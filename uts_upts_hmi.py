@@ -3,8 +3,9 @@ from lxml import etree
 import uuid
 import shutil
 import os
-from main_base import path_hmi
 from main_base import General_functions
+from main_base import path_hmi
+from main_base import path_hmi_sample
 from enum import Enum
 from typing import NamedTuple
 
@@ -376,7 +377,7 @@ class Alarm_map():
         if os.path.isfile(new_pic_path):
             os.remove(new_pic_path)
         # Копируем шаблон
-        shutil.copy2(f'{path_hmi}\\Form_UTS_UPTS_default.omobj', new_pic_path)
+        shutil.copy2(f'{path_hmi_sample}\\Form_UTS_UPTS_default.omobj', new_pic_path)
         # Счетчик всех табло и сирен в карте
         counter_uts = 0
 

@@ -4,7 +4,6 @@ from playhouse.migrate import *
 # from gen_gui import MainWin
 # from PyQt5.QtWidgets import QApplication
 # app = QApplication([])
-
 # win_ = MainWin()
 # path_prj = win_.launch()
 
@@ -53,6 +52,10 @@ port_prj = '5432'
 #             path_su = split_str[1]
 #         if split_str[0] == 'path_rest:':
 #             path_rest = split_str[1]
+#         if split_str[0] == 'path_hmi:':
+#             path_hmi = split_str[1]
+#         if split_str[0] == 'path_hmi_sample:':
+#             path_hmi_sample = split_str[1]
 
 #         if split_str[0] == 'database_msg':
 #             database_msg = split_str[1]
@@ -1371,5 +1374,3 @@ class TM_TR2(BaseModel):
     descriptionTR4 = CharField(null = True)
     class Meta:
         table_name = 'tm_tr2'
-
-

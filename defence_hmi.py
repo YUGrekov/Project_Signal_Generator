@@ -1,6 +1,7 @@
 from lxml import etree
 import uuid, math, os, shutil
-from main_base import *
+from main_base import path_hmi
+from main_base import path_hmi_sample
 
 reset_button_designed = {'1' : ['X'       , '901', '2'],
                          '2' : ['Y'       , ''   , '2'],
@@ -317,7 +318,7 @@ def gen_station_defence(work_tabl, pump_def):
             
             if os.path.isfile(new_pic_path): os.remove(new_pic_path)
             # В любом случае создадим новый
-            shutil.copy2(f'{path_hmi}\\Form_Defences_default.omobj', new_pic_path)
+            shutil.copy2(f'{path_hmi_sample}\\Form_Defences_default.omobj', new_pic_path)
 
             # Счетчик всех защит в карте
             counter_defence = 0

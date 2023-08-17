@@ -7,7 +7,6 @@ import psycopg2
 today = datetime.now()
 
 
-
 # Additional general features
 class General_functions():
     def str_find(self, str1, arr):

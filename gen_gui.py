@@ -5,8 +5,8 @@ import sys
 # for path in sys.path:
 #     print(path)
 from main_base import *
-from defence_hmi import gen_station_defence
-from uts_upts_hmi import Alarm_map
+#from defence_hmi import gen_station_defence
+#from uts_upts_hmi import Alarm_map
 
 # ГРАФИЧЕСКИЙ ИНТЕРФЕЙС ДЛЯ ЗАПУСКА ГЕНЕРАТОРА
 # Сформировать exe: в терминале добавить: auto-py-to-exe
@@ -2707,7 +2707,7 @@ class Window_contexmenu_sql(QMainWindow):
                     self.write_text_cell = f'{self.combo.currentText()}[{self.cell_value}].{self.combo_type.currentText()}'
         except: return
 # Основное окно просмотра и редактирования таблиц
-class Window_update_sql(QWidget):
+class Window_update_sql(QWidget): 
     def __init__(self, table_used):
         super(Window_update_sql, self).__init__()
         self.setWindowTitle('Редактор базы данных')
