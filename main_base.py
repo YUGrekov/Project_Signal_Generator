@@ -680,34 +680,32 @@ class Editing_table_SQL():
             msg[f'{today} - Таблица: {table_used} некорректный запрос!'] = 2
             return msg
     # Updating cell values
-    def update_row_tabl(self, column, text_cell, text_cell_id, table_used, hat_name, flag_NULL):
+    def update_row_tabl(self, column, text_cell, text_cell_id, table_used, hat_name):
         msg = {}
         active_column = list(hat_name)[column]
         try:
-            if flag_NULL:
+            if not len(text_cell):
                 self.cursor.execute(f"""UPDATE "{table_used}" 
                                         SET "{active_column}"= NULL
                                         WHERE id={text_cell_id}""")
             else:
                 self.cursor.execute(f"""UPDATE "{table_used}" 
-                                        SET "{active_column}"='{text_cell}' 
+                                        SET "{active_column}"='{text_cell}'
                                         WHERE id={text_cell_id}""")
             return msg
         except Exception:
             msg[f'{today} - Таблица: {table_used}, ошибка при изменении ячейки: {traceback.format_exc()}'] = 2
             return msg
-        #table_used.update(**{active_column: text_cell}).where(table_used.id == text_cell_id).execute()
+
     # Adding new lines
     def add_new_row(self, table_used, row):
-        #self.cursor.execute(f'''INSERT INTO {table_used} DEFAULT VALUES''')
         self.cursor.execute(f'''INSERT INTO "{table_used}" (id) VALUES ({row});''')
 
-        #table_used.insert(**{active_column: ''}).execute()
     # Removing rows
     def delete_row(self, text_cell_id, table_used):
+        print(f'''DELETE FROM "{table_used}" WHERE id={text_cell_id}''')
         self.cursor.execute(f'''DELETE FROM "{table_used}"
                                 WHERE id={text_cell_id}''')
-        #table_used.get(table_used.id == text_cell_id).delete_instance()
     # Adding new column
     def add_new_column(self, table_used, new_column):
         self.cursor.execute(f'''ALTER TABLE "{table_used}" 
@@ -5116,6 +5114,7 @@ class Filling_CodeSys():
             write_file = self.file_check('сfg_ZD')
 
             for value in data_value:
+                print(value)
                 numbers        = value[0]
                 name           = value[1]
                 rs_ok          = value[2]
@@ -8313,9 +8312,9 @@ class Filling_ZD():
                 for name in sorted(unique_name):
                     list_zd = []
 
-                    kvo, kvz, mpo, mpz, mufta, error, dist, vmmo, vmmz = '', '', '', '', '', '', '', '', ''
-                    close_bru, stop_bru, voltage, isp_opening_chain, isp_closing_chain   = '', '', '', '', ''
-                    open_zd, close_zd, stop_zd, open_stop, close_stop = '', '', '', '', ''
+                    kvo, kvz, mpo, mpz, mufta, error, dist, vmmo, vmmz = None, None, None, None, None, None, None, None, None
+                    close_bru, stop_bru, voltage, isp_opening_chain, isp_closing_chain   = None, None, None, None, None
+                    open_zd, close_zd, stop_zd, open_stop, close_stop = None, None, None, None, None
 
                     for tag in array_di_tag_zd:
                         self.cursor.execute(f"""SELECT id, tag_eng, name 
@@ -8355,7 +8354,8 @@ class Filling_ZD():
                         if tag == 'DCOB': open_stop  = f'ctrlDO[{number_id}]'
                         if tag == 'DCCB': close_stop = f'ctrlDO[{number_id}]'
                     
-                    if kvo == '' and kvz == '': continue
+                    if (kvo is None) and (kvz is None): 
+                        continue
 
                     if self.dop_function.str_find(str(name).lower, {'клапа'}) or self.dop_function.str_find(str(name).lower, {'клоп'}): klapan = 1
                     else: klapan = 0
@@ -8388,26 +8388,16 @@ class Filling_ZD():
                         msg[f'{today} - Таблица: zd, добавлена новая задвижка: ZD[{count_row}], {name}'] = 1
                         list_zd.append(dict(id = count_row,
                                             variable = f'ZD[{count_row}]',
-                                            tag = '',
                                             name = name,
-                                            short_name = '',
                                             exists_interface = 0,
                                             KVO = kvo,KVZ = kvz,MPO = mpo,MPZ = mpz,Dist = dist,Mufta = mufta,Drive_failure = error,
                                             Open = open_zd,Close = close_zd,Stop = stop_zd,Opening_stop = open_stop,Closeing_stop = close_stop,
-                                            KVO_i = '',KVZ_i = '',MPO_i = '',MPZ_i = '',Dist_i = '',Mufta_i = '',Drive_failure_i = '',
-                                            Open_i = '',Close_i = '',Stop_i = '',Opening_stop_i = '',Closeing_stop_i = '',
-                                            No_connection = '',
                                             Close_BRU = close_bru,Stop_BRU = stop_bru,
-                                            Voltage = voltage,Voltage_CHSU = '',Voltage_in_signaling_circuits = '',
+                                            Voltage = voltage,
                                             Serviceability_opening_circuits = isp_opening_chain,Serviceability_closening_circuits = isp_closing_chain,
                                             VMMO = vmmo,VMMZ = vmmz,
-                                            Freeze_on_suspicious_change = '',
                                             Is_klapan = klapan,
-                                            Opening_percent = '',
-                                            Pic = '',Type_BUR_ZD = '', tabl_msg='TblValves',
-                                            AlphaHMI = '',AlphaHMI_PIC1 = '',AlphaHMI_PIC1_Number_kont = '',
-                                            AlphaHMI_PIC2 = '',AlphaHMI_PIC2_Number_kont = '',AlphaHMI_PIC3 = '',
-                                            AlphaHMI_PIC3_Number_kont = '',AlphaHMI_PIC4 = '',AlphaHMI_PIC4_Number_kont = ''))
+                                            tabl_msg='TblValves'))
 
                         # Checking for the existence of a database
                         ZD.insert_many(list_zd).execute()
