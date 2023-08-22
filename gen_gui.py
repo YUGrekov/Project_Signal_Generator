@@ -3055,6 +3055,7 @@ class Window_update_sql(QWidget):
         self.TableWidget_1.resizeRowsToContents()
     
     def scrollToColumn(self, item):
+        print(item)
         def clear_widget():
             rowcount = self.TableWidget_1.rowCount()
             if rowcount != 0: 

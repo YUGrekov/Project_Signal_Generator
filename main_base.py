@@ -689,7 +689,7 @@ class Editing_table_SQL():
             msg[f'{today} - Таблица: {table_used} некорректный запрос!'] = 2
             return msg
     # Updating cell values
-    def update_row_tabl(self, column, text_cell, text_cell_id, table_used, hat_name):
+    def update_row_tabl(self, column, text_cell, text_cell_id, table_used, hat_name, flag_NULL=None):
         msg = {}
         active_column = list(hat_name)[column]
         try:
@@ -1810,9 +1810,11 @@ class Generate_database_SQL():
                 Id, variable, tag, name, unit            = signal[0], signal[1], signal[2], signal[3], signal[4]
                 used, value_ust, group_ust, rule_map_ust = signal[5], signal[6], signal[7], signal[8]
 
-                if used == '0': continue
+                if not used: continue
 
                 # Prefix
+                try: prefix_system
+                except: prefix_system = ''
                 Prefix = 'NULL' if prefix_system == '' or prefix_system is None else str(prefix_system)
                 
                 # SetpointGroupId
@@ -1829,8 +1831,8 @@ class Generate_database_SQL():
                 msg[f'{today} - {sign}: ошибка добавления строки, пропускается: {traceback.format_exc()}'] = 2
                 continue
             
-            ins_row_tabl = f"INSERT INTO objects.{sign} (Id, Prefix, SetpointGroupId, Tag, Name, Source, Value, Egu, RuleName) VALUES({Id},'{Prefix}', {SetpointGroupId}, '{tag}', '{name}', '{variable}', {value_ust}, '{unit}', '{RuleName}');\n"
-            
+            ins_row_tabl = f"INSERT INTO objects.{sign} (Id, Prefix, SetpointGroupId, Tag, Name, Source, Value, Egu, RuleName) VALUES({Id}, {Prefix}, {SetpointGroupId}, '{tag}', '{name}', '{variable}', {value_ust}, '{unit}', '{RuleName}');\n"
+
             if flag_write_db:
                 try:
                     if flag_del_tabl is False :
@@ -9233,7 +9235,12 @@ class Filling_PZ_tm():
                     ('Инерционность системы', 'T6', '50', 'c'),
                     ('Задержка включения насосов с момента окончания задержки атаки', 'T7', '0', 'c'),
                     ('Выдержка времения на включение следующего насоса при включении нескольких насосов', 'T8', '10', 'c'),
-                    ('Задержка открытия задвижек с момента окончания задержки атаки', 'T9', '10', 'c'),] 
+                    ('Задержка открытия задвижек с момента окончания задержки атаки', 'T9', '10', 'c'),
+                    ('Резерв', 'T10', '0', 'c'),
+                    ('Резерв', 'T11', '0', 'c'),
+                    ('Резерв', 'T12', '0', 'c'),
+                    ('Резерв', 'T13', '0', 'c'),
+                    ('Резерв', 'T14', '0', 'c')] 
         with db:
             try:                
                 try:
@@ -9244,7 +9251,7 @@ class Filling_PZ_tm():
                     msg[f'{today} - Таблица: pz пустая или не существует!'] = 2
                     return msg
                 
-                self.cursor.execute(f'''SELECT name FROM pz''')
+                self.cursor.execute(f'''SELECT name FROM pz ORDER BY id''')
                 for i in self.cursor.fetchall():
                     count_PZ += 1
                     count = 0
@@ -9253,8 +9260,8 @@ class Filling_PZ_tm():
                         count += 1
                         used = '0' if ust[0] == 'Резерв' else '1' 
                         list_pz_tm.append(dict(id = count_row, 
-                                                variable = f'HPZ[{count}].{count_PZ}',
-                                                tag  = f'HUTS[{count_PZ}]_{ust[1]}',
+                                                variable = f'tmPZ[{count_PZ}].{ust[1]}',
+                                                tag  = f'HPZ0{count}.{count_PZ}',
                                                 name = f'{i[0]}. {ust[0]}',
                                                 unit = ust[3],
                                                 used = used,

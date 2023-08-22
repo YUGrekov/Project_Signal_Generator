@@ -1,83 +1,83 @@
 from peewee import *
 from playhouse.migrate import *
 
-from gen_gui import MainWin
-from PyQt5.QtWidgets import QApplication
-app = QApplication([])
-win_ = MainWin()
-path_prj = win_.launch()
+# from gen_gui import MainWin
+# from PyQt5.QtWidgets import QApplication
+# app = QApplication([])
+# win_ = MainWin()
+# path_prj = win_.launch()
 
-# path_to_exel = f'D:\\Development\\New_SQL_generator\\Working_draft_SQL\\sqllite_database\\П3 - КЗФКП Аксинино-2_MK500_20230405.xlsx'
-# path_to_base = f'D:\\Development\\New_SQL_generator\\Working_draft_SQL\\sqllite_database\\asutp.db'
+path_to_exel = f'D:\\Development\\New_SQL_generator\\Working_draft_SQL\\sqllite_database\\П3 - КЗФКП Аксинино-2_MK500_20230405.xlsx'
+path_to_base = f'D:\\Development\\New_SQL_generator\\Working_draft_SQL\\sqllite_database\\asutp.db'
 
-# path_to_exel = 'D:\\Development\\New_SQL_generator\\Working_draft_SQL\\sqllite_database\\П3 - КЗФКП Аксинино-2_MK500_20230405.xlsx'
-# path_sample  = 'D:\Development\Generation_msg\Sample\\'
-# path_location_file = 'D:\Development\Generation_msg\Script\\'
-# name_project = 'Тест'
-# prefix_system = ''
-# path_to_devstudio = 'D:\Проекты\НПС-Бисер\project\\typical_prj\\'
-# path_su = 'D:\Development\Generation_msg\SU\\'
-# path_rest = ''
-# path_hmi = 'D:\\Development\\Generation_msg\\HMI'
-# path_hmi_sample = 'D:\\Development\\Generation_msg\\HMI'
+path_to_exel = 'D:\\Development\\New_SQL_generator\\Working_draft_SQL\\sqllite_database\\П3 - КЗФКП Аксинино-2_MK500_20230405.xlsx'
+path_sample = 'D:\Development\Generation_msg\Sample\\'
+path_location_file = 'D:\Development\Generation_msg\Script\\'
+name_project = 'Тест'
+prefix_system = ''
+path_to_devstudio = 'D:\Проекты\НПС-Бисер\project\\typical_prj\\'
+path_su = 'D:\Development\Generation_msg\SU\\'
+path_rest = ''
+path_hmi = 'D:\\Development\\Generation_msg\\HMI'
+path_hmi_sample = 'D:\\Development\\Generation_msg\\HMI'
 
-# database_msg = 'asupt_temp'
-# user_msg = 'postgres'
-# password_msg = 'postgres'
-# host_msg = 'localhost'
-# port_msg = '5432'
+database_msg = 'asupt_temp'
+user_msg = 'postgres'
+password_msg = 'postgres'
+host_msg = 'localhost'
+port_msg = '5432'
 
-# database_prj = 'asutp'
-# user_prj = 'postgres'
-# password_prj = 'postgres'
-# host_prj = 'localhost'
-# port_prj = '5432'
+database_prj = 'asutp'
+user_prj = 'postgres'
+password_prj = 'postgres'
+host_prj = 'localhost'
+port_prj = '5432'
 
-with open(path_prj) as paths:
-    for string in paths:
-        split_str = string.strip().split(': ')
-        if split_str[0] == 'path_to_kzfkp':
-            path_to_exel = split_str[1]
-        if split_str[0] == 'path_sample':
-            path_sample = split_str[1]
-        if split_str[0] == 'path_location_file':
-            path_location_file = split_str[1]
-        if split_str[0] == 'name_project':
-            name_project = split_str[1]
-        if split_str[0] == 'prefix_system':
-            prefix_system = split_str[1]
-        if split_str[0] == 'path_to_devstudio':
-            path_to_devstudio = split_str[1]
-        if split_str[0] == 'path_su':
-            path_su = split_str[1]
-        if split_str[0] == 'path_rest:':
-            path_rest = split_str[1]
-        if split_str[0] == 'path_hmi:':
-            path_hmi = split_str[1]
-        if split_str[0] == 'path_hmi_sample:':
-            path_hmi_sample = split_str[1]
+# with open(path_prj) as paths:
+#     for string in paths:
+#         split_str = string.strip().split(': ')
+#         if split_str[0] == 'prefix_system':
+#             prefix_system = split_str[1]
+#         if split_str[0] == 'path_to_kzfkp':
+#             path_to_exel = split_str[1]
+#         if split_str[0] == 'path_sample':
+#             path_sample = split_str[1]
+#         if split_str[0] == 'path_location_file':
+#             path_location_file = split_str[1]
+#         if split_str[0] == 'name_project':
+#             name_project = split_str[1]
+#         if split_str[0] == 'path_to_devstudio':
+#             path_to_devstudio = split_str[1]
+#         if split_str[0] == 'path_su':
+#             path_su = split_str[1]
+#         if split_str[0] == 'path_rest:':
+#             path_rest = split_str[1]
+#         if split_str[0] == 'path_hmi:':
+#             path_hmi = split_str[1]
+#         if split_str[0] == 'path_hmi_sample:':
+#             path_hmi_sample = split_str[1]
 
-        if split_str[0] == 'database_msg':
-            database_msg = split_str[1]
-        if split_str[0] == 'user_msg':
-            user_msg = split_str[1]
-        if split_str[0] == 'password_msg':
-            password_msg = split_str[1]
-        if split_str[0] == 'host_msg':
-            host_msg = split_str[1]
-        if split_str[0] == 'port_msg':
-            port_msg = split_str[1]
+#         if split_str[0] == 'database_msg':
+#             database_msg = split_str[1]
+#         if split_str[0] == 'user_msg':
+#             user_msg = split_str[1]
+#         if split_str[0] == 'password_msg':
+#             password_msg = split_str[1]
+#         if split_str[0] == 'host_msg':
+#             host_msg = split_str[1]
+#         if split_str[0] == 'port_msg':
+#             port_msg = split_str[1]
         
-        if split_str[0] == 'database':
-            database_prj = split_str[1]
-        if split_str[0] == 'user':
-            user_prj = split_str[1]
-        if split_str[0] == 'password':
-            password_prj = split_str[1]
-        if split_str[0] == 'host':
-            host_prj = split_str[1]
-        if split_str[0] == 'port':
-            port_prj = split_str[1]
+#         if split_str[0] == 'database':
+#             database_prj = split_str[1]
+#         if split_str[0] == 'user':
+#             user_prj = split_str[1]
+#         if split_str[0] == 'password':
+#             password_prj = split_str[1]
+#         if split_str[0] == 'host':
+#             host_prj = split_str[1]
+#         if split_str[0] == 'port':
+#             port_prj = split_str[1]
 
 
 db = PostgresqlDatabase(database_msg, user=user_msg, password=password_msg, host=host_msg, port=port_msg)
@@ -377,6 +377,9 @@ rus_list = {'signals': {'id': '№', 'type_signal':'Тип сигнала', 'uso
                    'Reset_Link':'Сброс ссылка', 'Reset_Request':'Сброс запроса', 'Through_loop_number_for_interface':'Сквозной номер шлейфа\nдля интерфейсных', 'location':'Место установки', 'Pic':'Pic','Normal':'Норма'}, 
                 
             'pz_tm': {'id':'№','variable':'Переменная', 'tag':'Идентификатор', 'name':'Название', 'unit':'Единица измерения', 'used':'Используется', 'value_ust':'Значение уставки', 'minimum':'Минимум', 
+                       'maximum':'Максимум', 'group_ust':'Группа уставок', 'rule_map_ust':'Правило для карты уставок'},
+            
+            'prj_tm': {'id':'№','variable':'Переменная', 'tag':'Идентификатор', 'name':'Название', 'unit':'Единица измерения', 'used':'Используется', 'value_ust':'Значение уставки', 'minimum':'Минимум', 
                        'maximum':'Максимум', 'group_ust':'Группа уставок', 'rule_map_ust':'Правило для карты уставок'},
             
             'pt': {'id':'№','variable':'Переменная', 'tag':'Идентификатор', 'name':'Название', 'nZDFoam_1':'nZDFoam_1', 'nZDFoam_2':'nZDFoam_2', 'nZDFoam_3':'nZDFoam_3', 
