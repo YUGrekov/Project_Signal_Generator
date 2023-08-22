@@ -779,6 +779,21 @@ class Widget(QWidget):
         b_clear_tm_pz.resize(80,23)
         b_clear_tm_pz.move(b_width_two + 647, b_height + 156) 
         b_clear_tm_pz.clicked.connect(self.clear_tmpz_tabl)
+        # PT
+        l_pt = QLabel('PT:', tab_3)
+        l_pt.move(b_width_one + 587, l_height + 182)
+        b_pt_basket = QPushButton('Подготовить', tab_3)
+        b_pt_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
+        b_pt_basket.setToolTip('''Общие настройки пожаротушения PT''')
+        b_pt_basket.resize(80,23)
+        b_pt_basket.move(b_width_one + 647, b_height + 182) 
+        b_pt_basket.clicked.connect(self.filling_pt)
+        b_clear_pt = QPushButton('Очистить', tab_3)
+        b_clear_pt.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
+        b_clear_pt.setToolTip("Очистить таблицу Общие настройки пожаротушения PT")
+        b_clear_pt.resize(80,23)
+        b_clear_pt.move(b_width_two + 647, b_height + 182) 
+        b_clear_pt.clicked.connect(self.clear_pt_tabl)
        
         # TM_TS
         l_tm_ts = QLabel('TM_TS:', tab_3)
@@ -1702,6 +1717,14 @@ class Widget(QWidget):
         self.logs_msg('default', 1, msg, True)
     def clear_tmvsgrp_tabl(self):
         msg = self.dop_function.clear_tabl('vsgrp_tm', 'VSGRP_tm', self.list_tabl)
+        self.logs_msg('default', 1, msg, True)
+    # PT
+    def filling_pt(self):
+        pt_table = Filling_PT()
+        msg = pt_table.column_check()
+        self.logs_msg('default', 1, msg, True)
+    def clear_pt_tabl(self):
+        msg = self.dop_function.clear_tabl('pt', 'PT', self.list_tabl)
         self.logs_msg('default', 1, msg, True)
     # UTS
     def filling_uts(self):

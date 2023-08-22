@@ -1,83 +1,83 @@
 from peewee import *
 from playhouse.migrate import *
 
-# from gen_gui import MainWin
-# from PyQt5.QtWidgets import QApplication
-# app = QApplication([])
-# win_ = MainWin()
-# path_prj = win_.launch()
+from gen_gui import MainWin
+from PyQt5.QtWidgets import QApplication
+app = QApplication([])
+win_ = MainWin()
+path_prj = win_.launch()
 
-path_to_exel = f'D:\\Development\\New_SQL_generator\\Working_draft_SQL\\sqllite_database\\П3 - КЗФКП Аксинино-2_MK500_20230405.xlsx'
-path_to_base = f'D:\\Development\\New_SQL_generator\\Working_draft_SQL\\sqllite_database\\asutp.db'
+# path_to_exel = f'D:\\Development\\New_SQL_generator\\Working_draft_SQL\\sqllite_database\\П3 - КЗФКП Аксинино-2_MK500_20230405.xlsx'
+# path_to_base = f'D:\\Development\\New_SQL_generator\\Working_draft_SQL\\sqllite_database\\asutp.db'
 
-path_to_exel = 'D:\\Development\\New_SQL_generator\\Working_draft_SQL\\sqllite_database\\П3 - КЗФКП Аксинино-2_MK500_20230405.xlsx'
-path_sample  = 'D:\Development\Generation_msg\Sample\\'
-path_location_file = 'D:\Development\Generation_msg\Script\\'
-name_project = 'Тест'
-prefix_system = ''
-path_to_devstudio = 'D:\Проекты\НПС-Бисер\project\\typical_prj\\'
-path_su = 'D:\Development\Generation_msg\SU\\'
-path_rest = ''
-path_hmi = 'D:\\Development\\Generation_msg\\HMI'
-path_hmi_sample = 'D:\\Development\\Generation_msg\\HMI'
+# path_to_exel = 'D:\\Development\\New_SQL_generator\\Working_draft_SQL\\sqllite_database\\П3 - КЗФКП Аксинино-2_MK500_20230405.xlsx'
+# path_sample  = 'D:\Development\Generation_msg\Sample\\'
+# path_location_file = 'D:\Development\Generation_msg\Script\\'
+# name_project = 'Тест'
+# prefix_system = ''
+# path_to_devstudio = 'D:\Проекты\НПС-Бисер\project\\typical_prj\\'
+# path_su = 'D:\Development\Generation_msg\SU\\'
+# path_rest = ''
+# path_hmi = 'D:\\Development\\Generation_msg\\HMI'
+# path_hmi_sample = 'D:\\Development\\Generation_msg\\HMI'
 
-database_msg = 'asutp_temp'
-user_msg = 'postgres'
-password_msg = 'postgres'
-host_msg = 'localhost'
-port_msg = '5432'
+# database_msg = 'asupt_temp'
+# user_msg = 'postgres'
+# password_msg = 'postgres'
+# host_msg = 'localhost'
+# port_msg = '5432'
 
-database_prj = 'asutp'
-user_prj = 'postgres'
-password_prj = 'postgres'
-host_prj = 'localhost'
-port_prj = '5432'
+# database_prj = 'asutp'
+# user_prj = 'postgres'
+# password_prj = 'postgres'
+# host_prj = 'localhost'
+# port_prj = '5432'
 
-# with open(path_prj) as paths:
-#     for string in paths:
-#         split_str = string.strip().split(': ')
-#         if split_str[0] == 'path_to_kzfkp':
-#             path_to_exel = split_str[1]
-#         if split_str[0] == 'path_sample':
-#             path_sample = split_str[1]
-#         if split_str[0] == 'path_location_file':
-#             path_location_file = split_str[1]
-#         if split_str[0] == 'name_project':
-#             name_project = split_str[1]
-#         if split_str[0] == 'prefix_system':
-#             prefix_system = split_str[1]
-#         if split_str[0] == 'path_to_devstudio':
-#             path_to_devstudio = split_str[1]
-#         if split_str[0] == 'path_su':
-#             path_su = split_str[1]
-#         if split_str[0] == 'path_rest:':
-#             path_rest = split_str[1]
-#         if split_str[0] == 'path_hmi:':
-#             path_hmi = split_str[1]
-#         if split_str[0] == 'path_hmi_sample:':
-#             path_hmi_sample = split_str[1]
+with open(path_prj) as paths:
+    for string in paths:
+        split_str = string.strip().split(': ')
+        if split_str[0] == 'path_to_kzfkp':
+            path_to_exel = split_str[1]
+        if split_str[0] == 'path_sample':
+            path_sample = split_str[1]
+        if split_str[0] == 'path_location_file':
+            path_location_file = split_str[1]
+        if split_str[0] == 'name_project':
+            name_project = split_str[1]
+        if split_str[0] == 'prefix_system':
+            prefix_system = split_str[1]
+        if split_str[0] == 'path_to_devstudio':
+            path_to_devstudio = split_str[1]
+        if split_str[0] == 'path_su':
+            path_su = split_str[1]
+        if split_str[0] == 'path_rest:':
+            path_rest = split_str[1]
+        if split_str[0] == 'path_hmi:':
+            path_hmi = split_str[1]
+        if split_str[0] == 'path_hmi_sample:':
+            path_hmi_sample = split_str[1]
 
-#         if split_str[0] == 'database_msg':
-#             database_msg = split_str[1]
-#         if split_str[0] == 'user_msg':
-#             user_msg = split_str[1]
-#         if split_str[0] == 'password_msg':
-#             password_msg = split_str[1]
-#         if split_str[0] == 'host_msg':
-#             host_msg = split_str[1]
-#         if split_str[0] == 'port_msg':
-#             port_msg = split_str[1]
+        if split_str[0] == 'database_msg':
+            database_msg = split_str[1]
+        if split_str[0] == 'user_msg':
+            user_msg = split_str[1]
+        if split_str[0] == 'password_msg':
+            password_msg = split_str[1]
+        if split_str[0] == 'host_msg':
+            host_msg = split_str[1]
+        if split_str[0] == 'port_msg':
+            port_msg = split_str[1]
         
-#         if split_str[0] == 'database':
-#             database_prj = split_str[1]
-#         if split_str[0] == 'user':
-#             user_prj = split_str[1]
-#         if split_str[0] == 'password':
-#             password_prj = split_str[1]
-#         if split_str[0] == 'host':
-#             host_prj = split_str[1]
-#         if split_str[0] == 'port':
-#             port_prj = split_str[1]
+        if split_str[0] == 'database':
+            database_prj = split_str[1]
+        if split_str[0] == 'user':
+            user_prj = split_str[1]
+        if split_str[0] == 'password':
+            password_prj = split_str[1]
+        if split_str[0] == 'host':
+            host_prj = split_str[1]
+        if split_str[0] == 'port':
+            port_prj = split_str[1]
 
 
 db = PostgresqlDatabase(database_msg, user=user_msg, password=password_msg, host=host_msg, port=port_msg)
@@ -91,7 +91,7 @@ class BaseModel(Model):
         database = db
         order_by = id
 
-rus_list = {'signals': {'id':'№', 'type_signal':'Тип сигнала', 'uso':'Шкаф', 'tag':'Идентификатор', 'description':'Наименование', 
+rus_list = {'signals': {'id': '№', 'type_signal':'Тип сигнала', 'uso':'Шкаф', 'tag':'Идентификатор', 'description':'Наименование', 
                         'schema':'Схема', 'klk':'Клеммник', 'contact':'Контакт', 'basket':'Корзина', 'module':'Модуль', 'channel':'Канал'},
             
             'di': {'id':'№','variable':'Переменная', 'tag':'Идентификатор', 'name':'Название', 
@@ -378,6 +378,15 @@ rus_list = {'signals': {'id':'№', 'type_signal':'Тип сигнала', 'uso'
                 
             'pz_tm': {'id':'№','variable':'Переменная', 'tag':'Идентификатор', 'name':'Название', 'unit':'Единица измерения', 'used':'Используется', 'value_ust':'Значение уставки', 'minimum':'Минимум', 
                        'maximum':'Максимум', 'group_ust':'Группа уставок', 'rule_map_ust':'Правило для карты уставок'},
+            
+            'pt': {'id':'№','variable':'Переменная', 'tag':'Идентификатор', 'name':'Название', 'nZDFoam_1':'nZDFoam_1', 'nZDFoam_2':'nZDFoam_2', 'nZDFoam_3':'nZDFoam_3', 
+                'nZDFoam_4':'nZDFoam_4', 'nZDFoam_5':'nZDFoam_5', 'nZDFoam_6':'nZDFoam_6', 'nZDFoam_7':'nZDFoam_7', 'nZDFoam_8':'nZDFoam_8', 
+                'nZDWater_1':'nZDWater_1', 'nZDWater_2':'nZDWater_2', 'nZDWater_3':'nZDWater_3', 'nZDWater_4':'nZDWater_4', 'nZDWater_5':'nZDWater_5', 'nZDWater_6':'nZDWater_6', 
+                'nZDWater_7':'nZDWater_7', 'nZDWater_8':'nZDWater_8', 'pLmin_1':'pLmin_1', 'pLmin_2':'pLmin_2', 'pLmin_3':'pLmin_3', 'pLmin_4':'pLmin_4', 
+                'pLmin_5':'pLmin_5', 'pLmin_6':'pLmin_6', 'pLmin_7':'pLmin_7', 'pLmin_8':'pLmin_8', 'min_level_RPZV':'Мин авар уровень в РПЗВ', 
+                'number_UPTS_call_oper':'Номер UPTS "Звонок в операт."', 
+                'max_number_launch_fire_algoritm':'Максимально допустимое число одновременно запущенных алгоритмов пенотушения', 
+                'max_number_launch_watercooling_algoritm':'Максимально допустимое число одновременно запущенных алгоритмов водоохлаждения'},
 
             'dps': {'id':'№','variable':'Переменная', 'tag':'Идентификатор', 'name':'Название', 'control':'Контроль', 'deblock':'Деблокировка', 
                       'actuation':'Срабатывание', 'actuation_transmitter':'Срабатывание\n(трансмиттер)', 'malfunction':'Неисправность', 'voltage':'Напряжение'},
@@ -1264,7 +1273,41 @@ class PI(BaseModel):
     Normal = CharField(null = True)
 
     class Meta:
-        table_name = 'pi'  
+        table_name = 'pi'
+class PT(BaseModel):
+    variable = CharField(null = True)
+    tag = CharField(null = True)
+    name = CharField(null = True)
+    nZDFoam_1 = IntegerField(null = True)
+    nZDFoam_2 = IntegerField(null = True)
+    nZDFoam_3 = IntegerField(null = True)
+    nZDFoam_4 = IntegerField(null = True)
+    nZDFoam_5 = IntegerField(null = True)
+    nZDFoam_6 = IntegerField(null = True)
+    nZDFoam_7 = IntegerField(null = True)
+    nZDFoam_8 = IntegerField(null = True)
+    nZDWater_1 = IntegerField(null = True)
+    nZDWater_2 = IntegerField(null = True)
+    nZDWater_3 = IntegerField(null = True)
+    nZDWater_4 = IntegerField(null = True)
+    nZDWater_5 = IntegerField(null = True)
+    nZDWater_6 = IntegerField(null = True)
+    nZDWater_7 = IntegerField(null = True)
+    nZDWater_8 = IntegerField(null = True)
+    pLmin_1 = CharField(null = True)
+    pLmin_2 = CharField(null = True)
+    pLmin_3 = CharField(null = True)
+    pLmin_4 = CharField(null = True)
+    pLmin_5 = CharField(null = True)
+    pLmin_6 = CharField(null = True)
+    pLmin_7 = CharField(null = True)
+    pLmin_8 = CharField(null = True)
+    number_UPTS_call_oper = IntegerField(null = True)
+    max_number_launch_fire_algoritm = IntegerField(null = True)
+    max_number_launch_watercooling_algoritm = IntegerField(null = True)
+
+    class Meta:
+        table_name = 'pt'
 class PZ_tm(BaseModel):
     variable = CharField(null = True)
     tag = CharField(null = True)

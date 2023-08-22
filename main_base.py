@@ -4,6 +4,7 @@ from lxml import etree
 from datetime import datetime
 import re, traceback, os, codecs, uuid, math
 import psycopg2
+from sql_metadata import Parser
 today = datetime.now()
 
 
@@ -643,9 +644,15 @@ class Editing_table_SQL():
         msg = {}
         unpacking = []
         try:
-            self.cursor.execute(f'''{request}''')
-            name_column = next(zip(*self.cursor.description))
-
+            try:
+                self.cursor.execute(f'''{request}''')
+                query_table = Parser(f'''{request}''').tables
+                name_column = next(zip(*self.cursor.description))
+                table_used = query_table[0]
+            except Exception:
+                self.cursor.execute(f'SELECT * FROM "{table_used}" ORDER BY id')
+                name_column = next(zip(*self.cursor.description))
+            
             array_name_column = []
             for tabl, name_c in rus_list.items():
 
@@ -665,11 +672,13 @@ class Editing_table_SQL():
             unpacking.append(records)
 
             count_column = len(name_column)
-            count_row    = len(records)
+            count_row = len(records)
             return count_column, count_row, array_name_column, records, msg
-        except:
-            msg[f'{today} - Таблица: {table_used} некорректный запрос!'] = 2
+        except Exception:
+            print(traceback.format_exc())
+            msg[f'{today} - Таблица: {table_used} некорректный запрос: {traceback.format_exc()}'] = 2
             return 'error', 'error', 'error', 'error', msg
+        
     def other_requests(self, request, table_used):
         msg = {}
         try:
@@ -703,7 +712,6 @@ class Editing_table_SQL():
 
     # Removing rows
     def delete_row(self, text_cell_id, table_used):
-        print(f'''DELETE FROM "{table_used}" WHERE id={text_cell_id}''')
         self.cursor.execute(f'''DELETE FROM "{table_used}"
                                 WHERE id={text_cell_id}''')
     # Adding new column
@@ -9192,6 +9200,19 @@ class Filling_PI():
                         'IK_channel_failure_10', 'UF_channel_failure_11', 'Loading_12', 'Test_13', 'Reserve_14',
                         'Reset_Link', 'Reset_Request', 'Through_loop_number_for_interface', 'location', 'Pic','Normal']
         msg = self.dop_function.column_check(PI, 'pi', list_default)
+        return msg 
+class Filling_PT():
+    def __init__(self):
+        self.cursor   = db.cursor()
+        self.dop_function = General_functions()
+
+    def column_check(self):
+        list_default = ['id', 'variable', 'tag', 'name', 'nZDFoam_1', 'nZDFoam_2', 'nZDFoam_3', 'nZDFoam_4', 'nZDFoam_5', 'nZDFoam_6', 'nZDFoam_7', 'nZDFoam_8', 
+                'nZDWater_1', 'nZDWater_2', 'nZDWater_3', 'nZDWater_4', 'nZDWater_5', 'nZDWater_6', 'nZDWater_7', 'nZDWater_8', 'pLmin_1', 'pLmin_2', 'pLmin_3', 'pLmin_4', 
+                'pLmin_5', 'pLmin_6', 'pLmin_7', 'pLmin_8', 'number_UPTS_call_oper', 
+                'max_number_launch_fire_algoritm', 'max_number_launch_watercooling_algoritm']
+        msg = self.dop_function.column_check(PT, 'pt', list_default)
+        msg[f'{today} - Таблица: pt подготовлена'] = 1
         return msg 
 class Filling_PZ_tm():
     def __init__(self):
