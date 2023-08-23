@@ -673,7 +673,7 @@ class Editing_table_SQL():
 
             count_column = len(name_column)
             count_row = len(records)
-            return count_column, count_row, array_name_column, records, msg
+            return table_used, count_column, count_row, array_name_column, records, msg
         except Exception:
             print(traceback.format_exc())
             msg[f'{today} - Таблица: {table_used} некорректный запрос: {traceback.format_exc()}'] = 2
@@ -705,7 +705,6 @@ class Editing_table_SQL():
         except Exception:
             msg[f'{today} - Таблица: {table_used}, ошибка при изменении ячейки: {traceback.format_exc()}'] = 2
             return msg
-
     # Adding new lines
     def add_new_row(self, table_used, row):
         self.cursor.execute(f'''INSERT INTO "{table_used}" (id) VALUES ({row});''')
@@ -9238,9 +9237,7 @@ class Filling_PZ_tm():
                     ('Задержка открытия задвижек с момента окончания задержки атаки', 'T9', '10', 'c'),
                     ('Резерв', 'T10', '0', 'c'),
                     ('Резерв', 'T11', '0', 'c'),
-                    ('Резерв', 'T12', '0', 'c'),
-                    ('Резерв', 'T13', '0', 'c'),
-                    ('Резерв', 'T14', '0', 'c')] 
+                    ('Резерв', 'T12', '0', 'c')] 
         with db:
             try:                
                 try:
