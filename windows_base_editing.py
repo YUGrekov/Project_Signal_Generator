@@ -5,6 +5,8 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QTableWidget
 from PyQt5.QtWidgets import QPushButton
+from PyQt5.QtWidgets import QComboBox
+from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWidgets import QVBoxLayout
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QGridLayout
@@ -22,255 +24,87 @@ CONST_WIN_SIZE_TYPETABLE_W = 500
 CONST_WIN_SIZE_TYPETABLE_H = 600
 CONST_WIDTH_BORDER = 11
 CONST_COUNT_ONE = 1
+CONST_CONTEXT_W = 800
+CONST_CONTEXT_H = 675
 
+USED_TABLE = [('AI', 'ai'), ('AO', 'ao'), ('DI', 'di'), ('DO', 'do'),
+              ('ctrlDO', 'do'), ('ctrlAO', 'ao'), ('NA', 'umpna'),
+              ('ZD', 'zd'), ('VS', 'vs'), ('VSGRP', 'vsgrp'), ('BUF', 'buf'),
+              ('RSreq', 'rsreq'), ('KTPR', 'ktpr'), ('KTPRA', 'ktpra'),
+              ('KTPRS', 'ktprs'), ('NPS', 'nps'), ('AIVisualValue', 'ai'),
+              ('Facility', ''), ('PI', 'pi'), ('BUFr', 'bufr'), ('UTS', 'uts'),
+              ('UPTS', 'upts')]
 
-class WindowContexMenuSQL(QMainWindow):
-    def __init__(self):
-        super(WindowContexMenuSQL, self).__init__()
-        self.setWindowTitle('Ссылки')
-        self.setStyleSheet("background-color: #e1e5e5;")
-        self.setWindowFlags(Qt.WindowCloseButtonHint)
-        self.setWindowFlag(Qt.WindowStaysOnTopHint)
-        self.resize(800, 675)
-
-#         self.edit_SQL = Editing_table_SQL()
-#         self.write_text_cell = ''
-        
-#         # Выбор таблицы
-#         self.combo = QComboBox(self)
-#         self.combo.setStyleSheet("border-radius: 4px; border: 1px solid")
-#         self.combo.resize(120,25)
-#         self.combo.move(5, 5)
-#         self.combo.setFont(QFont('Arial', 10))
-#         self.tuple_tabl = {'AI':'ai', 'AO':'ao', 'DI':'di', 'DO':'do', 'ctrlDO':'do', 'NA':'umpna', 'ZD':'zd', 'VS':'vs', 'VSGRP':'vsgrp',
-#                            'BUF':'buf', 'RSreq':'rsreq', 'KTPR':'ktpr', 'KTPRA':'ktpra', 'KTPRS':'ktprs', 'NPS':'nps', 'AIVisualValue':'ai', 
-#                            'ctrlAO':'ao', 'Facility':'', 'BUFr':'bufr', 'PI':'pi', 'UTS':'uts', 'UPTS':'upts'}
-#         for key, tabl in self.tuple_tabl.items():
-#            self.combo.addItem(str(key))
-#         # Кнопка открыть таблицу
-#         open_Button = QPushButton('Открыть таблицу', self)
-#         open_Button.setStyleSheet("background: #faf5cd;border-radius: 4px; border: 1px solid")
-#         open_Button.move(130, 5)
-#         open_Button.resize(120,25)
-#         open_Button.clicked.connect(self.open_tabl)
-#         # Тип
-#         self.combo_type = QComboBox(self)
-#         self.combo_type.setStyleSheet("border-radius: 4px; border: 1px solid")
-#         self.combo_type.resize(200,25)
-#         self.combo_type.move(270, 5)
-#         self.combo_type.setFont(QFont('Arial', 10))
-#         self.combo_type.activated.connect(self.do_something)
-#         # Строка ввода сигнала для поиска
-#         self.req_base = QLineEdit(self, placeholderText='Поиск сигнала', clearButtonEnabled=True)
-#         self.req_base.setStyleSheet("border-radius: 4px; border: 1px solid")
-#         self.req_base.move(500, 5)
-#         self.req_base.resize(292,25)
-#         self.req_base.textChanged.connect(self.request)
-#         # Подтвердить выбранный сигнал
-#         confirm_Button = QPushButton('Добавить', self)
-#         confirm_Button.setStyleSheet("background: #bfd6bf;border-radius: 4px; border: 1px solid")
-#         confirm_Button.move(672, 645)
-#         confirm_Button.resize(120,25)
-#         confirm_Button.clicked.connect(self.new_text_cell)
-#         # Значение ссылки
-#         self.link_value = QLineEdit(self, placeholderText='Значение ссылки', clearButtonEnabled=True)
-#         self.link_value.setStyleSheet("border-radius: 4px; border: 1px solid")
-#         self.link_value.move(315, 645)
-#         self.link_value.resize(350,25)
-#         # Результат загрузки таблицы
-#         self.load = QLabel('', self)
-#         self.load.move(10, 643)
-#         self.load.resize(200,25)
-
-#         self.TableWidget = QTableWidget(self)
-#         self.TableWidget.setGeometry(5,40,790,600)
-#         self.TableWidget.verticalHeader().setVisible(False)
-#         self.TableWidget.horizontalHeader().setStretchLastSection(True) 
-#         self.TableWidget.setColumnCount(3)
-#         tabl = ['№', 'Тэг', 'Название']
-#         self.TableWidget.setHorizontalHeaderLabels(tabl)
-#         # Color header
-#         style = "::section {""background-color: #bbbabf; }"
-#         self.TableWidget.horizontalHeader().setStyleSheet(style)
-#         self.TableWidget.cellClicked.connect(self.click_position)
-
-#     def parent_click(self, row, column, qtablew):
-#         self.row_parent = row
-#         self.column_parent = column
-#         self.tablew_parent = qtablew
-
-#     def build(self, table_list):
-#         self.list_signal = table_list
-#         self.launch_windows(self.list_signal)
-
-#     def launch_windows(self, table_list):
-#         self.TableWidget.setRowCount(len(table_list))
-#         for row_t in range(len(table_list)):
-#             for column_t in range(3):
-#                 if column_t == 0: value = table_list[row_t][column_t]
-#                 if column_t == 1: value = table_list[row_t][column_t]
-#                 if column_t == 2: value = table_list[row_t][column_t]
-
-#                 if value is None:
-#                     item = QTableWidgetItem('')
-#                 else:
-#                     item = QTableWidgetItem(str(value))
-#                 item.setFlags(Qt.ItemIsEnabled)
-#                 self.TableWidget.setItem(row_t, column_t, item)
-
-#     def request(self):
-#         request = self.req_base.text()
-#         if request == '': return
-#         # Clear
-#         rowcount = self.TableWidget.rowCount()
-#         if rowcount != 0: 
-#             while rowcount >= 0:
-#                 self.TableWidget.removeRow(rowcount)
-#                 rowcount -= 1
-
-#         list_filter = self.edit_SQL.filter_text(request, self.list_signal)
-#         self.launch_windows(list_filter) 
-
-#     def setColortoRow(self, rowIndex):
-#         for i in range(self.TableWidget.rowCount()):
-#             for j in range(self.TableWidget.columnCount()):
-#                 self.TableWidget.item(i, j).setBackground(QColor(229, 229, 229))
-
-#         for j in range(self.TableWidget.columnCount()):
-#             self.TableWidget.item(rowIndex, j).setBackground(QColor(107, 219, 132))
-
-#     def new_text_cell(self):
-#         try:
-#             self.cell_value
-#             self.tablew_parent.setItem(self.row_parent, self.column_parent, QTableWidgetItem(self.write_text_cell))
-#         except: return
-
-#     def open_tabl(self):
-#         name_table = self.combo.currentText()
-#         for key, tab_value in self.tuple_tabl.items():
-#             if key == name_table:
-#                 need_open = tab_value
-#         # Clear
-#         rowcount = self.TableWidget.rowCount()
-#         if rowcount != 0: 
-#             while rowcount >= 0:
-#                 self.TableWidget.removeRow(rowcount)
-#                 rowcount -= 1
-#         list_signal, msg, color = self.edit_SQL.dop_window_signal(need_open)
-#         self.load.setText(msg)
-#         self.load.setStyleSheet(f"background-color: {color}")
-#         self.build(list_signal)
-
-#         list_type = {'AI':['Norm','Warn','Avar','Ndv','LTMin','MTMax','Min6','Min5','Min4','Min3_IsMT10Perc','Min2_IsNdv2ndParam','Min1_IsHighVibStat',
-#                            'Max1_IsHighVibStatNMNWR', 'Max2_IsHighVibNoStat', 'Max3_IsAvarVibStat', 'Max4_IsAvarVibStatNMNWR', 'Max5_IsAvarVibNoStat', 
-#                            'Max6_IsAvar2Vib', 'Status'],
-#                      'DI':['Value', 'Break', 'KZ', 'NC'],
-#                      'BUF':['0','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15'],
-#                      'RSreq':['ok'],
-#                      'ZD':['State_1_Opening','State_2_Opened','State_3_Middle','State_4_Closing','State_5_Closed','Dist','Imit','NOT_EC','Open','Close','Stop',
-#                            'StopClose','KVO','KVZ','MPO','MPZ','CorrCO','CorrCZ','VMMO','VMMZ','NOT_ZD_EC_KTP','Local','Mufta','Avar_BUR','CorrCOCorrCZ','ErrMPO',
-#                            'ErrMPZ','EC','RS_OK','Blink','Neisprav','NeispravVU','Close_Fail','Open_Fail','Stop_Fail','Unpromted_Open',
-#                            'Unpromted_Close','Avar','Diff','WarnClose','ECsign'],
-#                      'VSGRP':['REZ_EXIST','REM','OTKL'],
-#                      'VS':['State_1_VKL','State_2_OTKL','State_3_ZAPUSK','State_4_OSTANOV','Mode_1_OSN','Mode_2_REZ','Mode_3_RUCH','Mode_4_REM','NEISPRAV','SEC_EC',
-#                            'EC','MP','Imit','BLOCK_WORK_IS_ACTIVE','BLOCK_STOP_IS_ACTIVE','WAITING_FOR_FUTURE_PUSK','WAITING_FOR_APV','STARTED_AS_DOP','REORDER_REZ',
-#                            'PC','WarnOff','PC_FALL','PC_NOT_UP','MPC_CONTROL','PC_CONTROL','MPC_CEPI_OTKL','MPC_CEPI_VKL','EC_CONTROL','EC_FALL','MPC_FALL','MPC_NOT_FALL',
-#                            'MPC_CONTROL_RUCH','PC_CONTROL_RUCH','EC_CONTROL_RUCH','MPC_NOT_UP','EXTERNAL'],
-#                      'NA':['MainState_1_VKL','MainState_2_OTKL','MainState_3_PUSK','MainState_4_OSTANOV','SubState_1_GP','SubState_2_GORREZ','SubState_3_PP','SubState_4_PO',
-#                               'Mode_1_OSN','Mode_2_TU','Mode_3_REZ','Mode_4_REM','KTPRA_P','SimAgr','Prog_1','Prog_2','HIGHVIB','HIGHVIBNas','QF3A','QF1A','BBon','BBoff',
-#                               'KTPRA_FNM','KTPRA_M','GMPNA_M','BBErrOtkl_All','BBErrOtkl','BBErrOtkl1','BBErrVkl','SAR_Ramp','StartWork','StopWork','StopNoCmd_1','StopNoCmd_2',
-#                               'StartNoCmd','StateAlarm','StateAlarm_ChRP','StateAlarm_All','ChRPRegError','LogicalChRPCrash','StateAlarm_VV','StopErr','StopErr2','StopErr_All',
-#                               'StartErr','StartErr2','StartErr3','StartErr_All','KKCAlarm1','KKCAlarm2','KKCAlarm3','KKCAlarm4','InputPath','OutputPath','OIPVib','GMPNA_F',
-#                               'GMPNA_P','KTPR_ACHR','KTPR_SAON','ZD_Unprompted_Close','needRez','needOverhaul','ED_IsMT10Perc','ED_IsNdv2ndParam','ED_IsHighVibStat',
-#                               'ED_IsHighVibNoStat','ED_IsAvarVibStat','ED_IsAvarVibNoStat','ED_IsAvar2Vib','Pump_IsMT10Perc','Pump_IsNdv2ndParam','Pump_IsHighVibStat',
-#                               'Pump_IsHighVibStatNMNWR','Pump_IsHighVibNoStat','Pump_IsAvarVibStat','Pump_IsAvarVibStatNMNWR','Pump_IsAvarVibNoStat','Pump_IsAvar2Vib'],
-#                      'KTPR':['P','F','M','NP'],
-#                      'KTPRA':['P','F','M','NP'],
-#                      'KTPRS':['P','F','M','NP'],
-#                      'NPS':['ModeNPSDst','MNSInWork','IsMNSOff','IsNPSModePsl','IsPressureReady','NeNomFeedInterval','OIPHighPressure','KTPR_P','KTPR_M','CSPAWorkDeny',
-#                             'TSstopped','stopDisp','stopCSPA','stopARM','CSPAlinkOK'],
-#                      'Facility':['ndv2Gas','gasKTPR','activeGas','startExcessHeat','stopExcessHeat','warnGasPoint1','warnGasPoint2','warnGasPoint3','warnGasPoint4',
-#                                  'warnGasPoint5','warnGasPoint6','warnGasPoint7','warnGasPoint8','longGasPoint1','longGasPoint2','longGasPoint3','longGasPoint4',
-#                                  'longGasPoint5','longGasPoint6','longGasPoint7','longGasPoint8'],
-#                      'DO':['Value'],
-#                      'ctrlDO':[''],
-#                      'ctrlAO':[''],
-#                      'AO':[''],
-#                      'BUFr':[''],
-#                      'AIVisualValue':['']}
-        
-#         self.combo_type.clear()
-#         for key, value in list_type.items():
-#             if key == name_table:
-#                 for i in value:
-#                     self.combo_type.addItem(str(i))
-
-#     def do_something(self):
-#         self.update_str()
-
-#     def click_position(self):
-#         row = self.TableWidget.currentRow()
-#         self.setColortoRow(row)
-#         self.cell_value = self.TableWidget.item(row, 0).text()
-#         self.cell_value_ktpra = self.TableWidget.item(row, 1).text()
-#         self.update_str() 
-
-#     def update_str(self):
-#         column = self.TableWidget.currentColumn()
-#         row    = self.TableWidget.currentRow()
-#         try:
-#             if column == 0:
-#                 self.link_value.setText(str(row + 1))
-#                 self.write_text_cell = str(row + 1)
-#             else:
-#                 if self.combo.currentText() in  ['ctrlDO', 'AO', 'AIVisualValue', 'ctrlAO', 'BUFr']: 
-#                     self.link_value.setText(f'{self.combo.currentText()}[{self.cell_value}]')
-#                     self.write_text_cell = f'{self.combo.currentText()}[{self.cell_value}]'
-#                 elif self.combo.currentText() == 'Facility': 
-#                     self.link_value.setText(f'{self.combo.currentText()}[].{self.combo_type.currentText()}')
-#                     self.load.setText('Добавь индекс вручную!')
-#                     self.load.setStyleSheet("background-color: red")
-#                     self.write_text_cell = f'{self.combo.currentText()}[].{self.combo_type.currentText()}'
-#                 elif self.combo.currentText() == 'KTPRA': 
-#                     self.link_value.setText(f'{self.cell_value_ktpra}.{self.combo_type.currentText()}')
-#                     self.write_text_cell = f'{self.cell_value_ktpra}.{self.combo_type.currentText()}'
-#                 else:
-#                     self.link_value.setText(f'{self.combo.currentText()}[{self.cell_value}].{self.combo_type.currentText()}')
-#                     self.write_text_cell = f'{self.combo.currentText()}[{self.cell_value}].{self.combo_type.currentText()}'
-#         except: return
-
-
-class WindowTypeTableSQL(QMainWindow):
-    """Отдельно окно с типами столбов, применяемое для запроса"""
-    def __init__(self, table_list):
-        super(WindowTypeTableSQL, self).__init__()
-
-        self.setWindowTitle('Тип столбцов таблицы')
-        self.setStyleSheet("background-color: #e1e5e5;")
-        self.setWindowFlags(Qt.WindowCloseButtonHint)
-        self.resize(CONST_WIN_SIZE_TYPETABLE_W, CONST_WIN_SIZE_TYPETABLE_H)
-
-        self.t_w = QTableWidget(self)
-        self.t_w.verticalHeader().setVisible(False)
-        self.t_w.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.t_w.setColumnCount(3)
-        self.t_w.setFocusPolicy(Qt.NoFocus)
-        self.t_w.setRowCount(len(table_list))
-        column = ['Имя_eng', 'Имя_rus', 'Тип']
-        self.t_w.setHorizontalHeaderLabels(column)
-        style = "::section {""background-color: #bbbabf; }"
-        self.t_w.horizontalHeader().setStyleSheet(style)
-
-        for row_t in range(len(table_list)):
-            for column_t in range(3):
-                item = QTableWidgetItem(table_list[row_t][column_t])
-                item.setFlags(Qt.ItemIsEnabled)
-                self.t_w.setItem(row_t, column_t, item)
-
-        self.centralwidget = QWidget()
-        self.setCentralWidget(self.centralwidget)
-        self.layout_v = QVBoxLayout(self.centralwidget)
-        self.layout_v.addWidget(self.t_w)
+LIST_TYPE = {'AI': ['Norm', 'Warn', 'Avar', 'Ndv', 'LTMin', 'MTMax', 'Min6',
+                    'Min5', 'Min4', 'Min3_IsMT10Perc', 'Min2_IsNdv2ndParam',
+                    'Min1_IsHighVibStat', 'Max1_IsHighVibStatNMNWR',
+                    'Max2_IsHighVibNoStat', 'Max3_IsAvarVibStat',
+                    'Max4_IsAvarVibStatNMNWR', 'Max5_IsAvarVibNoStat',
+                    'Max6_IsAvar2Vib', 'Status'],
+             'DI': ['Value', 'Break', 'KZ', 'NC'],
+             'BUF': ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
+                     '11', '12', '13', '14', '15'],
+             'ZD': ['State_1_Opening', 'State_2_Opened', 'State_3_Middle',
+                    'State_4_Closing', 'State_5_Closed', 'Dist', 'Imit',
+                    'NOT_EC', 'Open', 'Close', 'Stop',
+                    'StopClose', 'KVO', 'KVZ', 'MPO', 'MPZ', 'CorrCO',
+                    'CorrCZ', 'VMMO', 'VMMZ', 'NOT_ZD_EC_KTP', 'Local',
+                    'Mufta', 'Avar_BUR', 'CorrCOCorrCZ', 'ErrMPO',
+                    'ErrMPZ', 'EC', 'RS_OK', 'Blink', 'Neisprav',
+                    'NeispravVU', 'Close_Fail', 'Open_Fail', 'Stop_Fail',
+                    'Unpromted_Open', 'Unpromted_Close', 'Avar', 'Diff',
+                    'WarnClose', 'ECsign'],
+             'VSGRP': ['REZ_EXIST', 'REM', 'OTKL'],
+             'VS': ['State_1_VKL', 'State_2_OTKL', 'State_3_ZAPUSK',
+                    'State_4_OSTANOV', 'Mode_1_OSN', 'Mode_2_REZ',
+                    'Mode_3_RUCH', 'Mode_4_REM', 'NEISPRAV', 'SEC_EC',
+                    'EC', 'MP', 'Imit', 'BLOCK_WORK_IS_ACTIVE',
+                    'BLOCK_STOP_IS_ACTIVE', 'WAITING_FOR_FUTURE_PUSK',
+                    'WAITING_FOR_APV', 'STARTED_AS_DOP', 'REORDER_REZ',
+                    'PC', 'WarnOff', 'PC_FALL', 'PC_NOT_UP', 'MPC_CONTROL',
+                    'PC_CONTROL', 'MPC_CEPI_OTKL', 'MPC_CEPI_VKL',
+                    'EC_CONTROL', 'EC_FALL', 'MPC_FALL', 'MPC_NOT_FALL',
+                    'MPC_CONTROL_RUCH', 'PC_CONTROL_RUCH', 'EC_CONTROL_RUCH',
+                    'MPC_NOT_UP', 'EXTERNAL'],
+             'NA': ['MainState_1_VKL', 'MainState_2_OTKL', 'MainState_3_PUSK',
+                    'MainState_4_OSTANOV', 'SubState_1_GP',
+                    'SubState_2_GORREZ', 'SubState_3_PP', 'SubState_4_PO',
+                    'Mode_1_OSN', 'Mode_2_TU', 'Mode_3_REZ', 'Mode_4_REM',
+                    'KTPRA_P', 'SimAgr', 'Prog_1', 'Prog_2', 'HIGHVIB',
+                    'HIGHVIBNas', 'QF3A', 'QF1A', 'BBon', 'BBoff',
+                    'KTPRA_FNM', 'KTPRA_M', 'GMPNA_M', 'BBErrOtkl_All',
+                    'BBErrOtkl', 'BBErrOtkl1', 'BBErrVkl', 'SAR_Ramp',
+                    'StartWork', 'StopWork', 'StopNoCmd_1', 'StopNoCmd_2',
+                    'StartNoCmd', 'StateAlarm', 'StateAlarm_ChRP',
+                    'StateAlarm_All', 'ChRPRegError', 'LogicalChRPCrash',
+                    'StateAlarm_VV', 'StopErr', 'StopErr2', 'StopErr_All',
+                    'StartErr', 'StartErr2', 'StartErr3', 'StartErr_All',
+                    'KKCAlarm1', 'KKCAlarm2', 'KKCAlarm3', 'KKCAlarm4',
+                    'InputPath', 'OutputPath', 'OIPVib', 'GMPNA_F',
+                    'GMPNA_P', 'KTPR_ACHR', 'KTPR_SAON', 'ZD_Unprompted_Close',
+                    'needRez', 'needOverhaul', 'ED_IsMT10Perc',
+                    'ED_IsNdv2ndParam', 'ED_IsHighVibStat',
+                    'ED_IsHighVibNoStat', 'ED_IsAvarVibStat',
+                    'ED_IsAvarVibNoStat', 'ED_IsAvar2Vib', 'Pump_IsMT10Perc',
+                    'Pump_IsNdv2ndParam', 'Pump_IsHighVibStat',
+                    'Pump_IsHighVibStatNMNWR', 'Pump_IsHighVibNoStat',
+                    'Pump_IsAvarVibStat', 'Pump_IsAvarVibStatNMNWR',
+                    'Pump_IsAvarVibNoStat', 'Pump_IsAvar2Vib'],
+             'KTPR': ['P', 'F', 'M', 'NP'], 'KTPRA': ['P', 'F', 'M', 'NP'],
+             'KTPRS': ['P', 'F', 'M', 'NP'],
+             'NPS': ['ModeNPSDst', 'MNSInWork', 'IsMNSOff', 'IsNPSModePsl',
+                     'IsPressureReady', 'NeNomFeedInterval', 'OIPHighPressure',
+                     'KTPR_P', 'KTPR_M', 'CSPAWorkDeny', 'TSstopped',
+                     'stopDisp', 'stopCSPA', 'stopARM', 'CSPAlinkOK'],
+             'Facility': ['ndv2Gas', 'gasKTPR', 'activeGas',
+                          'startExcessHeat', 'stopExcessHeat', 'warnGasPoint1',
+                          'warnGasPoint2', 'warnGasPoint3', 'warnGasPoint4',
+                         'warnGasPoint5', 'warnGasPoint6', 'warnGasPoint7',
+                         'warnGasPoint8', 'longGasPoint1', 'longGasPoint2',
+                         'longGasPoint3', 'longGasPoint4', 'longGasPoint5',
+                         'longGasPoint6', 'longGasPoint7', 'longGasPoint8'],
+             'DO': ['Value'], 'RSreq': ['ok'], 'ctrlDO': [''], 'ctrlAO': [''],
+             'AO': [''], 'BUFr': [''], 'AIVisualValue': ['']}
 
 
 class TableWidget(QTableWidget):
@@ -407,23 +241,74 @@ class TableWidget(QTableWidget):
                                             self.table_us, hat_name)
         # self.logs_msg('default', 1, msg, True)
 
+    def value_change(self, text):
+        '''Отработка события при изменении ячейки'''
+        row, column = self.data_cell()
+        value_id = self.text_cell(row, 0)
+        hat_name = self.edit_SQL.column_names(self.table_us)
 
-class LogsTextEdit(QTextEdit):
+        self.setItem(row, column, QTableWidgetItem(text))
+
+        msg = self.edit_SQL.update_row_tabl(column, text, value_id,
+                                            self.table_us, hat_name)
+
+
+class TableWidgetLinks(QTableWidget):
+    '''Макет таблицы для работы с ссылками'''
     def __init__(self, parent=None):
-        super(LogsTextEdit, self).__init__(parent)
+        super(TableWidgetLinks, self).__init__(parent)
+
+        self.verticalHeader().setVisible(False)
+        self.horizontalHeader().setStretchLastSection(True)
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.setColumnCount(3)
+
+        tabl = ['№', 'Тэг', 'Название']
+        self.setHorizontalHeaderLabels(tabl)
+
+        style = "::section {""background-color: #bbbabf; }"
+        self.horizontalHeader().setStyleSheet(style)
+
+    def row_count(self) -> int:
+        '''Кол-во строк в таблице.'''
+        return self.rowCount()
+
+    def data_cell(self):
+        '''Текущая позиция ячейки'''
+        return self.currentRow(), self.currentColumn()
+
+    def tw_clear_lines(self, rowcount: int):
+        """Очистка таблицы виджета QTableWidget.
+
+        Args:
+            rowcount (int): кол-во строк
+        """
+        if not rowcount:
+            while rowcount >= 0:
+                self.removeRow(rowcount)
+                rowcount -= 1
+
+    def filling_table(self, table_list):
+        '''Заполнение таблицы данными.'''
+        self.setRowCount(len(table_list))
+
+        for row_t in range(len(table_list)):
+            for column_t in range(3):
+                value = table_list[row_t][column_t]
+
+                if value is None:
+                    item = QTableWidgetItem('')
+                else:
+                    item = QTableWidgetItem(str(value))
+                self.setItem(row_t, column_t, item)
+
+
+class ComboBox(QComboBox):
+    def __init__(self, *args, **kwargs):
+        super(ComboBox, self).__init__(*args, **kwargs)
 
         self.setStyleSheet('''border-radius: 4px;
-                              border: 1px solid''')
-        self.setFont(QFont('Arial', 12))
-        self.setReadOnly(True)
-
-
-class LineEdit(QLineEdit):
-    def __init__(self, *args, **kwargs):
-        super(LineEdit, self).__init__(*args, **kwargs)
-
-        self.setStyleSheet('''border: 1px solid;
-                              border-radius: 4px;
+                              border: 1px solid;
                               font-size: 15px;''')
 
 
@@ -445,6 +330,173 @@ class PushButton(QPushButton):
                            "*:pressed{background: '#4f45ba'}")
 
 
+class LogsTextEdit(QTextEdit):
+    def __init__(self, parent=None):
+        super(LogsTextEdit, self).__init__(parent)
+
+        self.setStyleSheet('''border-radius: 4px;
+                              border: 1px solid''')
+        self.setFont(QFont('Arial', 12))
+        self.setReadOnly(True)
+
+
+class LineEdit(QLineEdit):
+    def __init__(self, *args, **kwargs):
+        super(LineEdit, self).__init__(*args, **kwargs)
+
+        self.setStyleSheet('''border: 1px solid;
+                              border-radius: 4px;
+                              font-size: 15px;''')
+
+
+class WindowContexMenuSQL(QMainWindow):
+    '''Отдельная форма для работы с ссылками'''
+    def __init__(self):
+        super(WindowContexMenuSQL, self).__init__()
+
+        self.setWindowTitle('Ссылки')
+        self.setStyleSheet("background-color: #e1e5e5;")
+        self.setWindowFlags(Qt.WindowCloseButtonHint)
+        self.setWindowFlag(Qt.WindowStaysOnTopHint)
+        self.resize(CONST_CONTEXT_W, CONST_CONTEXT_H)
+
+        self.editSQL = Editing_table_SQL()
+
+    def initObject(self, parent):
+        '''Инициализация объектов макета'''
+        self.parent = parent
+        self.tw_links = TableWidgetLinks(self)
+        self.combo_table = ComboBox(self)
+        self.combo_type = ComboBox(self)
+        open_table = PushButton('Открыть таблицу', '#bfd6bf')
+        confirm = PushButton('  Добавить  ', '#bfd6bf')
+        self.req_base = LineEdit(self,
+                                 placeholderText='Поиск сигнала',
+                                 clearButtonEnabled=True)
+        self.link_value = LineEdit(self,
+                                   placeholderText='Значение ссылки',
+                                   clearButtonEnabled=True)
+        self.data_load = QLabel('', self)
+
+        # Events
+        open_table.clicked.connect(self.open_tabl)
+        confirm.clicked.connect(self.broadcast_text)
+        self.req_base.textChanged.connect(self.search_text)
+        self.tw_links.cellClicked.connect(self.click_position)
+
+        [self.combo_table.addItem(value1) for value1, value2 in USED_TABLE]
+
+        self.centralwidget = QWidget()
+        self.setCentralWidget(self.centralwidget)
+
+        self.layout_g_top = QGridLayout()
+        self.layout_g_top.addWidget(self.combo_table, 0, 0)
+        self.layout_g_top.addWidget(open_table, 0, 1)
+        self.layout_g_top.addWidget(self.combo_type, 0, 2)
+        self.layout_g_top.addWidget(self.req_base, 0, 3, 1, 3)
+
+        self.layout_g_bottom = QGridLayout()
+        self.layout_g_bottom.addWidget(self.data_load, 0, 0)
+        self.layout_g_bottom.addWidget(self.link_value, 0, 1)
+        self.layout_g_bottom.addWidget(confirm, 0, 2)
+
+        self.layout_v = QVBoxLayout(self.centralwidget)
+        self.layout_v.addLayout(self.layout_g_top)
+        self.layout_v.addWidget(self.tw_links)
+        self.layout_v.addLayout(self.layout_g_bottom)
+
+    def open_tabl(self):
+        '''Событие по нажатию кнопки открыть таблицу'''
+        name_table = self.combo_table.currentText()
+        rowcount = self.tw_links.row_count()
+        self.tw_links.tw_clear_lines(rowcount)
+
+        need_open = ''.join([table for desc, table in USED_TABLE if desc == name_table])
+
+        self.list_signal, msg, color = self.editSQL.dop_window_signal(need_open)
+
+        self.data_load.setText(msg)
+        self.data_load.setStyleSheet(f"background-color: {color}")
+
+        self.tw_links.filling_table(self.list_signal)
+
+        self.combo_type.clear()
+        [self.combo_type.addItem(str(i)) for table, sign in LIST_TYPE.items() for i in sign if table == name_table]
+
+    def search_text(self):
+        '''Поиск сигналов в таблице по запросу'''
+        request = self.req_base.text()
+        if request == '':
+            return
+
+        rowcount = self.tw_links.row_count()
+        self.tw_links.tw_clear_lines(rowcount)
+
+        list_filter = self.editSQL.filter_text(request, self.list_signal)
+        self.tw_links.filling_table(list_filter)
+
+    def click_position(self):
+        '''Отработка действий по клику.'''
+        row, column = self.tw_links.data_cell()
+
+        try:
+            value_cell = self.tw_links.item(row, 0).text()
+            value_cell_ktpra = self.tw_links.item(row, 1).text()
+
+            if column == 0:
+                self.link_value.setText(str(row + 1))
+            else:
+                if self.combo_table.currentText() in ['ctrlDO', 'AO',
+                                                      'AIVisualValue',
+                                                      'ctrlAO', 'BUFr']:
+                    self.link_value.setText(f'{self.combo_table.currentText()}[{value_cell}]')
+                elif self.combo_table.currentText() == 'Facility':
+                    self.link_value.setText(f'{self.combo_table.currentText()}[].{self.combo_type.currentText()}')
+                elif self.combo_table.currentText() == 'KTPRA':
+                    self.link_value.setText(f'{value_cell_ktpra}.{self.combo_table.currentText()}')
+                else:
+                    self.link_value.setText(f'{self.combo_table.currentText()}[{value_cell}].{self.combo_type.currentText()}')
+        except Exception:
+            return
+
+    def broadcast_text(self):
+        '''Передача текста в родительский объект.'''
+        self.parent.update_text(self.link_value.text())
+
+
+class WindowTypeTableSQL(QMainWindow):
+    """Отдельно окно с типами столбов, применяемое для запроса"""
+    def __init__(self, table_list):
+        super(WindowTypeTableSQL, self).__init__()
+
+        self.setWindowTitle('Тип столбцов таблицы')
+        self.setStyleSheet("background-color: #e1e5e5;")
+        self.setWindowFlags(Qt.WindowCloseButtonHint)
+        self.resize(CONST_WIN_SIZE_TYPETABLE_W, CONST_WIN_SIZE_TYPETABLE_H)
+
+        self.t_w = QTableWidget(self)
+        self.t_w.verticalHeader().setVisible(False)
+        self.t_w.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.t_w.setColumnCount(3)
+        self.t_w.setFocusPolicy(Qt.NoFocus)
+        self.t_w.setRowCount(len(table_list))
+        column = ['Имя_eng', 'Имя_rus', 'Тип']
+        self.t_w.setHorizontalHeaderLabels(column)
+        style = "::section {""background-color: #bbbabf; }"
+        self.t_w.horizontalHeader().setStyleSheet(style)
+
+        for row_t in range(len(table_list)):
+            for column_t in range(3):
+                item = QTableWidgetItem(table_list[row_t][column_t])
+                item.setFlags(Qt.ItemIsEnabled)
+                self.t_w.setItem(row_t, column_t, item)
+
+        self.centralwidget = QWidget()
+        self.setCentralWidget(self.centralwidget)
+        self.layout_v = QVBoxLayout(self.centralwidget)
+        self.layout_v.addWidget(self.t_w)
+
+
 class MainWindow(QMainWindow):
     def __init__(self, table_used: str):
         super(MainWindow, self).__init__()
@@ -454,8 +506,9 @@ class MainWindow(QMainWindow):
         self.setWindowFlags(Qt.WindowCloseButtonHint)
         self.resize(CONST_WIN_SIZE_MAIN_W, CONST_WIN_SIZE_MAIN_H)
 
-        self.table_us = table_used
         self.editSQL = Editing_table_SQL()
+        self.table_us = table_used
+
         self.logsTextEdit = LogsTextEdit(self)
         self.tableWidget = TableWidget(self.editSQL, self.table_us)
         self.tableWidget_dub = TableWidget(self.editSQL, self.table_us, True)
@@ -533,7 +586,9 @@ class MainWindow(QMainWindow):
         # self.logs_msg('default', 1, msg, True)
 
     def link_tabl(self):
+        '''Создание и запуск нового окна - Ссылки.'''
         self.link_tabl = WindowContexMenuSQL()
+        self.link_tabl.initObject(self)
         self.link_tabl.show()
 
     def synh_position(self, index):
@@ -643,6 +698,12 @@ class MainWindow(QMainWindow):
         self.tableWidget.init_table(column, row, hat_name, value)
         self.tableWidget_dub.init_table(column, row, hat_name, value)
         # self.l_enter_req.clear()
+
+    def update_text(self, text=None):
+        if self.fl_actives_windows == 1:
+            self.tableWidget.value_change(text)
+        else:
+            self.tableWidget_dub.value_change(text)
 
 
 if __name__ == '__main__':

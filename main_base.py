@@ -764,27 +764,32 @@ class Editing_table_SQL():
             msg[f'{today} - Окно тип данных: ошибка: {traceback.format_exc()}'] = 2
 
         return type_list, msg
+    
     def dop_window_signal(self, table_used):
-            type_list = []
-            try:
-                if table_used == 'ktpra':
-                    self.cursor.execute(f"""SELECT id, variable, name FROM "{table_used}" ORDER BY id""")
-                else:
-                    self.cursor.execute(f"""SELECT id, tag, name FROM "{table_used}" ORDER BY id""")
-                for i in self.cursor.fetchall():
-                    id_  = i[0]
-                    tag  = i[1]
-                    name = i[2]
+        type_list = []
+        try:
+            if table_used == 'ktpra':
+                self.cursor.execute(f"""SELECT id, variable, name
+                                        FROM "{table_used}"
+                                        ORDER BY id""")
+            else:
+                self.cursor.execute(f"""SELECT id, tag, name 
+                                        FROM "{table_used}" 
+                                        ORDER BY id""")
+            for i in self.cursor.fetchall():
+                id_  = i[0]
+                tag  = i[1]
+                name = i[2]
 
-                    list_a = [id_, tag, name]
-                    type_list.append(list_a)
-                msg = 'Таблица открыта'
-                color = '#6bdb84'
-            except Exception:
-                msg = 'Для типа сигнала нет таблицы'
-                color = 'yellow'
+                list_a = [id_, tag, name]
+                type_list.append(list_a)
+            msg = ' Таблица открыта '
+            color = '#6bdb84'
+        except Exception:
+            msg = ' Для типа сигнала нет таблицы '
+            color = 'yellow'
 
-            return type_list, msg, color
+        return type_list, msg, color
     def filter_text(self, text, list_signal):
         list_request = []
         for i in list_signal:
