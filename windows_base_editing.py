@@ -465,7 +465,7 @@ class WindowContexMenuSQL(QMainWindow):
 
 
 class WindowTypeTableSQL(QMainWindow):
-    """Отдельно окно с типами столбов, применяемое для запроса"""
+    """Отдельно окно с типами столбцов, применяемое для запроса"""
     def __init__(self, table_list):
         super(WindowTypeTableSQL, self).__init__()
 

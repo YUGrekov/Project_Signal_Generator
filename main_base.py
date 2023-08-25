@@ -6,6 +6,7 @@ import re, traceback, os, codecs, uuid, math
 import psycopg2
 from sql_metadata import Parser
 today = datetime.now()
+import json
 
 
 # Additional general features
@@ -178,45 +179,98 @@ class General_functions():
             msg[f'{today} - Таблица: {tabl_used_str}, обновлен: {name},  {column_update_str} = {value}'] = 3
             return msg
         return msg
+    
     def parser_sample(self, path, kod_msg, name, flag_write_db, table, *args):
+        def request_table_di(category, category_priority_1, priority_old, args):
+            priority_0 = args[0]
+            priority_1 = args[1]
+            sound_msg_0 = args[2]
+            sound_msg_1 = args[3]
+            isAck = True
+            isCycle = True
+            isSound = True
+            isAlert = True
+            soundFile = 'NULL'
+
+            if category == category_priority_1:
+                priority = priority_1
+                sound = sound_msg_1
+            else:
+                priority = priority_0
+                sound = sound_msg_0
+
+            if (priority == 1 or priority == 2) and sound is None:
+                return isAck, soundFile, isCycle, isSound, isAlert, str(priority)
+            
+            elif (priority == 1 or priority == 2) and sound is not None:
+                soundFile = f'{sound}'
+                return isAck, soundFile, isCycle, isSound, isAlert, str(priority)
+            
+            elif priority == 3 or priority == 4 or priority_0 == 5:
+                isAck = False
+                isCycle = False
+                isSound = False
+                isAlert = False
+                return isAck, soundFile, isCycle, isSound, isAlert, str(priority)
+            
+            else:
+                return not isAck, soundFile, not isCycle, not isSound, not isAlert, str(4)
+
         cursor = db_prj.cursor()
         parser = etree.XMLParser(remove_blank_text=True)
         tree = etree.parse(path, parser)
         root = tree.getroot()
 
         list_msg = []
+        flag_str = True
 
         for lvl_one in root.iter('Row'):
-            category  = lvl_one.attrib['Category']
-            isAck     = lvl_one.attrib['IsAck']
-            isCycle   = lvl_one.attrib['IsCycle']
-            isSound   = lvl_one.attrib['IsSound']
-            isHide    = lvl_one.attrib['IsHide']
-            priority  = lvl_one.attrib['Priority']
-            isAlert   = lvl_one.attrib['IsAlert']
-            mess      = lvl_one.attrib['Message']
+            category = lvl_one.attrib['Category']
+            isAck = lvl_one.attrib['IsAck']
+            isCycle = lvl_one.attrib['IsCycle']
+            isSound = lvl_one.attrib['IsSound']
+            isHide = lvl_one.attrib['IsHide']
+            priority = lvl_one.attrib['Priority']
+            isAlert = lvl_one.attrib['IsAlert']
+            mess = lvl_one.attrib['Message']
             soundFile = lvl_one.attrib['SoundFile']
-            nextLink  = lvl_one.attrib['NextLink']
-            base      = lvl_one.attrib['Base']
+            # nextLink = lvl_one.attrib['NextLink']
+            # base = lvl_one.attrib['Base']
 
             if table == 'KTPRAS_1' or table == 'UMPNA':
                 if self.str_find(mess, {'%1'}): 
                     mess = str(mess).replace('%1', args[0])
                 if self.str_find(mess, {'%2'}): 
                     mess = str(mess).replace('%2', args[1])
-            
-            if table == 'NPS' or table == 'KRMPN' or table == 'Global': text_mess = mess
-            else: text_mess = f'{name}. {mess}'
 
+            if table == 'NPS' or table == 'KRMPN' or table == 'Global':
+                text_mess = mess
+            else:
+                text_mess = f'{name}. {mess}'
+            
             del_row_tabl = f"DELETE FROM messages.opmessages WHERE Category ={kod_msg + int(category)};\n"
-            ins_row_tabl = f"INSERT INTO messages.opmessages (Category, Message, IsAck, SoundFile, IsCycle, IsSound, IsHide, Priority, IsAlert) VALUES({kod_msg + int(category)}, '{text_mess}', {isAck}, '{soundFile}', {isCycle}, {isSound}, {isHide}, {priority}, {isAlert});\n"
+
+            if table == 'DI':
+                if category == '9' or category == '13':
+                    isAck, soundFile, isCycle, isSound, isAlert, priority = request_table_di(category, '9', priority, args)
+
+            if table == 'KTPRS':
+                if category == '1' or category == '2':
+                    isAck, soundFile, isCycle, isSound, isAlert, priority = request_table_di(category, '2', priority, args)
+                    
+            if soundFile is None or soundFile == '' or soundFile == 'NULL':
+                if soundFile == '':
+                    soundFile = 'NULL'
+                ins_row_tabl = f"INSERT INTO messages.opmessages (Category, Message, IsAck, SoundFile, IsCycle, IsSound, IsHide, Priority, IsAlert) VALUES({kod_msg + int(category)}, '{text_mess}', {isAck}, {soundFile}, {isCycle}, {isSound}, {isHide}, {priority}, {isAlert});\n"
+            else:
+                ins_row_tabl = f"INSERT INTO messages.opmessages (Category, Message, IsAck, SoundFile, IsCycle, IsSound, IsHide, Priority, IsAlert) VALUES({kod_msg + int(category)}, '{text_mess}', {isAck}, '{soundFile}', {isCycle}, {isSound}, {isHide}, {priority}, {isAlert});\n"
             
             if flag_write_db:
                 cursor.execute(del_row_tabl)
                 cursor.execute(ins_row_tabl)
             else:
-                list_msg.append(dict(delete = del_row_tabl,
-                                     insert = ins_row_tabl))
+                list_msg.append(dict(delete=del_row_tabl,
+                                     insert=ins_row_tabl))
         return list_msg
     def all_tables(self):
         list_tabl = []
@@ -587,62 +641,52 @@ class Editing_table_SQL():
     def __init__(self):
         self.cursor = db.cursor()
         self.dop_function = General_functions()
+    
     def editing_sql(self, table_sql):
-        unpacking_  = []
         msg = {}
         try:
-            self.cursor.execute(f'SELECT * FROM "{table_sql}" ORDER BY id')
-            name_column = next(zip(*self.cursor.description))
-            array_name_column = []
-            if table_sql in rus_list.keys():
+            eng_name_column = self.column_names(table_sql)
 
-                for tabl, name_c in rus_list.items():
+            dict_rus = self.read_json(table_sql)
+            rus_eng_name = self.russian_name_column(dict_rus, eng_name_column)
 
-                    if tabl == table_sql:
-
-                        for name in name_column:
-                            if name in name_c.keys():
-
-                                for key, value in name_c.items():
-                                    if name == key:
-                                        array_name_column.append(value)
-                                        break
-                            else:
-                                array_name_column.append(name)
-            else:
-                array_name_column = name_column
-
-            records = self.cursor.fetchall()
-            unpacking_.append(records)
-
-            count_column = len(name_column)
-            count_row    = len(records)
-            return count_column, count_row, array_name_column, records, msg
+            value = self.cursor.fetchall()
+            return len(eng_name_column), len(value), rus_eng_name, value, msg
         except Exception:
             msg[f'{today} - Ошибка открытия редактора: {traceback.format_exc()}'] = 2
-            return 0, 0, array_name_column, records, msg
-    def func_chunks_generators(self, lst, n):
-        for i in range(0, len(lst), n):
-            yield lst[i : i + n]
-    # Поиск названия сигнала для подписи
+            return 0, 0, 0, 0, msg
+
+    def read_json(self, table: str) -> tuple:
+        '''Русификация шапки таблицы из файла .json.'''
+        data = []
+        with open(path_rus_text_column, "r", encoding='utf-8') as outfile:
+            data = json.load(outfile)
+
+        return data[table]
+    
+    def russian_name_column(self, dict_rus, name_column):
+        '''Расшифровка с английского на русский'''
+        return [dict_rus[eng_t] if eng_t in dict_rus.keys() else eng_t for eng_t in name_column]
+
     def search_name(self, tabl, value):
+        '''Поиск подписи к ячейке'''
         try:
-            isdigit_num  = re.findall('\d+', str(value))
+            isdigit_num = re.findall('\d+', str(value))
             self.cursor.execute(f"""SELECT name 
                                     FROM "{tabl}"
                                     WHERE id = {int(isdigit_num[0])}""")
             name_row = self.cursor.fetchall()[0][0]
             return name_row
-        except:
+        except Exception:
             return ''
-    # Column names
+
     def column_names(self, table_used):
-        self.cursor.execute(f'SELECT * FROM "{table_used}"')
+        '''Собираем название колонок'''
+        self.cursor.execute(f'SELECT * FROM "{table_used}" ORDER BY id')
         return next(zip(*self.cursor.description))
-    # Apply request 
+
     def apply_request_select(self, request, table_used):
         msg = {}
-        unpacking = []
         try:
             try:
                 self.cursor.execute(f'''{request}''')
@@ -669,7 +713,6 @@ class Editing_table_SQL():
                             array_name_column.append(name)
 
             records = self.cursor.fetchall()
-            unpacking.append(records)
 
             count_column = len(name_column)
             count_row = len(records)
@@ -688,8 +731,9 @@ class Editing_table_SQL():
         except:
             msg[f'{today} - Таблица: {table_used} некорректный запрос!'] = 2
             return msg
-    # Updating cell values
-    def update_row_tabl(self, column, text_cell, text_cell_id, table_used, hat_name, flag_NULL=None):
+
+    def update_row_tabl(self, column: int, text_cell: str, text_cell_id: int, 
+                        table_used: str, hat_name: list, flag_NULL=None) -> tuple:
         msg = {}
         active_column = list(hat_name)[column]
         try:
@@ -705,32 +749,37 @@ class Editing_table_SQL():
         except Exception:
             msg[f'{today} - Таблица: {table_used}, ошибка при изменении ячейки: {traceback.format_exc()}'] = 2
             return msg
-    # Adding new lines
-    def add_new_row(self, table_used, row):
-        self.cursor.execute(f'''INSERT INTO "{table_used}" (id) VALUES ({row});''')
 
-    # Removing rows
-    def delete_row(self, text_cell_id, table_used):
+    def add_new_row(self, table_used: str, row: int) -> None:
+        '''Добавление новой строки'''
+        self.cursor.execute(f'''INSERT INTO "{table_used}" (id)
+                                VALUES ({row});''')
+
+    def delete_row(self, text_cell_id: str, table_used: str) -> None:
+        '''Удаление выбранной строки'''
         self.cursor.execute(f'''DELETE FROM "{table_used}"
                                 WHERE id={text_cell_id}''')
-    # Adding new column
-    def add_new_column(self, table_used, new_column):
+
+    def add_new_column(self, table_used: str, new_column: str) -> None:
         self.cursor.execute(f'''ALTER TABLE "{table_used}" 
                                 ADD "{new_column}" VARCHAR(255)''')
-    # Removing column
+
     def delete_column(self, column, hat_name, table_used):
         active_column = list(hat_name)[column]
         self.cursor.execute(f'''ALTER TABLE "{table_used}" 
                                 DROP COLUMN "{active_column}"''')
-    # Removing all rows
-    def clear_tabl(self, table_used):
+
+    def clear_tabl(self, table_used: str) -> None:
+        '''Очистка таблицы'''
         self.cursor.execute(f'''DELETE FROM "{table_used}"''')
-    # Drop table
-    def drop_tabl(self, table_used):
+
+    def drop_tabl(self, table_used: str) -> None:
+        '''Удаление таблицы'''
         self.cursor.execute(f'''DROP TABLE "{table_used}"''')
-    # Table selection window
+
     def get_tabl(self):
         return db.get_tables()
+    
     def type_column(self, table_used):
         msg       = {}
         type_list = []
@@ -790,6 +839,7 @@ class Editing_table_SQL():
             color = 'yellow'
 
         return type_list, msg, color
+    
     def filter_text(self, text, list_signal):
         list_request = []
         for i in list_signal:
@@ -878,7 +928,7 @@ class Generate_database_SQL():
                 msg.update(self.gen_msg_ai(flag_write_db))
                 continue
             if tabl == 'DI': 
-                msg.update(self.gen_msg_general(flag_write_db, 'di', 'DI', 'PostgreSQL_Messages-DI'))
+                msg.update(self.gen_msg_di(flag_write_db, 'di', 'DI', 'PostgreSQL_Messages-DI'))
                 continue
             if tabl == 'DO': 
                 msg.update(self.gen_msg_general(flag_write_db, 'do', 'DOP', 'PostgreSQL_Messages-DO'))
@@ -915,7 +965,7 @@ class Generate_database_SQL():
                 msg.update(self.gen_msg_defence(flag_write_db, 'gmpna', 'GMPNA', 'PostgreSQL_Messages-GMPNA', 'TblPumpReadineses'))
                 continue
             if tabl == 'KTPRS': 
-                msg.update(self.gen_msg_defence(flag_write_db, 'ktprs', 'KTPRS', 'PostgreSQL_Messages-KTPRS', 'TblLimitParameters'))
+                msg.update(self.gen_msg_ktprs(flag_write_db, 'ktprs', 'KTPRS', 'PostgreSQL_Messages-KTPRS', 'TblLimitParameters'))
                 continue
             if tabl == 'Diag': 
                 msg.update(self.gen_msg_diag(flag_write_db))
@@ -1072,6 +1122,80 @@ class Generate_database_SQL():
         except Exception:
             msg[f'{today} - Сообщения ai: ошибка генерации: {traceback.format_exc()}'] = 2
         msg[f'{today} - Сообщения ai: генерация завершена'] = 1
+        return(msg) 
+    def gen_msg_di(self, flag_write_db, tabl, sign, script_file):
+        msg = {}
+        gen_list = []
+        cursor = db.cursor()
+        try:
+            kod_msg, addr_offset = self.define_number_msg(cursor, sign)
+            if addr_offset == 0 or kod_msg is None or addr_offset is None: 
+                msg[f'{today} - Сообщения {tabl}: ошибка. Адреса из таблицы msg не определены'] = 2
+                return msg
+            
+            cursor.execute(f"""SELECT id, name, "tabl_msg", "msg_priority_0", "msg_priority_1", "sound_msg_0", "sound_msg_1" FROM "{tabl}" ORDER BY id""")
+            list_signal = cursor.fetchall()
+            for signal in list_signal:
+                id_ = signal[0]
+                name = signal[1]
+                table_msg = signal[2]
+                msg_prior_0 = signal[3]
+                msg_prior_1 = signal[4]
+                sound_prior_0 = signal[5]
+                sound_prior_1 = signal[6]
+
+                start_addr = kod_msg + ((id_ - 1) * int(addr_offset))
+                path = f'{path_sample}\{table_msg}.xml'
+
+                if not os.path.isfile(path):
+                    msg[f'{today} - Сообщения {tabl}: в папке отсутствует шаблон - {table_msg}'] = 2
+                    continue
+                gen_list.append(self.dop_function.parser_sample(path, start_addr, name, flag_write_db, sign, msg_prior_0, msg_prior_1, sound_prior_0, sound_prior_1))
+            if not flag_write_db:
+                msg.update(self.write_file(gen_list, sign, script_file))
+                msg[f'{today} - Сообщения {tabl}: файл скрипта создан'] = 1
+                return(msg)
+        except Exception:
+            msg[f'{today} - Сообщения {tabl}: ошибка генерации: {traceback.format_exc()}'] = 2
+        msg[f'{today} - Сообщения {tabl}: генерация завершена!'] = 1
+        return(msg)
+    def gen_msg_ktprs(self, flag_write_db, tabl, sign, script_file, table_msg):
+        msg = {}
+        gen_list = []
+        cursor = db.cursor()
+        try:
+            kod_msg, addr_offset = self.define_number_msg(cursor, sign)
+            if addr_offset == 0 or kod_msg is None or addr_offset is None: 
+                msg[f'{today} - Сообщения {tabl}: ошибка. Адреса из таблицы msg не определены'] = 2
+                return msg
+            
+            cursor.execute(f"""SELECT id, name, "msg_priority_0", "msg_priority_1", "sound_msg_0", "sound_msg_1" FROM "{tabl}" ORDER BY id""")
+            list_signal = cursor.fetchall()
+
+            for signal in list_signal:
+                id_ = signal[0]
+                name = signal[1]
+                msg_prior_0 = signal[2]
+                msg_prior_1 = signal[3]
+                sound_prior_0 = signal[4]
+                sound_prior_1 = signal[5]
+
+                start_addr = kod_msg + ((id_ - 1) * int(addr_offset))
+                path = f'{path_sample}\{table_msg}.xml'
+
+                if not os.path.isfile(path):
+                    msg[f'{today} - Сообщения {tabl}: в папке отсутствует шаблон - {table_msg}'] = 2
+                    return msg
+                
+                gen_list.append(self.dop_function.parser_sample(path, start_addr, name, flag_write_db, sign, msg_prior_0, msg_prior_1, sound_prior_0, sound_prior_1))
+
+            if not flag_write_db:
+                msg.update(self.write_file(gen_list, sign, script_file))
+                msg[f'{today} - Сообщения {tabl}: файл скрипта создан'] = 1
+                return(msg)
+        except Exception:
+            msg[f'{today} - Сообщения {tabl}: ошибка генерации: {traceback.format_exc()}'] = 2
+        msg[f'{today} - Сообщения {tabl}: генерация завершена!'] = 1
         return(msg)
     def gen_msg_umpna(self, flag_write_db, tabl, sign, script_file):
         msg = {}
@@ -1087,13 +1211,14 @@ class Generate_database_SQL():
                                 FROM "{tabl}" ORDER BY id""")
             list_signal = cursor.fetchall()
             for signal in list_signal:
-                id_       = signal[0]
-                name      = signal[1]
+                id_ = signal[0]
+                name = signal[1]
                 table_msg = signal[2]
                 cabinet_1 = signal[3]
                 cabinet_2 = signal[4]
 
-                if sign == 'KTPRAS_1': table_msg = 'TblPumpsKTPRAS'
+                if sign == 'KTPRAS_1': 
+                    table_msg = 'TblPumpsKTPRAS'
 
                 start_addr = kod_msg + ((id_ - 1) * int(addr_offset))
                 path = f'{path_sample}\{table_msg}.xml'
@@ -1105,11 +1230,11 @@ class Generate_database_SQL():
             if not flag_write_db:
                 msg.update(self.write_file(gen_list, sign, script_file))
                 msg[f'{today} - Сообщения {tabl}: файл скрипта создан'] = 1
-                return(msg)
+                return msg
         except Exception:
             msg[f'{today} - Сообщения {tabl}: ошибка генерации: {traceback.format_exc()}'] = 2
         msg[f'{today} - Сообщения {tabl}: генерация завершена!'] = 1
-        return(msg)
+        return msg
     def gen_msg_uts_upts(self, flag_write_db, tabl, sign, script_file):
         msg = {}
         gen_list = []
@@ -7431,6 +7556,8 @@ class Filling_DI():
                                             Msg = 1,
                                             tabl_msg = 'TblDiscretes',
                                             group_diskrets = group_diskrets,
+                                            msg_priority_0 = 1,
+                                            msg_priority_1 = 1,
                                             short_title = description,
                                             uso = uso_s, basket = basket_s, module = module_s, channel = channel_s, tag_eng = tag_eng,))
 
@@ -7446,7 +7573,7 @@ class Filling_DI():
                         'ErrValue', 'priority_0', 'priority_1', 'Msg', 'isDI_NC',  
                         'isAI_Warn', 'isAI_Avar', 'pNC_AI',  'TS_ID', 
                         'isModuleNC',  'Pic',  'tabl_msg',  'group_diskrets', 
-                        'msg_priority_0',  'msg_priority_1', 'short_title', 'uso', 'basket', 'module', 'channel', 'tag_eng',
+                        'msg_priority_0',  'sound_msg_0', 'msg_priority_1', 'sound_msg_1', 'short_title', 'uso', 'basket', 'module', 'channel', 'tag_eng',
                         'AlphaHMI', 'AlphaHMI_PIC1', 'AlphaHMI_PIC1_Number_kont', 'AlphaHMI_PIC2',
                         'AlphaHMI_PIC2_Number_kont','AlphaHMI_PIC3', 'AlphaHMI_PIC3_Number_kont', 
                         'AlphaHMI_PIC4', 'AlphaHMI_PIC4_Number_kont']
@@ -7912,11 +8039,11 @@ class Filling_KTPRS():
             for i in range(1, 21):
                 list_KTPRS.append(dict(id = i,
                                        variable = f'KTPRS[{i}]',
-                                       tag  = '',
+                                       tag  = None,
                                        name = 'Резерв',
-                                       drawdown = '',
-                                       reference_to_value = '',
-                                       Pic = ''))
+                                       drawdown = None,
+                                       reference_to_value = None,
+                                       Pic = None))
 
             # Checking for the existence of a database
             KTPRS.insert_many(list_KTPRS).execute()
@@ -7925,8 +8052,8 @@ class Filling_KTPRS():
         return(msg)
     # Заполняем таблицу KTPRS
     def column_check(self):
-        list_default = ['variable', 'tag', 'name', 'drawdown', 'reference_to_value', 'priority_msg_0', 
-                        'priority_msg_1', 'prohibition_issuing_msg', 'Pic']
+        list_default = ['variable', 'tag', 'name', 'drawdown', 'reference_to_value', 'msg_priority_0', 
+                        'msg_priority_1', 'sound_msg_0', 'sound_msg_1', 'prohibition_issuing_msg', 'Pic']
         msg = self.dop_function.column_check(KTPRS, 'ktprs', list_default)
         return msg 
 class Filling_GMPNA():

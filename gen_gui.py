@@ -5,8 +5,8 @@ import sys
 # for path in sys.path:
 #     print(path)
 from main_base import *
-#from defence_hmi import gen_station_defence
-#from uts_upts_hmi import Alarm_map
+# from defence_hmi import gen_station_defence
+# from uts_upts_hmi import Alarm_map
 
 # ГРАФИЧЕСКИЙ ИНТЕРФЕЙС ДЛЯ ЗАПУСКА ГЕНЕРАТОРА
 # Сформировать exe: в терминале добавить: auto-py-to-exe
@@ -3055,7 +3055,6 @@ class Window_update_sql(QWidget):
         self.TableWidget_1.resizeRowsToContents()
     
     def scrollToColumn(self, item):
-        print(item)
         def clear_widget():
             rowcount = self.TableWidget_1.rowCount()
             if rowcount != 0: 

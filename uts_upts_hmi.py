@@ -3,9 +3,12 @@ from lxml import etree
 import uuid
 import shutil
 import os
-from main_base import General_functions
-from main_base import path_hmi
-from main_base import path_hmi_sample
+#from main_base import General_functions
+#from main_base import path_hmi
+#from main_base import path_hmi_sample
+from gen_gui import General_functions
+from gen_gui import path_hmi
+from gen_gui import path_hmi_sample
 from enum import Enum
 from typing import NamedTuple
 
@@ -435,9 +438,9 @@ class Alarm_map():
                         if button_bool:
                             init_1_target = f'ApSource_form_{self._work_tabl}s'
                             parser.adding_button(table, new_pic_path, root, tree,
-                                                int(max_value_1), int(max_value_2),
-                                                (number_list + 1), data_inf_button,
-                                                init_1_target)
+                                                 int(max_value_1), int(max_value_2),
+                                                 (number_list + 1), data_inf_button,
+                                                 init_1_target)
                         # Массив с данными
                         data_inf_button.clear()
 
