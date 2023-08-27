@@ -1,12 +1,18 @@
-from models import *
 import openpyxl as wb
+import json
+import psycopg2
+import re
+import traceback
+import os
+import codecs
+import uuid
+import math
+from playhouse.migrate import migrate
+from models import *
 from lxml import etree
 from datetime import datetime
-import re, traceback, os, codecs, uuid, math
-import psycopg2
 from sql_metadata import Parser
 today = datetime.now()
-import json
 
 
 # Additional general features
@@ -96,32 +102,27 @@ class General_functions():
             outstr = str.translate(trantab)
             return outstr
     def column_check(self, table_used_model, table_used_base, list_column):
-        # Logs
         msg = {}
-        # Create tabl
-        # try:
-        #     cursor = db.cursor()
-        #     cursor.execute(f'''SELECT * FROM {table_used_base}''')
-        #     msg[f'{today} - Таблица: {table_used_base} существует'] = 1
-        # except:
+  
         with db.atomic():
             db.create_tables([table_used_model])
-            #msg[f'{today} - Таблица: {table_used_base} добавлена в базу данных'] = 3
-        # Checking if a column exists
-        column_tabl  = []
-        new_column   = []
+
+        column_tabl = []
+        new_column = []
         
         for data_column in db.get_columns(table_used_base):
-            if data_column[0] in list_column: column_tabl.append(data_column[0])
+            if data_column[0] in list_column:
+                column_tabl.append(data_column[0])
         
         for lst in list_column:
-            if lst not in column_tabl: 
+            if lst not in column_tabl:
                 msg[f'{today} - Отсутствует обязательный столбец таблицы {table_used_model}: {lst}'] = 2
                 new_column.append(lst)
         
         for new_name in new_column:
             msg[f'{today} - Столбец: {new_name} добавлен в таблицу {table_used_model}'] = 3
-            migrate(migrator.add_column(table_used_base, new_name, IntegerField(null=True)))
+            migrate(migrator.add_column(table_used_base,
+                                        new_name, IntegerField(null=True)))
         return msg
     def empty_table(self, table_used):
         cursor = db.cursor()
@@ -354,7 +355,7 @@ class General_functions():
         # Чистка объектов
         msg = {}
         msg_bool, el1, tree = self.parser_omx(directory)
-        tree.write(f'{path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+        tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
 
         if msg_bool == 1: 
             msg[f'{today} - Файл omx: ошибка при чистке {directory}'] = 2
@@ -365,7 +366,7 @@ class General_functions():
         # Чистка объектов
         msg = {}
         msg_bool, el1, tree = self.parser_diag_omx(directory)
-        tree.write(f'{path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+        tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
 
         if msg_bool == 1: 
             msg[f'{today} - Файл omx: ошибка при чистке {directory}'] = 2
@@ -384,13 +385,13 @@ class General_functions():
     
     def parser_omx(self, directory):
         parser = etree.XMLParser(remove_blank_text=True)
-        tree = etree.parse(f'{path_to_devstudio}\\typical_prj.omx', parser)
+        tree = etree.parse(f'{connect.path_to_devstudio}\\typical_prj.omx', parser)
         root = tree.getroot()
         try:
             for el in root.iter('{automation.deployment}application-object'):
                 if el.attrib['name'] == "Application_PLC":
                     for item in el.iter('{automation.control}object'):
-                        if item.attrib['name'] == 'Root' + prefix_system:
+                        if item.attrib['name'] == 'Root' + connect.prefix_system:
                             for el1 in item.iter('{automation.control}object'):
                                 if el1.attrib['name'] == directory:
                                     item.remove(el1)
@@ -405,7 +406,7 @@ class General_functions():
             return 1, 0, 0
     def parser_diag_omx(self, directory):
         parser = etree.XMLParser(remove_blank_text=True)
-        tree = etree.parse(f'{path_to_devstudio}\\typical_prj.omx', parser)
+        tree = etree.parse(f'{connect.path_to_devstudio}\\typical_prj.omx', parser)
         root = tree.getroot()
         try:
             for el in root.iter('{automation.deployment}application-object'):
@@ -426,13 +427,13 @@ class General_functions():
             return 1, 0, 0
     
     def parser_map(self, directory):
-        path_map = f'{path_to_devstudio}\\OUA.xml'
+        path_map = f'{connect.path_to_devstudio}\\OUA.xml'
         parser = etree.XMLParser(remove_blank_text=True)
         tree = etree.parse(path_map, parser)
         root = tree.getroot()
 
         for item in root.iter('node-path'):
-            signal = f'Root{prefix_system}{directory}'
+            signal = f'Root{connect.prefix_system}{directory}'
             if self.str_find(item.text, {signal}):
                 parent = item.getparent()
                 root.remove(parent)
@@ -444,98 +445,127 @@ class General_functions():
         root = tree.getroot()
         
         for item in root.iter('item'):
-            signal = f'Root{prefix_system}{directory}'
+            signal = f'Root{connect.prefix_system}{directory}'
             if self.str_find(item.attrib['id'], {signal}):
                 root.remove(item)
         tree.write(path_map, pretty_print=True)
         return root, tree
 
-# Work with filling in the table 'Signals'
+
 class Import_in_SQL():
-    def __init__(self, exel):
-        self.exel    = exel
-        self.connect = wb.load_workbook(self.exel, read_only=True, data_only=True)
-    # Read tables from file
-    def read_table(self):
-        tables = []
-        for sheet in self.connect.worksheets:
-            tables.append(sheet.title)
-        return tables
-    # Looking for table hat
-    def search_hat_table(self, uso, number_row):
+    def __init__(self, exel: str):
+        self.exel = exel
+        self.connect = wb.load_workbook(self.exel,
+                                        read_only=True,
+                                        data_only=True)
+
+    def read_table(self) -> list:
+        '''Список таблиц Exel.'''
+        return [sheet.title for sheet in self.connect.worksheets]
+    
+    def read_select_table(self, uso: str):
+        """Читаем выбранную таблицу и получаем макс-ное кол-во стобцов.
+
+        Args:
+            uso (str): название шкафа
+        """
+        sheet = self.connect[uso]
+        column = sheet.max_column
+        return sheet, column
+
+    def search_hat_table(self, uso: str, number_row: int) -> list:
+        """Поиск названий столбцов таблицы.
+
+        Args:
+            uso (str): название шкафа
+            number_row (int): номер строки с шапкой
+
+        Returns:
+            list: список столбцов
+        """
         hat_tabl = []
-        for sheet in self.connect.worksheets:
-            if sheet.title == uso:
-                column = sheet.max_column
-                for i in range(int(number_row), int(number_row) + 1):
-                    for j in range(1, column + 1):
-                        cell = sheet.cell(row=i, column=j).value
-                        if cell is None: continue
-                        hat_tabl.append(cell)
+
+        sheet, column = self.read_select_table(uso)
+
+        for i in range(int(number_row), int(number_row) + 1):
+            for j in range(1, column + 1):
+                cell = sheet.cell(row=i, column=j).value
+                if cell is None: 
+                    continue
+                hat_tabl.append(cell)
         return hat_tabl
-    # Reading table data
+    
     def import_table(self, uso, number_row, name_column):
-        hat_num  = {}
-        for sheet in self.connect.worksheets:
-            if sheet.title == uso:
-                column = sheet.max_column
-                for i in range(int(number_row), int(number_row) + 1):
-                    for j in range(1, column + 1):
-                        cell = sheet.cell(row=i, column=j).value
-                        if cell is None: continue
-                        for key, value in name_column.items():
-                            if value == cell:
-                                hat_num[key] = j - 1
-                data = []
-                for row in sheet.iter_rows(min_row=(int(number_row) + 1)):
-                    keys   = []
-                    values = []
-                    for name, number in hat_num.items():
-                        keys.append(name)
-                        values.append(row[number].value)
-                    values.append(uso)
-                    array = {k: v for k, v in zip(keys, values)}
-                    data.append(array)
+        hat_num = {}
+
+        sheet, column = self.read_select_table(uso)
+
+        for i in range(int(number_row), int(number_row) + 1):
+
+            for j in range(1, column + 1):
+
+                cell = sheet.cell(row=i, column=j).value
+
+                if cell is None:
+                    continue
+
+                for key, value in name_column.items():
+                    if value == cell:
+                        hat_num[key] = j - 1
+        data = []
+        for row in sheet.iter_rows(min_row=(int(number_row) + 1)):
+            keys = []
+            values = []
+            for name, number in hat_num.items():
+                keys.append(name)
+                values.append(row[number].value)
+            values.append(uso)
+            array = {k: v for k, v in zip(keys, values)}
+            data.append(array)
         # Количество строк в таблице
         cursor = db.cursor()
         try:
-            cursor.execute(f'''SELECT COUNT(*) FROM signals''')
+            cursor.execute('''SELECT COUNT(*) FROM signals''')
             count_row = cursor.fetchall()[0][0]
-        except:
+        except Exception:
             count_row = 0
 
         # Delete basket is None
         data_new = []
         for row in data:
             type_signal = row['type_signal']
-            scheme      = row['schema']
-            basket      = row['basket']
-            module      = row['module']
-            channel     = row['channel']
+            scheme = row['schema']
+            basket = row['basket']
+            module = row['module']
+            channel = row['channel']
 
-            if basket is None or module is None or channel is None: continue
+            if (basket or module or channel) is None:
+                continue
             count_row += 1
 
-            list_type = ['CPU', 'PSU', 'CN', 'MN', 'AI','AO', 'DI', 'RS','DO']
+            list_type = ['CPU', 'PSU', 'CN', 'MN',
+                         'AI', 'AO', 'DI', 'RS', 'DO']
             for value in list_type:
                 if str(scheme).find(value) != -1: 
                     type_signal = value
+                    break
 
-            dict_column = {'id'          : count_row,
-                           'type_signal' : type_signal,
-                           'uso'         : uso,
-                           'tag'         : row['tag'],
-                           'description' : row['description'],
-                           'schema'      : row['schema'],
-                           'klk'         : row['klk'],
-                           'contact'     : row['contact'],
-                           'basket'      : basket,
-                           'module'      : row['module'],
-                           'channel'     : row['channel']}
-            if basket is None: continue
+            dict_column = {'id': count_row,
+                           'type_signal': type_signal,
+                           'uso': uso,
+                           'tag': row['tag'],
+                           'description': row['description'],
+                           'schema': row['schema'],
+                           'klk': row['klk'],
+                           'contact': row['contact'],
+                           'basket': basket,
+                           'module': row['module'],
+                           'channel': row['channel']}
+            if basket is None: 
+                continue
             data_new.append(dict_column)
         return data_new
-    # Importing into SQL
+
     def import_for_sql(self, data, uso):
         msg = {}
         # Checking for the existence of a database
@@ -546,7 +576,7 @@ class Import_in_SQL():
             except Exception:
                 msg[f'{today} - Таблица: signals, ошибка при заполнении: {traceback.format_exc()}'] = 2
         return(msg)
-    # Update Database
+
     def update_for_sql(self, data, uso):
         msg = {}
         with db:
@@ -599,35 +629,28 @@ class Import_in_SQL():
                                     contact    =row_exel['contact'],
                                 ).where(Signals.id == row_sql['id']).execute()
                                 msg[f'''{today} - Обновление сигнала id = {row_sql["id"]}: Было, 
-                                                                                        uso - {row_sql['uso']}, 
-                                                                                        type_signal - {row_sql['type_signal']}, 
-                                                                                        tag - {row_sql['tag']},                      
-                                                                                        description - {row_sql['description']}, 
-                                                                                        schema - {row_sql['scheme']}, 
-                                                                                        klk - {row_sql['klk']},
-                                                                                        contact - {row_sql['contact']} = 
-                                                                                        Стало, 
-                                                                                        uso - {row_exel['uso']}, 
-                                                                                        type_signal - {row_exel['type_signal']}, 
-                                                                                        tag - {row_exel['tag']}, 
-                                                                                        description - {row_exel['description']}, 
-                                                                                        scheme - {row_exel['scheme']}, 
-                                                                                        klk - {row_exel['klk']},
-                                                                                        contact - {row_exel['contact']}'''] = 3
+                                                    uso - {row_sql['uso']}, 
+                                                    type_signal - {row_sql['type_signal']}, 
+                                                    tag - {row_sql['tag']},                      
+                                                    description - {row_sql['description']}, 
+                                                    schema - {row_sql['scheme']}, 
+                                                    klk - {row_sql['klk']},
+                                                    contact - {row_sql['contact']} = 
+                                                    Стало, 
+                                                    uso - {row_exel['uso']}, 
+                                                    type_signal - {row_exel['type_signal']}, 
+                                                    tag - {row_exel['tag']}, 
+                                                    description - {row_exel['description']}, 
+                                                    scheme - {row_exel['scheme']}, 
+                                                    klk - {row_exel['klk']},
+                                                    contact - {row_exel['contact']}'''] = 3
                                 continue
                         else:
                             continue
             except Exception:
                 msg[f'{today} - Таблица: signals, ошибка при обновлении: {traceback.format_exc()}'] = 2
         return(msg)
-    # Removing all rows
-    def clear_tabl(self):
-        msg = {}
-        for row_sql in Signals.select().dicts():
-            Signals.get(Signals.id == row_sql['id']).delete_instance()
-        msg[f'{today} - Таблица: signals полностью очищена!'] = 1
-        return(msg)
-    # Column check
+
     def column_check(self):
         with db:
             list_default = ['id', 'type_signal', 'uso', 'tag', 'description', 'schema', 'klk', 'contact', 'basket', 'module', 'channel']
@@ -636,13 +659,15 @@ class Import_in_SQL():
             msg = self.dop_func.column_check(Signals, 'signals', list_default)
         return msg
 
-# Changing tables SQL
+
 class Editing_table_SQL():
+    '''Редактирование базы SQL'''
     def __init__(self):
         self.cursor = db.cursor()
         self.dop_function = General_functions()
     
     def editing_sql(self, table_sql):
+        '''Сбор данных для построения(столбцы, значения ячеек)'''
         msg = {}
         try:
             eng_name_column = self.column_names(table_sql)
@@ -658,11 +683,13 @@ class Editing_table_SQL():
 
     def read_json(self, table: str) -> tuple:
         '''Русификация шапки таблицы из файла .json.'''
-        data = []
-        with open(path_rus_text_column, "r", encoding='utf-8') as outfile:
+        value = {}
+        with open(connect.path_rus_text, "r", encoding='utf-8') as outfile:
             data = json.load(outfile)
-
-        return data[table]
+        try:
+            return data[table]
+        except Exception:
+            return value
     
     def russian_name_column(self, dict_rus, name_column):
         '''Расшифровка с английского на русский'''
@@ -780,35 +807,27 @@ class Editing_table_SQL():
     def get_tabl(self):
         return db.get_tables()
     
-    def type_column(self, table_used):
-        msg       = {}
+    def type_column(self, table_used: str):
+        '''Собираем тип столбцов, и названия на рус и англ'''
+        msg = {}
         type_list = []
         try:
             self.cursor.execute(f"""SELECT column_name, data_type
                                     FROM information_schema.columns
-                                    WHERE table_schema = 'public' AND table_name = '{table_used}'""")
-            if table_used in rus_list.keys():
-                for tabl, name_c in rus_list.items():
+                                    WHERE table_schema = 'public' AND 
+                                        table_name = '{table_used}'""")
+            
+            dict_rus = self.read_json(table_used) 
 
-                    if tabl == table_used:
+            for i in self.cursor.fetchall():
+                column_name = i[0]
+                data_type = i[1]
+                try:
+                    list_a = [column_name,  dict_rus[column_name], data_type]
+                except Exception:
+                    list_a = [column_name,  '', data_type]
+                type_list.append(list_a)
 
-                        for i in self.cursor.fetchall():
-                            column_name = i[0]
-                            data_type   = i[1]
-
-                            if column_name in name_c.keys():
-
-                                for key, value in name_c.items():
-                                    if column_name == key:
-                                        list_a = [column_name, value, data_type]
-                                        type_list.append(list_a)
-                                        break
-            else:
-                for i in self.cursor.fetchall():
-                    column_name = i[0]
-                    data_type   = i[1]
-                    list_a = [column_name, '', data_type]
-                    type_list.append(list_a)
         except Exception:
             msg[f'{today} - Окно тип данных: ошибка: {traceback.format_exc()}'] = 2
 
@@ -852,7 +871,7 @@ class Editing_table_SQL():
                 list_request.append(list_temp)
         return list_request
 
-# Generate data SQL
+
 class Generate_database_SQL():
     def __init__(self):
         self.dop_function = General_functions()
@@ -879,14 +898,14 @@ class Generate_database_SQL():
     def write_file(self, list_str, tabl, name_file):
         msg = {}
         # Создаём файл запроса
-        path_request = f'{path_location_file}\\{name_file}.sql'
+        path_request = f'{connect.path_location_file}\\{name_file}.sql'
         if not os.path.exists(path_request):
             file = codecs.open(path_request, 'w', 'utf-8')
         else:
             os.remove(path_request)
             file = codecs.open(path_request, 'w', 'utf-8')
 
-        if path_location_file == '' or path_location_file is None or len(path_location_file) == 0:
+        if connect.path_location_file == '' or connect.path_location_file is None or len(connect.path_location_file) == 0:
             msg[f'{today} - Сообщения {tabl}: не указана конечная папка'] = 2
             return msg
         begin = ('\tCREATE SCHEMA IF NOT EXISTS messages;\n'
@@ -1097,8 +1116,8 @@ class Generate_database_SQL():
             cursor.execute(f"""SELECT id, "name", "AnalogGroupId" FROM ai""")
             list_ai = cursor.fetchall()
             for analog in list_ai:
-                id_ai    = analog[0]
-                name_ai  = analog[1]
+                id_ai = analog[0]
+                name_ai = analog[1]
                 group_ai = analog[2]
 
                 start_addr = kod_msg + ((id_ai - 1) * int(addr_offset))
@@ -1107,7 +1126,7 @@ class Generate_database_SQL():
                                        FROM ai_grp
                                        WHERE name_group='{group_ai}'""")
                     list_group = cursor.fetchall()[0][0]
-                    path = f'{path_sample}\{list_group}.xml'
+                    path = f'{connect.path_sample}\{list_group}.xml'
                     if not os.path.isfile(path):
                         msg[f'{today} - Сообщения ai: отсутствует шаблон - {list_group}'] = 2
                         continue
@@ -1145,7 +1164,7 @@ class Generate_database_SQL():
                 sound_prior_1 = signal[6]
 
                 start_addr = kod_msg + ((id_ - 1) * int(addr_offset))
-                path = f'{path_sample}\{table_msg}.xml'
+                path = f'{connect.path_sample}\{table_msg}.xml'
 
                 if not os.path.isfile(path):
                     msg[f'{today} - Сообщения {tabl}: в папке отсутствует шаблон - {table_msg}'] = 2
@@ -1181,7 +1200,7 @@ class Generate_database_SQL():
                 sound_prior_1 = signal[5]
 
                 start_addr = kod_msg + ((id_ - 1) * int(addr_offset))
-                path = f'{path_sample}\{table_msg}.xml'
+                path = f'{connect.path_sample}\{table_msg}.xml'
 
                 if not os.path.isfile(path):
                     msg[f'{today} - Сообщения {tabl}: в папке отсутствует шаблон - {table_msg}'] = 2
@@ -1221,7 +1240,7 @@ class Generate_database_SQL():
                     table_msg = 'TblPumpsKTPRAS'
 
                 start_addr = kod_msg + ((id_ - 1) * int(addr_offset))
-                path = f'{path_sample}\{table_msg}.xml'
+                path = f'{connect.path_sample}\{table_msg}.xml'
                 if not os.path.isfile(path):
                     msg[f'{today} - Сообщения {tabl}: в папке отсутствует шаблон - {table_msg}'] = 2
                     continue
@@ -1262,7 +1281,7 @@ class Generate_database_SQL():
                     table_msg = 'TblFireSignalingDevices'
 
                 start_addr = kod_msg + ((id_ - 1) * int(addr_offset))
-                path = f'{path_sample}\{table_msg}.xml'
+                path = f'{connect.path_sample}\{table_msg}.xml'
                 if not os.path.isfile(path):
                     msg[f'{today} - Сообщения {tabl}: в папке отсутствует шаблон - {table_msg}'] = 2
                     return msg
@@ -1298,7 +1317,7 @@ class Generate_database_SQL():
                 if sign == 'KTPRA' or sign == 'GMPNA': na = signal[2]
 
                 start_addr = kod_msg + ((id_ - 1) * int(addr_offset))
-                path = f'{path_sample}\{table_msg}.xml'
+                path = f'{connect.path_sample}\{table_msg}.xml'
                 if not os.path.isfile(path):
                     msg[f'{today} - Сообщения {tabl}: в папке отсутствует шаблон - {table_msg}'] = 2
                     return msg
@@ -1334,7 +1353,7 @@ class Generate_database_SQL():
                 table_msg = signal[2]
 
                 start_addr = kod_msg + ((id_ - 1) * int(addr_offset))
-                path = f'{path_sample}\{table_msg}.xml'
+                path = f'{connect.path_sample}\{table_msg}.xml'
                 if not os.path.isfile(path):
                     msg[f'{today} - Сообщения {tabl}: в папке отсутствует шаблон - {table_msg}'] = 2
                     continue
@@ -1454,7 +1473,7 @@ class Generate_database_SQL():
                             table_msg = 'TblD_ModulesRS'
                             count_RS += 1
 
-                    path = f'{path_sample}\{table_msg}.xml'
+                    path = f'{connect.path_sample}\{table_msg}.xml'
                     if not os.path.isfile(path):
                         msg[f'{today} - Сообщения {tabl}: в папке отсутствует шаблон - {table_msg}'] = 2
                         return msg
@@ -1531,7 +1550,7 @@ class Generate_database_SQL():
                 msg[f'{today} - Сообщения {tabl}: ошибка. Адреса из таблицы msg не определены'] = 2
                 return msg
             
-            path = f'{path_sample}\{table_msg}.xml'
+            path = f'{connect.path_sample}\{table_msg}.xml'
             if not os.path.isfile(path):
                 msg[f'{today} - Сообщения {tabl}: в папке отсутствует шаблон - {table_msg}'] = 2
                 return msg
@@ -1591,7 +1610,7 @@ class Generate_database_SQL():
             list_sample = ['TblFireZonesState', 'TblFireZonesGPZFoam', 'TblFireZonesGPZWater', 'TblFireZonesMode',
                             'TblFireZonesAPT', 'TblFireZonesGPZWithout', 'TblFireZonesGPZGas']
             for i in list_sample:
-                path = f'{path_sample}\{i}.xml'
+                path = f'{connect.path_sample}\{i}.xml'
                 if not os.path.isfile(path):
                     msg[f'{today} - Сообщения {tabl}: в папке отсутствует шаблон - {i}'] = 2
 
@@ -1635,7 +1654,7 @@ class Generate_database_SQL():
                             text = f'Готовности зон. {name}'
                         else: continue
 
-                        path = f'{path_sample}\{table_msg}.xml'
+                        path = f'{connect.path_sample}\{table_msg}.xml'
                         if not os.path.isfile(path):
                             continue
                         gen_list.append(self.dop_function.parser_sample(path, start_addr, text, flag_write_db, sign))
@@ -1738,7 +1757,7 @@ class Generate_database_SQL():
                 module, channel                                       = signal[36], signal[37]
 
                 # Prefix
-                Prefix = 'NULL' if prefix_system == '' or prefix_system is None else str(prefix_system)
+                Prefix = 'NULL' if connect.prefix_system == '' or connect.prefix_system is None else str(connect.prefix_system)
                 # SystemIndex
                 SystemIndex = 0
                 # AnalogGroupId
@@ -1868,13 +1887,13 @@ class Generate_database_SQL():
         if not flag_write_db:
             try:
                 # Создаём файл запроса
-                path_request = f'{path_location_file}\\PostgreSQL-TblAnalogs.sql'
+                path_request = f'{connect.path_location_file}\\PostgreSQL-TblAnalogs.sql'
                 if not os.path.exists(path_request):
                     file = codecs.open(path_request, 'w', 'utf-8')
                 else:
                     os.remove(path_request)
                     file = codecs.open(path_request, 'w', 'utf-8')
-                if path_location_file == '' or path_location_file is None or len(path_location_file) == 0:
+                if connect.path_location_file == '' or connect.path_location_file is None or len(connect.path_location_file) == 0:
                     msg[f'{today} - TblAnalogs: не указана конечная папка'] = 2
                     return msg
                 file.write(text_start)
@@ -1942,9 +1961,9 @@ class Generate_database_SQL():
                 if not used: continue
 
                 # Prefix
-                try: prefix_system
-                except: prefix_system = ''
-                Prefix = 'NULL' if prefix_system == '' or prefix_system is None else str(prefix_system)
+                try: connect.prefix_system
+                except: connect.prefix_system = ''
+                Prefix = 'NULL' if connect.prefix_system == '' or connect.prefix_system is None else str(connect.prefix_system)
                 
                 # SetpointGroupId
                 cursor.execute(f"""SELECT id FROM "sp_grp" WHERE name_group='{group_ust}'""")
@@ -1979,13 +1998,13 @@ class Generate_database_SQL():
         if not flag_write_db:
             try:
                 # Создаём файл запроса
-                path_request = f'{path_location_file}\\PostgreSQL-{sign}.sql'
+                path_request = f'{connect.path_location_file}\\PostgreSQL-{sign}.sql'
                 if not os.path.exists(path_request):
                     file = codecs.open(path_request, 'w', 'utf-8')
                 else:
                     os.remove(path_request)
                     file = codecs.open(path_request, 'w', 'utf-8')
-                if path_location_file == '' or path_location_file is None or len(path_location_file) == 0:
+                if connect.path_location_file == '' or connect.path_location_file is None or len(connect.path_location_file) == 0:
                     msg[f'{today} - {sign}: не указана конечная папка'] = 2
                     return msg
                 file.write(text_start)
@@ -2034,7 +2053,7 @@ class Generate_database_SQL():
                 time_ust, group_ust, rule_map_ust = signal[4], signal[5], signal[6]
 
                 # Prefix
-                Prefix = 'NULL' if prefix_system == '' or prefix_system is None else str(prefix_system)
+                Prefix = 'NULL' if connect.prefix_system == '' or connect.prefix_system is None else str(connect.prefix_system)
                 # tag
                 tag = '' if tag == '' or tag is None else str(tag)
                 # Value
@@ -2068,13 +2087,13 @@ class Generate_database_SQL():
         if not flag_write_db:
             try:
                 # Создаём файл запроса
-                path_request = f'{path_location_file}\\PostgreSQL-TblStationDefencesSetpoints.sql'
+                path_request = f'{connect.path_location_file}\\PostgreSQL-TblStationDefencesSetpoints.sql'
                 if not os.path.exists(path_request):
                     file = codecs.open(path_request, 'w', 'utf-8')
                 else:
                     os.remove(path_request)
                     file = codecs.open(path_request, 'w', 'utf-8')
-                if path_location_file == '' or path_location_file is None or len(path_location_file) == 0:
+                if connect.path_location_file == '' or connect.path_location_file is None or len(connect.path_location_file) == 0:
                     msg[f'{today} - TblStationDefencesSetpoints: не указана конечная папка'] = 2
                     return msg
                 file.write(text_start)
@@ -2125,7 +2144,7 @@ class Generate_database_SQL():
                 if time_ust == '' or time_ust is None: continue
 
                 # Prefix
-                Prefix = 'NULL' if prefix_system == '' or prefix_system is None else str(prefix_system)
+                Prefix = 'NULL' if connect.prefix_system == '' or connect.prefix_system is None else str(connect.prefix_system)
                 # Name
                 name = '' if name == '' or name is None else str(name)
                 # PumpName
@@ -2162,13 +2181,13 @@ class Generate_database_SQL():
         if not flag_write_db:
             try:
                 # Создаём файл запроса
-                path_request = f'{path_location_file}\\PostgreSQL-{sign}.sql'
+                path_request = f'{connect.path_location_file}\\PostgreSQL-{sign}.sql'
                 if not os.path.exists(path_request):
                     file = codecs.open(path_request, 'w', 'utf-8')
                 else:
                     os.remove(path_request)
                     file = codecs.open(path_request, 'w', 'utf-8')
-                if path_location_file == '' or path_location_file is None or len(path_location_file) == 0:
+                if connect.path_location_file == '' or connect.path_location_file is None or len(connect.path_location_file) == 0:
                     msg[f'{today} - {sign}: не указана конечная папка'] = 2
                     return msg
                 file.write(text_start)
@@ -2499,13 +2518,18 @@ class Filling_attribute_DevStudio():
                     continue
             return msg
     def clear_omx(self, list_tabl):
-        path_AI_AO = [f'{path_to_devstudio}\\AttributesMapAI_Ref.xml', f'{path_to_devstudio}\\AttributesMapKlk.xml', f'{path_to_devstudio}\\AttributesMapKont.xml', 
-                      f'{path_to_devstudio}\\AttributesMapSignalName.xml', f'{path_to_devstudio}\\AttributesMapTagName.xml']
-        path_DI_DO = [f'{path_to_devstudio}\\AttributesMapKlk.xml', f'{path_to_devstudio}\\AttributesMapKont.xml', 
-                      f'{path_to_devstudio}\\AttributesMapSignalName.xml', f'{path_to_devstudio}\\AttributesMapTagName.xml']
-        path_ColorDI = [f'{path_to_devstudio}\\AttributesMapColorScheme.xml']
-        path_formatAI = [f'{path_to_devstudio}\\AttributesAnalogsFormats.xml']
-        path_egu = [f'{path_to_devstudio}\\AttributesMapEGU.xml']
+        path_AI_AO = [f'{connect.path_to_devstudio}\\AttributesMapAI_Ref.xml',
+                      f'{connect.path_to_devstudio}\\AttributesMapKlk.xml',
+                      f'{connect.path_to_devstudio}\\AttributesMapKont.xml', 
+                      f'{connect.path_to_devstudio}\\AttributesMapSignalName.xml',
+                      f'{connect.path_to_devstudio}\\AttributesMapTagName.xml']
+        path_DI_DO = [f'{connect.path_to_devstudio}\\AttributesMapKlk.xml',
+                      f'{connect.path_to_devstudio}\\AttributesMapKont.xml', 
+                      f'{connect.path_to_devstudio}\\AttributesMapSignalName.xml',
+                      f'{connect.path_to_devstudio}\\AttributesMapTagName.xml']
+        path_ColorDI = [f'{connect.path_to_devstudio}\\AttributesMapColorScheme.xml']
+        path_formatAI = [f'{connect.path_to_devstudio}\\AttributesAnalogsFormats.xml']
+        path_egu = [f'{connect.path_to_devstudio}\\AttributesMapEGU.xml']
         msg = {}
         if len(list_tabl) == 0: 
             msg[f'{today} - Файл omx: не выбраны атрибуты'] = 2
@@ -2711,9 +2735,9 @@ class Filling_attribute_DevStudio():
         modul = []
         with db:
             for basket in HardWare.select().dicts():
-                id_        = basket['id']
-                tag        = basket['tag']
-                uso        = basket['uso']
+                id_ = basket['id']
+                tag = basket['tag']
+                uso = basket['uso']
                 num_basket = basket['basket']
                 for key, value in basket.items():
                     if value == type_modul:
@@ -2809,7 +2833,7 @@ class Filling_attribute_DevStudio():
                     self.dop_function.new_attr(object, "unit.Library.Attributes.AI_Ref_KZFKP", tag)
 
                     el1.append(object)
-                tree.write(f'{path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+                tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
                 msg[f'{today} - Файл omx: Analogs добавлены'] = 1
                 return msg
             except Exception:
@@ -2879,7 +2903,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.Library.Attributes.AI_Ref_KZFKP", tag_ai_ref)
 
                 el1.append(object)
-            tree.write(f'{path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
             msg[f'{today} - Файл omx: Diskrets добавлены'] = 1
             return msg
         except Exception:
@@ -2911,7 +2935,7 @@ class Filling_attribute_DevStudio():
                     self.dop_function.new_attr(object, "unit.System.Attributes.Description", name_pic)
                     
                     el1.append(object)
-                tree.write(f'{path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+                tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
                 msg[f'{today} - Файл omx: Pictures добавлены'] = 1
                 return msg
             except Exception:
@@ -2998,7 +3022,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.Library.Attributes.DO_ref", tag_close)
 
                 el1.append(object)
-            tree.write(f'{path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
             msg[f'{today} - Файл omx: AuxSystems добавлены'] = 1
             return msg
         except Exception:
@@ -3030,31 +3054,41 @@ class Filling_attribute_DevStudio():
                 if number == '' or number is None: continue
                 if name == '' or name   is None: continue
 
-                isdigitKVO = re.findall('\d+', kvo_in_zd)
-                if self.dop_function.str_find(kvo_in_zd.lower(), {'di'}):
-                    for value_di in data_di:
-                        tag_di = value_di[1]
-                        if self.dop_function.str_find(value_di[0], isdigitKVO): break
+                try:
+                    isdigitKVO = re.findall('\d+', kvo_in_zd)
+                    if self.dop_function.str_find(kvo_in_zd.lower(), {'di'}):
+                        for value_di in data_di:
+                            tag_di = value_di[1]
+                            if self.dop_function.str_find(value_di[0], isdigitKVO):
+                                break
+                except Exception:
+                    tag_di = ''
 
-                isdigitOPEN = re.findall('\d+', open_in_zd)
-                if self.dop_function.str_find(open_in_zd.lower(), {'do'}):
-                    for value_do in data_do:
-                        tag_do = value_do[1]
-                        if self.dop_function.str_find(value_do[0], isdigitOPEN): break
+                try:
+                    isdigitOPEN = re.findall('\d+', open_in_zd)
+                    if self.dop_function.str_find(open_in_zd.lower(), {'do'}):
+                        for value_do in data_do:
+                            tag_do = value_do[1]
+                            if self.dop_function.str_find(value_do[0], isdigitOPEN):
+                                break
+                except Exception:
+                    tag_di = ''
 
-                tag    = f'ZD_{number}'
+                tag = f'ZD_{number}'
                 # Наличие мутфа, авария
-                isBUR  = True if (vmmo is None or vmmo == '') or (vmmz is None or vmmz == '') else False
+                isBUR = True if (vmmo is None or vmmo == '') or (vmmz is None or vmmz == '') else False
                 # Наличие ключа М/Д смотри по двум полям физика или интерфейс
                 isDist = True if (not dist_i is None or dist_i == '') or (not dist_f is None or dist_f == '') else False
                 # Наличие интерфейса
-                isRS   = True if rs == 1 else False
+                isRS = True if rs == 1 else False
 
                 object = etree.Element("{automation.control}object")
                 object.attrib['name'] = tag
                 object.attrib['uuid'] = str(uuid.uuid1())
-                if isRS != True: object.attrib['base-type'] = "unit.Library.PLC_Types.Valve_PLC"
-                else           : object.attrib['base-type'] = "unit.Library.PLC_Types.ex_Valve_PLC"
+                if isRS != True:
+                    object.attrib['base-type'] = "unit.Library.PLC_Types.Valve_PLC"
+                else:
+                    object.attrib['base-type'] = "unit.Library.PLC_Types.ex_Valve_PLC"
                 object.attrib['aspect'] = "unit.Library.PLC_Types.PLC"
 
                 self.dop_function.new_attr(object, "unit.Library.Attributes.Index", number)
@@ -3067,7 +3101,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.Library.Attributes.DO_ref", tag_do)
 
                 el1.append(object)
-            tree.write(f'{path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
             msg[f'{today} - Файл omx: Valves добавлены'] = 1
             return msg
         except Exception:
@@ -3100,7 +3134,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.System.Attributes.Description", name)
                 
                 el1.append(object)
-            tree.write(f'{path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
             msg[f'{today} - Файл omx: NAs добавлены'] = 1
             return msg
         except Exception:
@@ -3133,7 +3167,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.System.Attributes.Description", name)
 
                 el1.append(object)
-            tree.write(f'{path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
             msg[f'{today} - Файл omx: SSs добавлены'] = 1
             return msg
         except Exception:
@@ -3175,7 +3209,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.System.Attributes.Description", name)
                 
                 el1.append(object)
-            tree.write(f'{path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
             msg[f'{today} - Файл omx: UTSs добавлены'] = 1
             return msg
         except Exception:
@@ -3215,7 +3249,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.Library.Attributes.Place", place)
                 
                 el1.append(object)
-            tree.write(f'{path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
             msg[f'{today} - Файл omx: UPTSs добавлены'] = 1
             return msg
         except Exception:
@@ -3244,7 +3278,7 @@ class Filling_attribute_DevStudio():
                 object.attrib['base-type'] = "unit.Library.PLC_Types.KTPRx_PLC"
                 object.attrib['aspect'] = "unit.Library.PLC_Types.PLC"
                 el1.append(object)
-            tree.write(f'{path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
             msg[f'{today} - Файл omx: KTPRs добавлены'] = 1
             return msg
         except Exception:
@@ -3273,7 +3307,7 @@ class Filling_attribute_DevStudio():
                     object.attrib['base-type'] = "unit.Library.PLC_Types.KTPRx_PLC"
                     object.attrib['aspect'] = "unit.Library.PLC_Types.PLC"
                     el1.append(object)
-            tree.write(f'{path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
             msg[f'{today} - Файл omx: KTPRPs добавлены'] = 1
             return msg
         except Exception:
@@ -3315,7 +3349,7 @@ class Filling_attribute_DevStudio():
                     group.attrib['aspect'] = "unit.Library.PLC_Types.PLC"
                     object.append(group)
                 el1.append(object)
-            tree.write(f'{path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
             msg[f'{today} - Файл omx: KTPRAs добавлены'] = 1
             return msg
         except Exception:
@@ -3357,7 +3391,7 @@ class Filling_attribute_DevStudio():
                     group.attrib['aspect'] = "unit.Library.PLC_Types.PLC"
                     object.append(group)
                 el1.append(object)
-            tree.write(f'{path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
             msg[f'{today} - Файл omx: GMPNAs добавлены'] = 1
             return msg
         except Exception:
@@ -3399,7 +3433,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.Library.Attributes.Place", place)
 
                 el1.append(object)
-            tree.write(f'{path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
             msg[f'{today} - Файл omx: PIs добавлены'] = 1
             return msg
         except Exception:
@@ -3434,7 +3468,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.Library.Attributes.Index", number)
                 
                 el1.append(object)
-            tree.write(f'{path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
             msg[f'{today} - Файл omx: PZs добавлены'] = 1
             return msg
         except Exception:
@@ -3442,11 +3476,11 @@ class Filling_attribute_DevStudio():
             return msg
     
     def mklogic_AI_AO_atrib(self, variable_mod, type_mod, prefix):
-        link_path = [f'{path_to_devstudio}\\AttributesMapAI_Ref.xml', 
-                     f'{path_to_devstudio}\\AttributesMapKlk.xml', 
-                     f'{path_to_devstudio}\\AttributesMapKont.xml', 
-                     f'{path_to_devstudio}\\AttributesMapSignalName.xml',
-                     f'{path_to_devstudio}\\AttributesMapTagName.xml']
+        link_path = [f'{connect.path_to_devstudio}\\AttributesMapAI_Ref.xml', 
+                     f'{connect.path_to_devstudio}\\AttributesMapKlk.xml', 
+                     f'{connect.path_to_devstudio}\\AttributesMapKont.xml', 
+                     f'{connect.path_to_devstudio}\\AttributesMapSignalName.xml',
+                     f'{connect.path_to_devstudio}\\AttributesMapTagName.xml']
         msg = {}
         try:
             data_hw = self.hardware_data(type_mod)
@@ -3474,20 +3508,20 @@ class Filling_attribute_DevStudio():
                         if contact == '' or contact is None: contact = ' '
                         if tag == '' or tag is None: str_tag = ' '
 
-                        name_AO = f'Root{prefix_system}.Diag.{variable_mod}.{string_name}.{prefix}{str(channel)}'
+                        name_AO = f'Root{connect.prefix_system}.Diag.{variable_mod}.{string_name}.{prefix}{str(channel)}'
 
                         object = etree.Element('item')
                         object.attrib['id'] = name_AO
 
-                        if path == f'{path_to_devstudio}\\AttributesMapAI_Ref.xml': 
+                        if path == f'{connect.path_to_devstudio}\\AttributesMapAI_Ref.xml': 
                             if not str_tag is None or str_tag == '': object.attrib['value'] = str(str_tag)
-                        if path == f'{path_to_devstudio}\\AttributesMapKlk.xml': 
+                        if path == f'{connect.path_to_devstudio}\\AttributesMapKlk.xml': 
                             if not klk is None or klk == '': object.attrib['value'] = str(klk)
-                        if path == f'{path_to_devstudio}\\AttributesMapKont.xml': 
+                        if path == f'{connect.path_to_devstudio}\\AttributesMapKont.xml': 
                             if not contact is None or contact == '': object.attrib['value'] = str(contact)
-                        if path == f'{path_to_devstudio}\\AttributesMapSignalName.xml': 
+                        if path == f'{connect.path_to_devstudio}\\AttributesMapSignalName.xml': 
                             if not name is None or name == '': object.attrib['value'] = str(name)
-                        if path == f'{path_to_devstudio}\\AttributesMapTagName.xml': 
+                        if path == f'{connect.path_to_devstudio}\\AttributesMapTagName.xml': 
                             if not tag is None or tag == '': object.attrib['value'] = str(tag)
 
                         msg[f'{today} - Значения атрибутов Diag.{variable_mod} файл заполнен: {path}'] = 1
@@ -3499,10 +3533,10 @@ class Filling_attribute_DevStudio():
             msg[f'{today} - Ошибка при добавлении значений атрибутов Diag.{variable_mod}: {traceback.format_exc()}'] = 2
             return msg
     def mklogic_DI_DO_atrib(self, variable_mod, type_mod):
-        link_path = [f'{path_to_devstudio}\\AttributesMapKlk.xml', 
-                     f'{path_to_devstudio}\\AttributesMapKont.xml', 
-                     f'{path_to_devstudio}\\AttributesMapSignalName.xml',
-                     f'{path_to_devstudio}\\AttributesMapTagName.xml']
+        link_path = [f'{connect.path_to_devstudio}\\AttributesMapKlk.xml', 
+                     f'{connect.path_to_devstudio}\\AttributesMapKont.xml', 
+                     f'{connect.path_to_devstudio}\\AttributesMapSignalName.xml',
+                     f'{connect.path_to_devstudio}\\AttributesMapTagName.xml']
         msg = {}
         try:
             data_hw = self.hardware_data(type_mod)
@@ -3529,19 +3563,19 @@ class Filling_attribute_DevStudio():
                         if contact == '' or contact is None: contact = ' '
                         if tag == '' or tag is None: tag = ' '
 
-                        if channel < 10: name_DI = f'Root{prefix_system}.Diag.{variable_mod}.{string_name}.ch_DI_0{str(channel)}'
-                        else           : name_DI = f'Root{prefix_system}.Diag.{variable_mod}.{string_name}.ch_DI_{str(channel)}'
+                        if channel < 10: name_DI = f'Root{connect.prefix_system}.Diag.{variable_mod}.{string_name}.ch_DI_0{str(channel)}'
+                        else           : name_DI = f'Root{connect.prefix_system}.Diag.{variable_mod}.{string_name}.ch_DI_{str(channel)}'
 
                         object = etree.Element('item')
                         object.attrib['id'] = name_DI
 
-                        if path == f'{path_to_devstudio}\\AttributesMapKlk.xml': 
+                        if path == f'{connect.path_to_devstudio}\\AttributesMapKlk.xml': 
                             if not klk is None or klk == '': object.attrib['value'] = str(klk)
-                        if path == f'{path_to_devstudio}\\AttributesMapKont.xml': 
+                        if path == f'{connect.path_to_devstudio}\\AttributesMapKont.xml': 
                             if not contact is None or contact == '': object.attrib['value'] = str(contact)
-                        if path == f'{path_to_devstudio}\\AttributesMapSignalName.xml': 
+                        if path == f'{connect.path_to_devstudio}\\AttributesMapSignalName.xml': 
                             if not name is None or name == '': object.attrib['value'] = str(name)
-                        if path == f'{path_to_devstudio}\\AttributesMapTagName.xml': 
+                        if path == f'{connect.path_to_devstudio}\\AttributesMapTagName.xml': 
                             if not tag is None or tag == '': object.attrib['value'] = str(tag)
 
                         msg[f'{today} - Значения атрибутов Diag.{variable_mod} файл заполнен: {path}'] = 1
@@ -3594,7 +3628,7 @@ class Filling_attribute_DevStudio():
                     self.dop_function.new_attr(object, "unit.Library.Attributes.SignalName_2", rs_port2)
 
                 el1.append(object)
-            tree.write(f'{path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
             msg[f'{today} - Файл omx: Diag.{variable_mod} добавлены'] = 1
             return msg
         except Exception:
@@ -3621,14 +3655,14 @@ class Filling_attribute_DevStudio():
                     object.attrib['aspect'] = "unit.Library.PLC_Types.PLC"
                     
                     el1.append(object)
-                tree.write(f'{path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+                tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
                 msg[f'{today} - Файл omx: Diag.RackStates добавлены'] = 1
                 return msg
             except Exception:
                 msg[f'{today} - Файл omx: ошибка при добавлении Diag.RackStates: {traceback.format_exc()}'] = 2   
                 return msg     
     def colorscheme_di(self):
-        link_path = f'{path_to_devstudio}\\AttributesMapColorScheme.xml'
+        link_path = f'{connect.path_to_devstudio}\\AttributesMapColorScheme.xml'
         dop_color = {"01":"1",
                      "02":"2",
                      "03":"3",
@@ -3668,7 +3702,7 @@ class Filling_attribute_DevStudio():
 
                 object = etree.Element('item')
                 object.attrib['id'] = f'Root.Diskrets.{tag}.s_Config'
-                object.attrib['id'] = f'Root{prefix_system}.Diskrets.{tag}.s_Config'
+                object.attrib['id'] = f'Root{connect.prefix_system}.Diskrets.{tag}.s_Config'
                 object.attrib['value'] = color_shema
                 root.append(object)
 
@@ -3679,7 +3713,7 @@ class Filling_attribute_DevStudio():
             msg[f'{today} - Ошибка при добавлении значений в карту атрибутов AttributesMapColorScheme: {traceback.format_exc()}'] = 2
             return msg
     def analogformat_map(self):
-        link_path = f'{path_to_devstudio}\\AttributesAnalogsFormats.xml'
+        link_path = f'{connect.path_to_devstudio}\\AttributesAnalogsFormats.xml'
         msg = {}
         try:
             data_ai = self.dop_function.connect_by_sql('ai', f'"tag", "AnalogGroupId", "Precision"')
@@ -3703,7 +3737,7 @@ class Filling_attribute_DevStudio():
                                   'UstName.UstMax4': grp[10],'UstName.UstMax5': grp[11],'UstName.UstMax6': grp[12]}
                         for grp, value in grp_ai.items():
                             object = etree.Element('item')
-                            object.attrib['id']    = f'Root.{prefix_system}Analogs.{tag}.{grp}'
+                            object.attrib['id']    = f'Root.{connect.prefix_system}Analogs.{tag}.{grp}'
                             object.attrib['value'] = str(value)
                             root.append(object)
                 tree.write(link_path, pretty_print=True)
@@ -3713,7 +3747,7 @@ class Filling_attribute_DevStudio():
             msg[f'{today} - Ошибка при добавлении значений в карту атрибутов AttributesAnalogsFormats: {traceback.format_exc()}'] = 2
             return msg
     def egu_map(self):
-        link_path = f'{path_to_devstudio}\\AttributesMapEGU.xml'
+        link_path = f'{connect.path_to_devstudio}\\AttributesMapEGU.xml'
         msg = {}
         try:
             data_ai = self.dop_function.connect_by_sql('ai', f'"tag", "Egu"')
@@ -3727,7 +3761,7 @@ class Filling_attribute_DevStudio():
                 tag = self.dop_function.translate(str(tag))
 
                 object = etree.Element('item')
-                object.attrib['id'] = f'Root{prefix_system}.Analogs.{tag}.AIValue'
+                object.attrib['id'] = f'Root{connect.prefix_system}.Analogs.{tag}.AIValue'
                 object.attrib['value'] = str(egu)
                 root.append(object)
 
@@ -3762,7 +3796,7 @@ class Filling_attribute_DevStudio():
                 tag = self.dop_function.translate(str(tag))
 
                 for key in list_analog:
-                    signal = f'Root{prefix_system}.Analogs.{tag}.{key}'
+                    signal = f'Root{connect.prefix_system}.Analogs.{tag}.{key}'
 
                     object = etree.Element('item')
                     object.attrib['Binding'] = 'Introduced'
@@ -3772,7 +3806,7 @@ class Filling_attribute_DevStudio():
                     self.dop_function.new_map_str(object, 'address', 2 * (number - 1))
                     
                     root.append(object)
-                tree.write(f'{path_to_devstudio}\\OUA.xml', pretty_print=True)
+                tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
             msg[f'{today} - Карта адресов: адреса Analogs заполнены'] = 1
             return msg
         except Exception:
@@ -3793,7 +3827,7 @@ class Filling_attribute_DevStudio():
                 if name == '' or name is None: continue
 
                 tag = self.dop_function.translate(str(tag))
-                signal = f'Root{prefix_system}.Diskrets.{tag}.StateDI'
+                signal = f'Root{connect.prefix_system}.Diskrets.{tag}.StateDI'
 
                 object = etree.Element('item')
                 object.attrib['Binding'] = 'Introduced'
@@ -3803,7 +3837,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_map_str(object, 'address', 2 * (number - 1))
                     
                 root.append(object)
-            tree.write(f'{path_to_devstudio}\\OUA.xml', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
             msg[f'{today} - Карта адресов: адреса Diskrets заполнены'] = 1
             return msg
         except Exception:
@@ -3820,7 +3854,7 @@ class Filling_attribute_DevStudio():
                 frame  = value[1]
 
                 if frame == '' or frame is None: continue
-                signal = f'Root{prefix_system}.Pictures.{frame}.StatePicture'
+                signal = f'Root{connect.prefix_system}.Pictures.{frame}.StatePicture'
 
                 object = etree.Element('item')
                 object.attrib['Binding'] = 'Introduced'
@@ -3830,7 +3864,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_map_str(object, 'address', 2 * (number - 1))
                     
                 root.append(object)
-            tree.write(f'{path_to_devstudio}\\OUA.xml', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
             msg[f'{today} - Карта адресов: адреса Pictures заполнены'] = 1
             return msg
         except Exception:
@@ -3849,7 +3883,7 @@ class Filling_attribute_DevStudio():
                 if number == '' or number is None: continue
                 for key in dop_vs:
                     tag = f'VS_{number}'
-                    signal = f'Root{prefix_system}.AuxSystems.{tag}.{key}'
+                    signal = f'Root{connect.prefix_system}.AuxSystems.{tag}.{key}'
 
                     object = etree.Element('item')
                     object.attrib['Binding'] = 'Introduced'
@@ -3859,7 +3893,7 @@ class Filling_attribute_DevStudio():
                     self.dop_function.new_map_str(object, 'address', 2 * (number - 1))
 
                     root.append(object)
-                tree.write(f'{path_to_devstudio}\\OUA.xml', pretty_print=True)
+                tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
             msg[f'{today} - Карта адресов: адреса AuxSystems заполнены'] = 1
             return msg
         except Exception:
@@ -3879,7 +3913,7 @@ class Filling_attribute_DevStudio():
 
                 for key in dop_zd:
                     tag = f'ZD_{number}'
-                    signal = f'Root{prefix_system}.Valves.{tag}.{key}'
+                    signal = f'Root{connect.prefix_system}.Valves.{tag}.{key}'
 
                     object = etree.Element('item')
                     object.attrib['Binding'] = 'Introduced'
@@ -3889,7 +3923,7 @@ class Filling_attribute_DevStudio():
                     self.dop_function.new_map_str(object, 'address', 2 * (number - 1))
 
                     root.append(object)
-                tree.write(f'{path_to_devstudio}\\OUA.xml', pretty_print=True)
+                tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
             msg[f'{today} - Карта адресов: адреса Valves заполнены'] = 1
             return msg
         except Exception:
@@ -3913,7 +3947,7 @@ class Filling_attribute_DevStudio():
 
                 for key in dop_na:
                     tag    = f'NA_{number}'
-                    signal = f'Root{prefix_system}.NAs.{tag}.{key}'
+                    signal = f'Root{connect.prefix_system}.NAs.{tag}.{key}'
 
                     object = etree.Element('item')
                     object.attrib['Binding'] = 'Introduced'
@@ -3923,7 +3957,7 @@ class Filling_attribute_DevStudio():
                     self.dop_function.new_map_str(object, 'address', 2 * (number - 1))
 
                     root.append(object)
-                tree.write(f'{path_to_devstudio}\\OUA.xml', pretty_print=True)
+                tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
             msg[f'{today} - Карта адресов: адреса NAs заполнены'] = 1
             return msg
         except Exception:
@@ -3942,7 +3976,7 @@ class Filling_attribute_DevStudio():
                 if number == '' or number is None: continue
                 if name == '' or name   is None: continue
 
-                signal = f'Root{prefix_system}.SSs.SS_{number}.StateSS'
+                signal = f'Root{connect.prefix_system}.SSs.SS_{number}.StateSS'
 
                 object = etree.Element('item')
                 object.attrib['Binding'] = 'Introduced'
@@ -3952,7 +3986,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_map_str(object, 'address', 2 * (number - 1))
 
                 root.append(object)
-                tree.write(f'{path_to_devstudio}\\OUA.xml', pretty_print=True)
+                tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
             msg[f'{today} - Карта адресов: адреса SSs заполнены'] = 1
             return msg
         except Exception:
@@ -3974,7 +4008,7 @@ class Filling_attribute_DevStudio():
                 if tag == '' or tag is None: continue
 
                 tag = self.dop_function.translate(str(tag))
-                signal = f'Root{prefix_system}.UTSs.{tag}.StateUTS'
+                signal = f'Root{connect.prefix_system}.UTSs.{tag}.StateUTS'
 
                 object = etree.Element('item')
                 object.attrib['Binding'] = 'Introduced'
@@ -3984,7 +4018,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_map_str(object, 'address', 2 * (number - 1))
 
                 root.append(object)
-            tree.write(f'{path_to_devstudio}\\OUA.xml', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
             msg[f'{today} - Карта адресов: адреса UTSs заполнены'] = 1
             return msg
         except Exception:
@@ -4006,7 +4040,7 @@ class Filling_attribute_DevStudio():
                 if tag == '' or tag is None: continue
 
                 tag = self.dop_function.translate(str(tag))
-                signal = f'Root{prefix_system}.UPTSs.{tag}.StateUPTS'
+                signal = f'Root{connect.prefix_system}.UPTSs.{tag}.StateUPTS'
 
                 object = etree.Element('item')
                 object.attrib['Binding'] = 'Introduced'
@@ -4016,7 +4050,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_map_str(object, 'address', 2 * (number - 1))
 
                 root.append(object)
-            tree.write(f'{path_to_devstudio}\\OUA.xml', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
             msg[f'{today} - Карта адресов: адреса UPTSs заполнены'] = 1
             return msg
         except Exception:
@@ -4037,7 +4071,7 @@ class Filling_attribute_DevStudio():
             count_group = math.ceil(number_group/4)
 
             for count in range(count_group):
-                signal = f'Root{prefix_system}.KTPRs.Group_{count + 1}.StateKTPRx'
+                signal = f'Root{connect.prefix_system}.KTPRs.Group_{count + 1}.StateKTPRx'
 
                 object = etree.Element('item')
                 object.attrib['Binding'] = 'Introduced'
@@ -4047,7 +4081,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_map_str(object, 'address', 2 * ((count - 1)))
 
                 root.append(object)
-            tree.write(f'{path_to_devstudio}\\OUA.xml', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
             msg[f'{today} - Карта адресов: адреса KTPRs заполнены'] = 1
             return msg
         except Exception:
@@ -4068,7 +4102,7 @@ class Filling_attribute_DevStudio():
             count_group = math.ceil(number_group / 4)
 
             for count in range(count_group):
-                signal = f'Root{prefix_system}.KTPRs.Group_{count + 1}.StateKTPRx'
+                signal = f'Root{connect.prefix_system}.KTPRs.Group_{count + 1}.StateKTPRx'
 
                 object = etree.Element('item')
                 object.attrib['Binding'] = 'Introduced'
@@ -4079,7 +4113,7 @@ class Filling_attribute_DevStudio():
 
                 root.append(object)
 
-            tree.write(f'{path_to_devstudio}\\OUA.xml', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
             msg[f'{today} - Карта адресов: адреса KTPRPs заполнены'] = 1
             return msg
         except Exception:
@@ -4109,7 +4143,7 @@ class Filling_attribute_DevStudio():
                 if number_defence % 4 == 0:
                     number_group += 1
                     count += 1
-                    signal = f'Root{prefix_system}.KTPRAs.KTPRAs_{count_pumps}.Group_{number_group}.StateKTPRx'
+                    signal = f'Root{connect.prefix_system}.KTPRAs.KTPRAs_{count_pumps}.Group_{number_group}.StateKTPRx'
 
                     object = etree.Element('item')
                     object.attrib['Binding'] = 'Introduced'
@@ -4119,7 +4153,7 @@ class Filling_attribute_DevStudio():
                     self.dop_function.new_map_str(object, 'address', 2 * ((count - 1)))
 
                     root.append(object)
-            tree.write(f'{path_to_devstudio}\\OUA.xml', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
             msg[f'{today} - Карта адресов: адреса KTPRAs заполнены'] = 1
             return msg
         except Exception:
@@ -4149,7 +4183,7 @@ class Filling_attribute_DevStudio():
                 if number_defence % 4 == 0:
                     number_group += 1
                     count        += 1
-                    signal = f'Root{prefix_system}.GMPNAs.GMPNAs_{count_pumps}.Group_{number_group}.StateGMPNA'
+                    signal = f'Root{connect.prefix_system}.GMPNAs.GMPNAs_{count_pumps}.Group_{number_group}.StateGMPNA'
 
                     object = etree.Element('item')
                     object.attrib['Binding'] = 'Introduced'
@@ -4159,7 +4193,7 @@ class Filling_attribute_DevStudio():
                     self.dop_function.new_map_str(object, 'address', 2 * ((count - 1)))
 
                     root.append(object)
-            tree.write(f'{path_to_devstudio}\\OUA.xml', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
             msg[f'{today} - Карта адресов: адреса GMPNAs заполнены'] = 1
             return msg
         except Exception:
@@ -4179,7 +4213,7 @@ class Filling_attribute_DevStudio():
                 if tag == '' or tag    is None: continue
 
                 tag = self.translate(str(tag))
-                signal = f'Root{prefix_system}.PIs.{tag}.StatePI'
+                signal = f'Root{connect.prefix_system}.PIs.{tag}.StatePI'
 
                 object = etree.Element('item')
                 object.attrib['Binding'] = 'Introduced'
@@ -4189,7 +4223,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_map_str(object, 'address', 2 * ((number - 1)))
 
                 root.append(object)
-            tree.write(f'{path_to_devstudio}\\OUA.xml', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
             msg[f'{today} - Карта адресов: адреса PIs заполнены'] = 1
             return msg
         except Exception:
@@ -4216,7 +4250,7 @@ class Filling_attribute_DevStudio():
                 #set_words = dop_pz if zone_type == 0 else dop_pz_ptush
 
                 for key in dop_pz_ptush:
-                    signal = f'Root{prefix_system}.PZs.PZ_{number}.{key}'
+                    signal = f'Root{connect.prefix_system}.PZs.PZ_{number}.{key}'
 
                     object = etree.Element('item')
                     object.attrib['Binding'] = 'Introduced'
@@ -4226,7 +4260,7 @@ class Filling_attribute_DevStudio():
                     self.dop_function.new_map_str(object, 'address', 2 * ((number - 1)))
 
                     root.append(object)
-            tree.write(f'{path_to_devstudio}\\OUA.xml', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
             msg[f'{today} - Карта адресов: адреса PZs заполнены'] = 1
             return msg
         except Exception:
@@ -4242,7 +4276,7 @@ class Filling_attribute_DevStudio():
             for data in data_hw:
                 string_name  = data['string_name']
                 for i in list_param:
-                    name = f'Root{prefix_system}.Diag.{variable_mod}.{string_name}.{i}'
+                    name = f'Root{connect.prefix_system}.Diag.{variable_mod}.{string_name}.{i}'
 
                     object = etree.Element('item')
                     object.attrib['Binding'] = 'Introduced'
@@ -4252,7 +4286,7 @@ class Filling_attribute_DevStudio():
                     self.dop_function.new_map_str(object, 'address', f'{i}')
                     
                     root.append(object)
-                tree.write(f'{path_to_devstudio}\\OUA.xml', pretty_print=True)
+                tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
             msg[f'{today} - Карта адресов: адреса Diag.{variable_mod} заполнены'] = 1
             return msg
         except Exception:
@@ -4271,7 +4305,7 @@ class Filling_attribute_DevStudio():
 
             for i in range(count):
                 for j in list_param:
-                    name = f'Root{prefix_system}.Diag.RackStates.rack_{i + 1}.{j}'
+                    name = f'Root{connect.prefix_system}.Diag.RackStates.rack_{i + 1}.{j}'
 
                     object = etree.Element('item')
                     object.attrib['Binding'] = 'Introduced'
@@ -4281,7 +4315,7 @@ class Filling_attribute_DevStudio():
                     self.dop_function.new_map_str(object, 'address', f'{i}')
                     
                     root.append(object)
-                tree.write(f'{path_to_devstudio}\\OUA.xml', pretty_print=True)
+                tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
             msg[f'{today} - Карта адресов: адреса Diag.RackStates заполнены'] = 1
             return msg
         except Exception:
@@ -4384,7 +4418,7 @@ class Filling_CodeSys():
                 continue
         return msg
     def file_check(self, name_file):
-        path_request = f'{path_su}\\{name_file}.txt'
+        path_request = f'{connect.path_su}\\{name_file}.txt'
         if not os.path.exists(path_request):
             file = codecs.open(path_request, 'w', 'utf-8')
             file.write(f'(*{name_file}*)\n')
@@ -8402,7 +8436,7 @@ class Filling_tmNA_UMPNA_narab():
         return msg 
 class Filling_ZD():
     def __init__(self):
-        self.cursor   = db.cursor()
+        self.cursor = db.cursor()
         self.dop_function = General_functions()
     # Получаем данные с таблицы AI и DI 
     def getting_modul(self):
@@ -8454,7 +8488,7 @@ class Filling_ZD():
                     list_zd = []
 
                     kvo, kvz, mpo, mpz, mufta, error, dist, vmmo, vmmz = None, None, None, None, None, None, None, None, None
-                    close_bru, stop_bru, voltage, isp_opening_chain, isp_closing_chain   = None, None, None, None, None
+                    close_bru, stop_bru, voltage, isp_opening_chain, isp_closing_chain = None, None, None, None, None
                     open_zd, close_zd, stop_zd, open_stop, close_stop = None, None, None, None, None
 
                     for tag in array_di_tag_zd:
@@ -9053,8 +9087,8 @@ class Filling_UTS():
                                          Examination = '', 
                                          Kvit = '',
                                          Pic = '',
-                                         number_list_VU = '',
-                                         order_number_for_VU = '', 
+                                         number_list_VU = None,
+                                         order_number_for_VU = None, 
                                          uso = f'{uts_do[3]}', 
                                          basket =  uts_do[4], 
                                          module =  uts_do[5], 

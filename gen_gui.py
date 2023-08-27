@@ -1,22 +1,24 @@
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
 import sys
-# for path in sys.path:
-#     print(path)
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QFrame
+from PyQt5.QtWidgets import QTabWidget
+from PyQt5.QtWidgets import QLabel
+from PyQt5.QtWidgets import QComboBox
+from PyQt5.QtWidgets import QPushButton
+from PyQt5.QtWidgets import QLineEdit
+from PyQt5.QtWidgets import QCheckBox
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QTextEdit
+from defence_hmi import gen_station_defence
+from uts_upts_hmi import Alarm_map
+from windows_base_editing import MainWindow as WinEditing
 from main_base import *
-# from defence_hmi import gen_station_defence
-# from uts_upts_hmi import Alarm_map
 
 # ГРАФИЧЕСКИЙ ИНТЕРФЕЙС ДЛЯ ЗАПУСКА ГЕНЕРАТОРА
 # Сформировать exe: в терминале добавить: auto-py-to-exe
 
 
-# Запуск файла для чтения
-class MainWin(QMainWindow):
-    def launch(self):
-        return(QFileDialog.getOpenFileName(caption='Выберите файл конфигурации проекта')[0])
-# Основное окно
 class Widget(QWidget):
     def __init__(self):
         super().__init__()
@@ -42,6 +44,8 @@ class Widget(QWidget):
         self.edit_SQL = Editing_table_SQL()
         self.list_tabl = self.edit_SQL.get_tabl()
         self.dop_function = General_functions()
+        self.gen_sql = Generate_database_SQL()
+        self.path_to_exel = connect.path_to_exel
 
         # ------------------Окно редактирования------------------
         list_tabl = self.dop_function.all_tables()
@@ -51,195 +55,168 @@ class Widget(QWidget):
 
         self.combo = QComboBox(tab_5)
         self.combo.move(10, 20) 
-        self.combo.resize(240,25)
+        self.combo.resize(240, 25)
         self.combo.setStyleSheet("border-radius: 3px; border: 1px solid")
         self.combo.setFont(QFont('Arial', 10))
 
         clickButton = QPushButton('Подключиться к таблице', tab_5)
         clickButton.setStyleSheet("border-radius: 3px; border: 1px solid")
-        clickButton.resize(240,23)
+        clickButton.resize(240, 23)
         clickButton.move(10, 55) 
         clickButton.clicked.connect(self.choose_tabl)
 
         updateButton = QPushButton('Обновить', tab_5)
         updateButton.setStyleSheet("border-radius: 3px; border: 1px solid")
-        updateButton.resize(120,23)
+        updateButton.resize(120, 23)
         updateButton.move(270, 20) 
         updateButton.clicked.connect(self.update_tabl)
 
         for tabl in list_tabl:
-           self.combo.addItem(str(tabl))
+            self.combo.addItem(str(tabl))
 
         # ------------------Соединение------------------
-        self.gen_sql = Generate_database_SQL()
-        # Название проекта
-        l_name_station_desc = QLabel('Название проекта: ', tab_1)
-        l_name_station_desc.move(10, 5)
-        l_name_station_path = QLabel(tab_1)
-        l_name_station_path.move(135, 5)
-        l_name_station_path.setText(name_project)
-        # КЗФКП
-        l_kzfkp_desc = QLabel('Путь до файла КД: ', tab_1)
-        l_kzfkp_desc.move(10, 20)
-        l_kzfkp_path = QLabel(tab_1)
-        l_kzfkp_path.move(135, 20)
-        l_kzfkp_path.setText(path_to_exel)
-        # Шаблоны сообщений
-        l_sample_desc = QLabel('Шаблоны сообщений: ', tab_1)
-        l_sample_desc.move(10, 35)
-        l_sample_path = QLabel(tab_1)
-        l_sample_path.move(135, 35)
-        l_sample_path.setText(path_sample)
-        # Скрипты сообщений
-        l_script_desc = QLabel('Скрипты сообщений: ', tab_1)
-        l_script_desc.move(10, 50)
-        l_script_path = QLabel(tab_1)
-        l_script_path.move(135, 50)
-        l_script_path.setText(path_location_file)
-        # Файлы DevStudio
-        l_devstudio_desc = QLabel('Файлы DevStudio: ', tab_1)
-        l_devstudio_desc.move(10, 65)
-        l_devstudio_path = QLabel(tab_1)
-        l_devstudio_path.move(135, 65)
-        l_devstudio_path.setText(path_to_devstudio)
-        # Файлы СУ
-        l_su_desc = QLabel('Файлы СУ: ', tab_1)
-        l_su_desc.move(10, 80)
-        l_su_path = QLabel(tab_1)
-        l_su_path.move(135, 80)
-        l_su_path.setText(path_su)
         # SQL
         l_sql_desc = QLabel('Данные для подключения к базе SQL: ', tab_1)
-        l_sql_desc.move(50, 100)
-        l_sql_msg_desc = QLabel('SQL база разработки: ', tab_1)
+        l_sql_desc.move(50, 5)
+        l_sql_dev_desc = QLabel('SQL база разработки: ', tab_1)
+        l_sql_dev_desc.setStyleSheet("background-color: #d8d99c")
+        l_sql_dev_desc.move(10, 20)
+        l_sql_msg_desc = QLabel('SQL база проекта: ', tab_1)
         l_sql_msg_desc.setStyleSheet("background-color: #d8d99c")
-        l_sql_msg_desc.move(10, 113)
-        l_sql_ust_desc = QLabel('SQL база проекта: ', tab_1)
-        l_sql_ust_desc.setStyleSheet("background-color: #d8d99c")
-        l_sql_ust_desc.move(200, 113)
+        l_sql_msg_desc.move(200, 20)
         # Проверка подключения
-        #msg
+        # Development
+        b_check_sql_dev = QPushButton('Проверить соединение', tab_1)
+        b_check_sql_dev.setStyleSheet("border-radius: 4px; border: 1px solid")
+        b_check_sql_dev.resize(130, 23)
+        b_check_sql_dev.move(10, 115) 
+        b_check_sql_dev.clicked.connect(self.check_base_sql_msg)
+        self.l_sql_dev_check = QLabel('Проверка не проводилась', tab_1)
+        self.l_sql_dev_check.move(10, 140)
+        # Messages
         b_check_sql_msg = QPushButton('Проверить соединение', tab_1)
         b_check_sql_msg.setStyleSheet("border-radius: 4px; border: 1px solid")
-        b_check_sql_msg.resize(130,23)
-        b_check_sql_msg.move(10, 202) 
-        b_check_sql_msg.clicked.connect(self.check_base_sql_msg)
-        self.l_sql_msg_check = QLabel('Проверка не проводилась',tab_1)
-        self.l_sql_msg_check.move(10, 227)
-        #ust
-        b_check_sql_ust = QPushButton('Проверить соединение', tab_1)
-        b_check_sql_ust.setStyleSheet("border-radius: 4px; border: 1px solid")
-        b_check_sql_ust.resize(130,23)
-        b_check_sql_ust.move(200, 202) 
-        b_check_sql_ust.clicked.connect(self.check_base_sql_ust)
-        self.l_sql_ust_check = QLabel('Проверка не проводилась',tab_1)
-        self.l_sql_ust_check.move(200, 227)
-        # MSG
-        l_sql_msg_base_desc = QLabel('Database: ',tab_1)
-        l_sql_msg_base_desc.move(10, 127)
+        b_check_sql_msg.resize(130, 23)
+        b_check_sql_msg.move(200, 115) 
+        b_check_sql_msg.clicked.connect(self.check_base_sql_ust)
+        self.l_sql_msg_check = QLabel('Проверка не проводилась', tab_1)
+        self.l_sql_msg_check.move(200, 140)
+        # Development
+        l_sql_dev_base_desc = QLabel('Database: ', tab_1)
+        l_sql_dev_base_desc.move(10, 35)
+        l_sql_dev_base_path = QLabel(tab_1)
+        l_sql_dev_base_path.move(70, 35)
+        l_sql_dev_base_path.setText(connect.database)
+        self.db_dev = connect.database
+        l_sql_dev_user_desc = QLabel('User: ', tab_1)
+        l_sql_dev_user_desc.move(10, 50)
+        l_sql_dev_user_path = QLabel(tab_1)
+        l_sql_dev_user_path.move(70, 50)
+        l_sql_dev_user_path.setText(connect.user)
+        self.user_dev = connect.user
+        l_sql_dev_pass_desc = QLabel('Password: ', tab_1)
+        l_sql_dev_pass_desc.move(10, 65)
+        l_sql_dev_pass_path = QLabel(tab_1)
+        l_sql_dev_pass_path.move(70, 65)
+        l_sql_dev_pass_path.setText(connect.password)
+        self.pw_dev = connect.password
+        l_sql_dev_host_desc = QLabel('Host: ', tab_1)
+        l_sql_dev_host_desc.move(10, 80)
+        l_sql_dev_host_path = QLabel(tab_1)
+        l_sql_dev_host_path.move(70, 80)
+        l_sql_dev_host_path.setText(connect.host)
+        self.host_dev = connect.host
+        l_sql_dev_port_desc = QLabel('Port: ', tab_1)
+        l_sql_dev_port_desc.move(10, 95)
+        l_sql_dev_port_path = QLabel(tab_1)
+        l_sql_dev_port_path.move(70, 95)
+        l_sql_dev_port_path.setText(connect.port)
+        self.port_dev = connect.port
+        # Messages
+        l_sql_msg_base_desc = QLabel('Database: ', tab_1)
+        l_sql_msg_base_desc.move(200, 35)
         l_sql_msg_base_path = QLabel(tab_1)
-        l_sql_msg_base_path.move(70, 127)
-        l_sql_msg_base_path.setText(database_msg)
-        l_sql_msg_user_desc = QLabel('User: ',tab_1)
-        l_sql_msg_user_desc.move(10, 142)
+        l_sql_msg_base_path.move(260, 35)
+        l_sql_msg_base_path.setText(connect.database_msg)
+        self.db_msg = connect.database_msg
+        l_sql_msg_user_desc = QLabel('User: ', tab_1)
+        l_sql_msg_user_desc.move(200, 50)
         l_sql_msg_user_path = QLabel(tab_1)
-        l_sql_msg_user_path.move(70, 142)
-        l_sql_msg_user_path.setText(user_msg)
-        l_sql_msg_pass_desc = QLabel('Password: ',tab_1)
-        l_sql_msg_pass_desc.move(10, 157)
+        l_sql_msg_user_path.move(260, 50)
+        l_sql_msg_user_path.setText(connect.user_msg)
+        self.user_msg = connect.user_msg
+        l_sql_msg_pass_desc = QLabel('Password: ', tab_1)
+        l_sql_msg_pass_desc.move(200, 65)
         l_sql_msg_pass_path = QLabel(tab_1)
-        l_sql_msg_pass_path.move(70, 157)
-        l_sql_msg_pass_path.setText(password_msg)
-        l_sql_msg_host_desc = QLabel('Host: ',tab_1)
-        l_sql_msg_host_desc.move(10, 172)
+        l_sql_msg_pass_path.move(260, 65)
+        l_sql_msg_pass_path.setText(connect.password_msg)
+        self.pw_msg = connect.password_msg
+        l_sql_msg_host_desc = QLabel('Host: ', tab_1)
+        l_sql_msg_host_desc.move(200, 80)
         l_sql_msg_host_path = QLabel(tab_1)
-        l_sql_msg_host_path.move(70, 172)
-        l_sql_msg_host_path.setText(host_msg)
-        l_sql_msg_port_desc = QLabel('Port: ',tab_1)
-        l_sql_msg_port_desc.move(10, 187)
+        l_sql_msg_host_path.move(260, 80)
+        l_sql_msg_host_path.setText(connect.host_msg)
+        self.host_msg = connect.host_msg
+        l_sql_msg_port_desc = QLabel('Port: ', tab_1)
+        l_sql_msg_port_desc.move(200, 95)
         l_sql_msg_port_path = QLabel(tab_1)
-        l_sql_msg_port_path.move(70, 187)
-        l_sql_msg_port_path.setText(port_msg)
-        # asutp
-        l_sql_base_desc = QLabel('Database: ',tab_1)
-        l_sql_base_desc.move(200, 127)
-        l_sql_base_path = QLabel(tab_1)
-        l_sql_base_path.move(260, 127)
-        l_sql_base_path.setText(database_prj)
-        l_sql_user_desc = QLabel('User: ',tab_1)
-        l_sql_user_desc.move(200, 142)
-        l_sql_user_path = QLabel(tab_1)
-        l_sql_user_path.move(260, 142)
-        l_sql_user_path.setText(user_prj)
-        l_sql_pass_desc = QLabel('Password: ',tab_1)
-        l_sql_pass_desc.move(200, 157)
-        l_sql_pass_path = QLabel(tab_1)
-        l_sql_pass_path.move(260, 157)
-        l_sql_pass_path.setText(password_prj)
-        l_sql_host_desc = QLabel('Host: ',tab_1)
-        l_sql_host_desc.move(200, 172)
-        l_sql_host_path = QLabel(tab_1)
-        l_sql_host_path.move(260, 172)
-        l_sql_host_path.setText(host_prj)
-        l_sql_port_desc = QLabel('Port: ',tab_1)
-        l_sql_port_desc.move(200, 187)
-        l_sql_port_path = QLabel(tab_1)
-        l_sql_port_path.move(260, 187)
-        l_sql_port_path.setText(port_prj)
+        l_sql_msg_port_path.move(260, 95)
+        l_sql_msg_port_path.setText(connect.port_msg)
+        self.port_msg = connect.port_msg
 
         # ------------------Импорт КЗФКП------------------
         readtablbutt = QPushButton('Прочитать шапку таблицы', tab_2)
         readtablbutt.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
-        readtablbutt.resize(150,25)
+        readtablbutt.resize(150, 25)
         readtablbutt.move(350, 10) 
         readtablbutt.clicked.connect(self.read_hat_tabl)
         self.select_uso = QComboBox(tab_2)
         self.select_uso.addItem('Выбери таблицу')
         self.select_uso.setStyleSheet('border: 1px solid; border-radius: 3px;')
         self.select_uso.move(10, 10)
-        self.select_uso.resize(150,25)
+        self.select_uso.resize(150, 25)
         self.select_uso.currentIndexChanged.connect(self.click_comboBox)
         self.select_row = QLineEdit(tab_2, placeholderText='Заполни строку заголовка', clearButtonEnabled=True)
         self.select_row.setStyleSheet('border: 1px solid #6f7370; border: 1px solid; border-radius: 3px;')
         self.select_row.move(180, 10)
-        self.select_row.resize(150,25)
+        self.select_row.resize(150, 25)
         self.select_row.returnPressed.connect(self.read_hat_tabl)
 
         self.q_type_sig = QComboBox(tab_2)
         self.q_type_sig.move(10, 55)
-        self.q_type_sig.resize(150,25)
+        self.q_type_sig.resize(150, 25)
         self.q_type_sig.setStyleSheet('border: 1px solid; border-radius: 3px;')
         self.q_tag = QComboBox(tab_2)
         self.q_tag.move(170, 55)
-        self.q_tag.resize(150,25)
+        self.q_tag.resize(150, 25)
         self.q_tag.setStyleSheet('border: 1px solid; border-radius: 3px;')
         self.q_dict = QComboBox(tab_2)
         self.q_dict.move(330, 55)
-        self.q_dict.resize(150,25)
+        self.q_dict.resize(150, 25)
         self.q_dict.setStyleSheet('border: 1px solid; border-radius: 3px;')
         self.q_schema = QComboBox(tab_2)
         self.q_schema.move(10, 90)
-        self.q_schema.resize(150,25)
+        self.q_schema.resize(150, 25)
         self.q_schema.setStyleSheet('border: 1px solid; border-radius: 3px;')
         self.q_klk = QComboBox(tab_2)
         self.q_klk.move(170, 90)
-        self.q_klk.resize(150,25)
+        self.q_klk.resize(150, 25)
         self.q_klk.setStyleSheet('border: 1px solid; border-radius: 3px;')
         self.q_kont = QComboBox(tab_2)
         self.q_kont.move(330, 90)
-        self.q_kont.resize(150,25)
+        self.q_kont.resize(150, 25)
         self.q_kont.setStyleSheet('border: 1px solid; border-radius: 3px;')
         self.q_basket = QComboBox(tab_2)
         self.q_basket.move(10, 125)
-        self.q_basket.resize(150,25)
+        self.q_basket.resize(150, 25)
         self.q_basket.setStyleSheet('border: 1px solid; border-radius: 3px;')
         self.q_mod = QComboBox(tab_2)
         self.q_mod.move(170, 125)
-        self.q_mod.resize(150,25)
+        self.q_mod.resize(150, 25)
         self.q_mod.setStyleSheet('border: 1px solid; border-radius: 3px;')
         self.q_channel = QComboBox(tab_2)
         self.q_channel.move(330, 125)
-        self.q_channel.resize(150,25)
+        self.q_channel.resize(150, 25)
         self.q_channel.setStyleSheet('border: 1px solid; border-radius: 3px;')
 
         self.l_type_sig = QLabel('Тип сигнала', tab_2)
@@ -264,28 +241,28 @@ class Widget(QWidget):
         savebasebutt = QPushButton('Сохранить новое УСО', tab_2)
         savebasebutt.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         savebasebutt.setToolTip('''Добавляются новые сигналы в конец таблицы''')
-        savebasebutt.resize(150,25)
+        savebasebutt.resize(150, 25)
         savebasebutt.move(330, 170) 
         savebasebutt.clicked.connect(self.start_fill_base)
 
         updatebasebutt = QPushButton('Обновить данные УСО', tab_2)
         updatebasebutt.setStyleSheet("background: #b2b4eb; border: 1px solid; border-radius: 3px;")
         updatebasebutt.setToolTip('''Сигнал проверяется по шкафу, модулю, корзине и каналу. Если такой отсутствует,\nто добавляется новый в конец таблицы, иначе данные которые различаются обновляются''')
-        updatebasebutt.resize(150,25)
+        updatebasebutt.resize(150, 25)
         updatebasebutt.move(330, 205) 
         updatebasebutt.clicked.connect(self.update_fill_base)
 
         cleartablbutt = QPushButton('Очистить таблицу signals', tab_2)
         cleartablbutt.setStyleSheet("background: #aeb37b; border: 1px solid; border-radius: 3px;")
-        cleartablbutt.resize(170,25)
+        cleartablbutt.resize(170, 25)
         cleartablbutt.move(10, 170) 
         cleartablbutt.clicked.connect(self.clear_table)
         # ------------------Заполнение таблиц------------------
         # Size default
         b_width_one = 27
         b_width_two = 110
-        l_height    = 22
-        b_height    = 18
+        l_height = 22
+        b_height = 18
 
         # HardWare
         self.kk_is_true = False
@@ -295,13 +272,13 @@ class Widget(QWidget):
         b_io_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px; ")
         b_io_basket.setToolTip('''Конфигурация корзин в проекте CodeSys. Обновления таблицы нет! При новом заполнении строки добавляются в конец таблицы. 
         После генерации заполнить вручную столбец Идентификатор!''')
-        b_io_basket.resize(80,23)
+        b_io_basket.resize(80, 23)
         b_io_basket.move(b_width_one, b_height) 
         b_io_basket.clicked.connect(self.filling_hardware)
         b_clear_tabl = QPushButton('Очистить', tab_3)
         b_clear_tabl.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_tabl.setToolTip("Очистить таблицу HardWare")
-        b_clear_tabl.resize(80,23)
+        b_clear_tabl.resize(80, 23)
         b_clear_tabl.move(b_width_two, b_height) 
         b_clear_tabl.clicked.connect(self.clear_tabl)
         c_kk_is_true = QCheckBox('Есть KK?', tab_3)
@@ -314,13 +291,13 @@ class Widget(QWidget):
         b_uso_basket = QPushButton('Заполнить', tab_3)
         b_uso_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_uso_basket.setToolTip("Шкафная дигностика. Должны быть заполнены таблицы AI и DI")
-        b_uso_basket.resize(80,23)
+        b_uso_basket.resize(80, 23)
         b_uso_basket.move(b_width_one, b_height + 26) 
         b_uso_basket.clicked.connect(self.filling_uso)
         b_clear_uso = QPushButton('Очистить', tab_3)
         b_clear_uso.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_uso.setToolTip("Очистить таблицу USO")
-        b_clear_uso.resize(80,23)
+        b_clear_uso.resize(80, 23)
         b_clear_uso.move(b_width_two, b_height + 26) 
         b_clear_uso.clicked.connect(self.clear_uso_tabl)
         # AI
@@ -329,7 +306,7 @@ class Widget(QWidget):
         b_ai_basket = QPushButton('Заполнить', tab_3)
         b_ai_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_ai_basket.setToolTip("Для корректного заполнения таблицы AI, необходимо указать тип сигнала в таблице signals")
-        b_ai_basket.resize(80,23)
+        b_ai_basket.resize(80, 23)
         b_ai_basket.move(b_width_one, b_height + 52) 
         b_ai_basket.clicked.connect(self.filling_ai)
         b_clear_ai = QPushButton('Очистить', tab_3)
@@ -344,13 +321,13 @@ class Widget(QWidget):
         b_ao_basket = QPushButton('Заполнить', tab_3)
         b_ao_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_ao_basket.setToolTip("Для корректного заполнения таблицы AO, необходимо указать тип сигнала в таблице signals")
-        b_ao_basket.resize(80,23)
+        b_ao_basket.resize(80, 23)
         b_ao_basket.move(b_width_one, b_height + 78) 
         b_ao_basket.clicked.connect(self.filling_ao)
         b_clear_ao = QPushButton('Очистить', tab_3)
         b_clear_ao.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_ao.setToolTip("Очистить таблицу AO")
-        b_clear_ao.resize(80,23)
+        b_clear_ao.resize(80, 23)
         b_clear_ao.move(b_width_two, b_height + 78) 
         b_clear_ao.clicked.connect(self.clear_ao_tabl)
         # DI
@@ -360,13 +337,13 @@ class Widget(QWidget):
         b_di_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_di_basket.setToolTip('''Для корректного заполнения таблицы DI, необходимо указать тип сигнала в таблице signals, 
         а также заполнить таблицу hardware, и подписать идентификатор шкафа!''')
-        b_di_basket.resize(80,23)
+        b_di_basket.resize(80, 23)
         b_di_basket.move(b_width_one, b_height + 104) 
         b_di_basket.clicked.connect(self.filling_di)
         b_clear_di = QPushButton('Очистить', tab_3)
         b_clear_di.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_di.setToolTip("Очистить таблицу DI")
-        b_clear_di.resize(80,23)
+        b_clear_di.resize(80, 23)
         b_clear_di.move(b_width_two, b_height + 104) 
         b_clear_di.clicked.connect(self.clear_di_tabl)
         # DO
@@ -382,7 +359,7 @@ class Widget(QWidget):
         b_clear_do = QPushButton('Очистить', tab_3)
         b_clear_do.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_do.setToolTip("Очистить таблицу DO")
-        b_clear_do.resize(80,23)
+        b_clear_do.resize(80, 23)
         b_clear_do.move(b_width_two, b_height + 130) 
         b_clear_do.clicked.connect(self.clear_do_tabl)
         # RS
@@ -390,13 +367,13 @@ class Widget(QWidget):
         l_rs.move(2, l_height + 156)
         b_rs_basket = QPushButton('Заполнить', tab_3)
         b_rs_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
-        b_rs_basket.resize(80,23)
+        b_rs_basket.resize(80, 23)
         b_rs_basket.move(b_width_one, b_height + 156) 
         b_rs_basket.clicked.connect(self.filling_rs)
         b_clear_rs = QPushButton('Очистить', tab_3)
         b_clear_rs.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_rs.setToolTip("Очистить таблицу Интерфейсные каналы")
-        b_clear_rs.resize(80,23)
+        b_clear_rs.resize(80, 23)
         b_clear_rs.move(b_width_two, b_height + 156) 
         b_clear_rs.clicked.connect(self.clear_rs_tabl)
 
@@ -407,13 +384,13 @@ class Widget(QWidget):
         b_ktpr_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_ktpr_basket.setToolTip('''Станционные защиты. Таблица не заполняется! 
         - Если отсутствует в базе, то добавиться новая со строками на 96 защит''')
-        b_ktpr_basket.resize(80,23)
+        b_ktpr_basket.resize(80, 23)
         b_ktpr_basket.move(b_width_one + 210, b_height) 
         b_ktpr_basket.clicked.connect(self.filling_ktpr)
         b_clear_ktpr = QPushButton('Очистить', tab_3)
         b_clear_ktpr.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_ktpr.setToolTip("Очистить таблицу KTPR")
-        b_clear_ktpr.resize(80,23)
+        b_clear_ktpr.resize(80, 23)
         b_clear_ktpr.move(b_width_two + 210, b_height) 
         b_clear_ktpr.clicked.connect(self.clear_ktpr_tabl)
         # KTPRP
@@ -423,13 +400,13 @@ class Widget(QWidget):
         b_ktprp_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_ktprp_basket.setToolTip('''Защиты по пожару. Таблица не заполняется! 
         - Если отсутствует в базе, то добавиться новая, со строками на 30 защит''')
-        b_ktprp_basket.resize(80,23)
+        b_ktprp_basket.resize(80, 23)
         b_ktprp_basket.move(b_width_one + 210, b_height + 26) 
         b_ktprp_basket.clicked.connect(self.filling_ktprp)
         b_clear_ktprp = QPushButton('Очистить', tab_3)
         b_clear_ktprp.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_ktprp.setToolTip("Очистить таблицу KTPRP")
-        b_clear_ktprp.resize(80,23)
+        b_clear_ktprp.resize(80, 23)
         b_clear_ktprp.move(b_width_two + 210, b_height + 26) 
         b_clear_ktprp.clicked.connect(self.clear_ktprp_tabl)
         # KTPRA
@@ -439,13 +416,13 @@ class Widget(QWidget):
         b_ktpra_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_ktpra_basket.setToolTip('''Агрегатные защиты. Таблица не заполняется! 
         - Если отсутствует в базе, то добавиться новая со строками на 4 агрегата и 96 защит''')
-        b_ktpra_basket.resize(80,23)
+        b_ktpra_basket.resize(80, 23)
         b_ktpra_basket.move(b_width_one + 210, b_height + 52) 
         b_ktpra_basket.clicked.connect(self.filling_ktpra)
         b_clear_ktpra = QPushButton('Очистить', tab_3)
         b_clear_ktpra.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_ktpra.setToolTip("Очистить таблицу KTPRA")
-        b_clear_ktpra.resize(80,23)
+        b_clear_ktpra.resize(80, 23)
         b_clear_ktpra.move(b_width_two + 210, b_height + 52) 
         b_clear_ktpra.clicked.connect(self.clear_ktpra_tabl)
         # KTPRS
@@ -455,13 +432,13 @@ class Widget(QWidget):
         b_ktprs_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_ktprs_basket.setToolTip('''Предельные защиты. Таблица не заполняется! 
         - Если отсутствует в базе, то добавиться новая со строками на 20 защит''')
-        b_ktprs_basket.resize(80,23)
+        b_ktprs_basket.resize(80, 23)
         b_ktprs_basket.move(b_width_one + 210, b_height + 78) 
         b_ktprs_basket.clicked.connect(self.filling_ktprs)
         b_clear_ktprs = QPushButton('Очистить', tab_3)
         b_clear_ktprs.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_ktprs.setToolTip("Очистить таблицу KTPRS")
-        b_clear_ktprs.resize(80,23)
+        b_clear_ktprs.resize(80, 23)
         b_clear_ktprs.move(b_width_two + 210, b_height + 78) 
         b_clear_ktprs.clicked.connect(self.clear_ktprs_tabl)
         # GMPNA
@@ -471,13 +448,13 @@ class Widget(QWidget):
         b_gmpna_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_gmpna_basket.setToolTip('''Агрегатные готовности. Таблица не заполняется! 
         - Если отсутствует в базе, то добавиться новая со строками на 4 агрегата и 64 готовности''')
-        b_gmpna_basket.resize(80,23)
+        b_gmpna_basket.resize(80, 23)
         b_gmpna_basket.move(b_width_one + 210, b_height + 104) 
         b_gmpna_basket.clicked.connect(self.filling_gmpna)
         b_clear_gmpna = QPushButton('Очистить', tab_3)
         b_clear_gmpna.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_gmpna.setToolTip("Очистить таблицу GMPNA")
-        b_clear_gmpna.resize(80,23)
+        b_clear_gmpna.resize(80, 23)
         b_clear_gmpna.move(b_width_two + 210, b_height + 104) 
         b_clear_gmpna.clicked.connect(self.clear_gmpna_tabl)
         # DPS
@@ -486,13 +463,13 @@ class Widget(QWidget):
         b_dps_basket = QPushButton('Подготовить', tab_3)
         b_dps_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_dps_basket.setToolTip('''Датчики прохождения поточных устройств. Таблица не заполняется!''')
-        b_dps_basket.resize(80,23)
+        b_dps_basket.resize(80, 23)
         b_dps_basket.move(b_width_one + 210, b_height + 130) 
         b_dps_basket.clicked.connect(self.filling_dps)
         b_clear_dps = QPushButton('Очистить', tab_3)
         b_clear_dps.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_dps.setToolTip("Очистить таблицу DPS")
-        b_clear_dps.resize(80,23)
+        b_clear_dps.resize(80, 23)
         b_clear_dps.move(b_width_two + 210, b_height + 130) 
         b_clear_dps.clicked.connect(self.clear_dps_tabl)
 
@@ -504,20 +481,20 @@ class Widget(QWidget):
         self.l_count_NA.setToolTip('Укажи количество НА (по умолчанию 4)')
         self.l_count_NA.setStyleSheet('border: 1px solid; border-radius: 3px;')
         self.l_count_NA.move(b_width_two + 420, l_height-20)
-        self.l_count_NA.resize(80,15)
+        self.l_count_NA.resize(80, 15)
         b_umpna_basket = QPushButton('Заполнить', tab_3)
         b_umpna_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_umpna_basket.setToolTip('''Насосные агрегаты UMPNA:
         - Если таблица пустая -> добавятся и заполнятся новые ряды = количеству агрегатов;
         - Если количество рядов < количества агрегатов -> существующие обновятся или останутся без изменения, недостающие добавятся и заполнятся;
         - Если количество рядов = количеству агрегатов -> обновятся или останутся без изменения''')
-        b_umpna_basket.resize(80,23)
+        b_umpna_basket.resize(80, 23)
         b_umpna_basket.move(b_width_one + 420, b_height) 
         b_umpna_basket.clicked.connect(self.filling_umpna)
         b_clear_umpna = QPushButton('Очистить', tab_3)
         b_clear_umpna.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_umpna.setToolTip("Очистить таблицу Насосные агрегаты UMPNA")
-        b_clear_umpna.resize(80,23)
+        b_clear_umpna.resize(80, 23)
         b_clear_umpna.move(b_width_two + 420, b_height) 
         b_clear_umpna.clicked.connect(self.clear_umpna_tabl)
          # ZD
@@ -535,13 +512,13 @@ class Widget(QWidget):
         - Если появилась новая задвижка то добавится в конец таблицы;
         - Если есть изменения у задвижки в таблице DI или DO -> они будут найдены и заменены на новые;
         - Если задвижка больше не существует в проекте -> будет сообщение, что задвижки не существует!''')
-        b_zd_basket.resize(80,23)
+        b_zd_basket.resize(80, 23)
         b_zd_basket.move(b_width_one + 420, b_height + 26) 
         b_zd_basket.clicked.connect(self.filling_valves)
         b_clear_zd = QPushButton('Очистить', tab_3)
         b_clear_zd.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_zd.setToolTip("Очистить таблицу ZD")
-        b_clear_zd.resize(80,23)
+        b_clear_zd.resize(80, 23)
         b_clear_zd.move(b_width_two + 420, b_height + 26) 
         b_clear_zd.clicked.connect(self.clear_valves_tabl)
         # VS
@@ -558,13 +535,13 @@ class Widget(QWidget):
         - Если появилась новая вспомсистема то добавится в конец таблицы;
         - Если есть изменения у вспомсистемы в таблице DI или DO -> они будут найдены и заменены на новые;
         - Если вспомсистемы больше не существует в проекте -> будет сообщение, что вспомсистемы не существует!''')
-        b_vs_basket.resize(80,23)
+        b_vs_basket.resize(80, 23)
         b_vs_basket.move(b_width_one + 420, b_height + 52) 
         b_vs_basket.clicked.connect(self.filling_vs)
         b_clear_vs = QPushButton('Очистить', tab_3)
         b_clear_vs.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_vs.setToolTip("Очистить таблицу VS")
-        b_clear_vs.resize(80,23)
+        b_clear_vs.resize(80, 23)
         b_clear_vs.move(b_width_two + 420, b_height + 52) 
         b_clear_vs.clicked.connect(self.clear_vs_tabl)
         # VSGRP
@@ -574,13 +551,13 @@ class Widget(QWidget):
         b_vsgrp_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_vsgrp_basket.setToolTip('''Группы вспомсистем VSGRP. Таблица не заполняется! 
         - Если отсутствует в базе, то добавиться новая таблица''')
-        b_vsgrp_basket.resize(80,23)
+        b_vsgrp_basket.resize(80, 23)
         b_vsgrp_basket.move(b_width_one + 420, b_height + 78) 
         b_vsgrp_basket.clicked.connect(self.filling_vsgrp)
         b_clear_vsgrp = QPushButton('Очистить', tab_3)
         b_clear_vsgrp.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_vsgrp.setToolTip("Очистить таблицу VSGRP")
-        b_clear_vsgrp.resize(80,23)
+        b_clear_vsgrp.resize(80, 23)
         b_clear_vsgrp.move(b_width_two + 420, b_height + 78) 
         b_clear_vsgrp.clicked.connect(self.clear_vsgrp_tabl)
         # VV
@@ -593,13 +570,13 @@ class Widget(QWidget):
         Существование сигнала проходт по названию.
         - Если сигнал существует -> происходит проверка по включению и отключению;
         - Если нет -> добавляется новый сигнал.''')
-        b_vv_basket.resize(80,23)
+        b_vv_basket.resize(80, 23)
         b_vv_basket.move(b_width_one + 420, b_height + 104) 
         b_vv_basket.clicked.connect(self.filling_vv)
         b_clear_vv = QPushButton('Очистить', tab_3)
         b_clear_vv.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_vv.setToolTip("Очистить таблицу VV")
-        b_clear_vv.resize(80,23)
+        b_clear_vv.resize(80, 23)
         b_clear_vv.move(b_width_two + 420, b_height + 104) 
         b_clear_vv.clicked.connect(self.clear_vv_tabl)
         # UTS
@@ -611,13 +588,13 @@ class Widget(QWidget):
         Существование сигнала определяется по шкафу,корзине, модулю и каналу. 
         - Если сигнал существует -> происходит проверка по названию, тегу и команде включения;
         - Если нет -> добавляется новый сигнал.''')
-        b_uts_basket.resize(80,23)
+        b_uts_basket.resize(80, 23)
         b_uts_basket.move(b_width_one + 420, b_height + 130) 
         b_uts_basket.clicked.connect(self.filling_uts)
         b_clear_uts = QPushButton('Очистить', tab_3)
         b_clear_uts.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_uts.setToolTip("Очистить таблицу UTS")
-        b_clear_uts.resize(80,23)
+        b_clear_uts.resize(80, 23)
         b_clear_uts.move(b_width_two + 420, b_height + 130) 
         b_clear_uts.clicked.connect(self.clear_uts_tabl)
         # UPTS
@@ -629,13 +606,13 @@ class Widget(QWidget):
         Существование сигнала определяется по шкафу,корзине, модулю и каналу. 
         - Если сигнал существует -> происходит проверка по названию, тегу и команде включения;
         - Если нет -> добавляется новый сигнал.''')
-        b_upts_basket.resize(80,23)
+        b_upts_basket.resize(80, 23)
         b_upts_basket.move(b_width_one + 420, b_height + 156) 
         b_upts_basket.clicked.connect(self.filling_upts)
         b_clear_upts = QPushButton('Очистить', tab_3)
         b_clear_upts.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_upts.setToolTip("Очистить таблицу UPTS")
-        b_clear_upts.resize(80,23)
+        b_clear_upts.resize(80, 23)
         b_clear_upts.move(b_width_two + 420, b_height + 156) 
         b_clear_upts.clicked.connect(self.clear_upts_tabl)
         # PI
@@ -650,13 +627,13 @@ class Widget(QWidget):
         - Если таблица пустая -> добавятся и заполнятся новые ряды = найденным ПИ(поиск происходит по ключевым словам);
         - Если появился новаый ПИ то добавится в конец таблицы;
         - Если есть изменения у ПИ в таблице AI или DO -> они будут найдены и заменены на новые.''')
-        b_pi_basket.resize(80,23)
+        b_pi_basket.resize(80, 23)
         b_pi_basket.move(b_width_one + 420, b_height + 182) 
         b_pi_basket.clicked.connect(self.filling_pi)
         b_clear_pi = QPushButton('Очистить', tab_3)
         b_clear_pi.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_pi.setToolTip("Очистить таблицу PI")
-        b_clear_pi.resize(80,23)
+        b_clear_pi.resize(80, 23)
         b_clear_pi.move(b_width_two + 420, b_height + 182) 
         b_clear_pi.clicked.connect(self.clear_pi_tabl)
 
@@ -668,13 +645,13 @@ class Widget(QWidget):
         b_tm_umpna_basket.setToolTip('''Временные уставки UMPNA.
         Должна быть заполнена таблица UMPNA, откуда берется название и по умолчанию добавляются уставки.
         Проверки нет! Для нового заполнения необходимо очистить таблицу, иначе новые записи добавятся в конец таблицы!''')
-        b_tm_umpna_basket.resize(80,23)
+        b_tm_umpna_basket.resize(80, 23)
         b_tm_umpna_basket.move(b_width_one + 647, b_height) 
         b_tm_umpna_basket.clicked.connect(self.filling_tmNA_umpna)
         b_clear_tm_umpna = QPushButton('Очистить', tab_3)
         b_clear_tm_umpna.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_tm_umpna.setToolTip("Очистить таблицу Временные уставки UMPNA")
-        b_clear_tm_umpna.resize(80,23)
+        b_clear_tm_umpna.resize(80, 23)
         b_clear_tm_umpna.move(b_width_two + 647, b_height) 
         b_clear_tm_umpna.clicked.connect(self.clear_tmNA_umpna_tabl)
         # tmZD
@@ -685,13 +662,13 @@ class Widget(QWidget):
         b_tm_zd_basket.setToolTip('''Временные уставки ZD.
         Должна быть заполнена таблица ZD, откуда берется название и по умолчанию добавляются уставки.
         Проверки нет! Для нового заполнения необходимо очистить таблицу, иначе новые записи добавятся в конец таблицы!''')
-        b_tm_zd_basket.resize(80,23)
+        b_tm_zd_basket.resize(80, 23)
         b_tm_zd_basket.move(b_width_one + 647, b_height + 26) 
         b_tm_zd_basket.clicked.connect(self.filling_tmzd)
         b_clear_tm_zd = QPushButton('Очистить', tab_3)
         b_clear_tm_zd.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_tm_zd.setToolTip("Очистить таблицу Временные уставки ZD")
-        b_clear_tm_zd.resize(80,23)
+        b_clear_tm_zd.resize(80, 23)
         b_clear_tm_zd.move(b_width_two + 647, b_height + 26) 
         b_clear_tm_zd.clicked.connect(self.clear_tmzd_tabl)
         # tmVS
@@ -702,13 +679,13 @@ class Widget(QWidget):
         b_tm_vs_basket.setToolTip('''Временные уставки VS.
         Должна быть заполнена таблица VS, откуда берется название и по умолчанию добавляются уставки.
         Проверки нет! Для нового заполнения необходимо очистить таблицу, иначе новые записи добавятся в конец таблицы!''')
-        b_tm_vs_basket.resize(80,23)
+        b_tm_vs_basket.resize(80, 23)
         b_tm_vs_basket.move(b_width_one + 647, b_height + 52) 
         b_tm_vs_basket.clicked.connect(self.filling_tmvs)
         b_clear_tm_vs = QPushButton('Очистить', tab_3)
         b_clear_tm_vs.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_tm_vs.setToolTip("Очистить таблицу Временные уставки VS")
-        b_clear_tm_vs.resize(80,23)
+        b_clear_tm_vs.resize(80, 23)
         b_clear_tm_vs.move(b_width_two + 647, b_height + 52) 
         b_clear_tm_vs.clicked.connect(self.clear_tmvs_tabl)
         # tmVSGRP
@@ -719,13 +696,13 @@ class Widget(QWidget):
         b_tm_vsgrp_basket.setToolTip('''Временные уставки VSGRP.
         Должна быть заполнена таблица VSGRP, откуда берется название и по умолчанию добавляются уставки.
         Проверки нет! Для нового заполнения необходимо очистить таблицу, иначе новые записи добавятся в конец таблицы!''')
-        b_tm_vsgrp_basket.resize(80,23)
+        b_tm_vsgrp_basket.resize(80, 23)
         b_tm_vsgrp_basket.move(b_width_one + 647, b_height + 78) 
         b_tm_vsgrp_basket.clicked.connect(self.filling_tmvsgrp)
         b_clear_tm_vsgrp = QPushButton('Очистить', tab_3)
         b_clear_tm_vsgrp.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_tm_vsgrp.setToolTip("Очистить таблицу Временные уставки VSGRP")
-        b_clear_tm_vsgrp.resize(80,23)
+        b_clear_tm_vsgrp.resize(80, 23)
         b_clear_tm_vsgrp.move(b_width_two + 647, b_height + 78) 
         b_clear_tm_vsgrp.clicked.connect(self.clear_tmvsgrp_tabl)
         # tmNA_narab_UMPNA
@@ -736,13 +713,13 @@ class Widget(QWidget):
         b_tm_umpna_basket.setToolTip('''Временные уставки наработки UMPNA.
         Должна быть заполнена таблица UMPNA, откуда берется название и по умолчанию добавляются уставки.
         Проверки нет! Для нового заполнения необходимо очистить таблицу, иначе новые записи добавятся в конец таблицы!''')
-        b_tm_umpna_basket.resize(80,23)
+        b_tm_umpna_basket.resize(80, 23)
         b_tm_umpna_basket.move(b_width_one + 647, b_height + 104) 
         b_tm_umpna_basket.clicked.connect(self.filling_tmNA_umpna_narab)
         b_clear_tm_umpna = QPushButton('Очистить', tab_3)
         b_clear_tm_umpna.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_tm_umpna.setToolTip("Очистить таблицу Временные уставки UMPNA")
-        b_clear_tm_umpna.resize(80,23)
+        b_clear_tm_umpna.resize(80, 23)
         b_clear_tm_umpna.move(b_width_two + 647, b_height + 104) 
         b_clear_tm_umpna.clicked.connect(self.clear_tmNA_umpna_narab_tabl)
          # tmUTS
@@ -753,13 +730,13 @@ class Widget(QWidget):
         b_utstm_basket.setToolTip('''Временные уставки UTS.
         Должна быть заполнена таблица UTS, откуда берется название и по умолчанию добавляются уставки.
         Проверки нет! Для нового заполнения необходимо очистить таблицу, иначе новые записи добавятся в конец таблицы!''')
-        b_utstm_basket.resize(80,23)
+        b_utstm_basket.resize(80, 23)
         b_utstm_basket.move(b_width_one + 647, b_height + 130) 
         b_utstm_basket.clicked.connect(self.filling_uts_tm)
         b_clear_utstm = QPushButton('Очистить', tab_3)
         b_clear_utstm.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_utstm.setToolTip("Очистить таблицу Временные уставки UTS")
-        b_clear_utstm.resize(80,23)
+        b_clear_utstm.resize(80, 23)
         b_clear_utstm.move(b_width_two + 647, b_height + 130) 
         b_clear_utstm.clicked.connect(self.clear_uts_tm_tabl)
         # tmPZ
@@ -770,13 +747,13 @@ class Widget(QWidget):
         b_tm_pz_basket.setToolTip('''Временные уставки PZ.
         Должна быть заполнена таблица PZ, откуда берется название и по умолчанию добавляются уставки.
         Проверки нет! Для нового заполнения необходимо очистить таблицу, иначе новые записи добавятся в конец таблицы!''')
-        b_tm_pz_basket.resize(80,23)
+        b_tm_pz_basket.resize(80, 23)
         b_tm_pz_basket.move(b_width_one + 647, b_height + 156) 
         b_tm_pz_basket.clicked.connect(self.filling_tmpz)
         b_clear_tm_pz = QPushButton('Очистить', tab_3)
         b_clear_tm_pz.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_tm_pz.setToolTip("Очистить таблицу Временные уставки PZ")
-        b_clear_tm_pz.resize(80,23)
+        b_clear_tm_pz.resize(80, 23)
         b_clear_tm_pz.move(b_width_two + 647, b_height + 156) 
         b_clear_tm_pz.clicked.connect(self.clear_tmpz_tabl)
         # PT
@@ -785,13 +762,13 @@ class Widget(QWidget):
         b_pt_basket = QPushButton('Подготовить', tab_3)
         b_pt_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_pt_basket.setToolTip('''Общие настройки пожаротушения PT''')
-        b_pt_basket.resize(80,23)
+        b_pt_basket.resize(80, 23)
         b_pt_basket.move(b_width_one + 647, b_height + 182) 
         b_pt_basket.clicked.connect(self.filling_pt)
         b_clear_pt = QPushButton('Очистить', tab_3)
         b_clear_pt.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_pt.setToolTip("Очистить таблицу Общие настройки пожаротушения PT")
-        b_clear_pt.resize(80,23)
+        b_clear_pt.resize(80, 23)
         b_clear_pt.move(b_width_two + 647, b_height + 182) 
         b_clear_pt.clicked.connect(self.clear_pt_tabl)
        
@@ -801,13 +778,13 @@ class Widget(QWidget):
         b_tm_ts_basket = QPushButton('Подготовить', tab_3)
         b_tm_ts_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_tm_ts_basket.setToolTip('''Подготавливается таблица на 2544 строки''')
-        b_tm_ts_basket.resize(80,23)
+        b_tm_ts_basket.resize(80, 23)
         b_tm_ts_basket.move(b_width_one + 860, b_height) 
         b_tm_ts_basket.clicked.connect(self.filling_tmts)
         b_clear_tm_ts = QPushButton('Очистить', tab_3)
         b_clear_tm_ts.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_tm_ts.setToolTip("Очистить таблицу Телемеханика - ТС")
-        b_clear_tm_ts.resize(80,23)
+        b_clear_tm_ts.resize(80, 23)
         b_clear_tm_ts.move(b_width_two + 860, b_height) 
         b_clear_tm_ts.clicked.connect(self.clear_tmts_tabl)
         # TM_TI4
@@ -816,13 +793,13 @@ class Widget(QWidget):
         b_tm_ti4_basket = QPushButton('Подготовить', tab_3)
         b_tm_ti4_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_tm_ti4_basket.setToolTip('''Подготавливается таблица на 108 строки''')
-        b_tm_ti4_basket.resize(80,23)
+        b_tm_ti4_basket.resize(80, 23)
         b_tm_ti4_basket.move(b_width_one + 860, b_height + 26) 
         b_tm_ti4_basket.clicked.connect(self.filling_tmti4)
         b_clear_tm_ti4 = QPushButton('Очистить', tab_3)
         b_clear_tm_ti4.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_tm_ti4.setToolTip("Очистить таблицу Телемеханика - ТИ4")
-        b_clear_tm_ti4.resize(80,23)
+        b_clear_tm_ti4.resize(80, 23)
         b_clear_tm_ti4.move(b_width_two + 860, b_height + 26) 
         b_clear_tm_ti4.clicked.connect(self.clear_tmti4_tabl)
         # TM_TI2
@@ -831,13 +808,13 @@ class Widget(QWidget):
         b_tm_ti2_basket = QPushButton('Подготовить', tab_3)
         b_tm_ti2_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_tm_ti2_basket.setToolTip('''Подготавливается таблица на 50 строк''')
-        b_tm_ti2_basket.resize(80,23)
+        b_tm_ti2_basket.resize(80, 23)
         b_tm_ti2_basket.move(b_width_one + 860, b_height + 52) 
         b_tm_ti2_basket.clicked.connect(self.filling_tmti2)
         b_clear_tm_ti2 = QPushButton('Очистить', tab_3)
         b_clear_tm_ti2.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_tm_ti2.setToolTip("Очистить таблицу Телемеханика - ТИ2")
-        b_clear_tm_ti2.resize(80,23)
+        b_clear_tm_ti2.resize(80, 23)
         b_clear_tm_ti2.move(b_width_two + 860, b_height + 52) 
         b_clear_tm_ti2.clicked.connect(self.clear_tmti2_tabl)
         # TM_TII
@@ -846,13 +823,13 @@ class Widget(QWidget):
         b_tm_tii_basket = QPushButton('Подготовить', tab_3)
         b_tm_tii_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_tm_tii_basket.setToolTip('''Подготавливается таблица на 54 строк''')
-        b_tm_tii_basket.resize(80,23)
+        b_tm_tii_basket.resize(80, 23)
         b_tm_tii_basket.move(b_width_one + 860, b_height + 78) 
         b_tm_tii_basket.clicked.connect(self.filling_tmtii)
         b_clear_tm_tii = QPushButton('Очистить', tab_3)
         b_clear_tm_tii.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_tm_tii.setToolTip("Очистить таблицу Телемеханика - ТИИ")
-        b_clear_tm_tii.resize(80,23)
+        b_clear_tm_tii.resize(80, 23)
         b_clear_tm_tii.move(b_width_two + 860, b_height + 78) 
         b_clear_tm_tii.clicked.connect(self.clear_tmtii_tabl)
         # TM_TU
@@ -861,13 +838,13 @@ class Widget(QWidget):
         b_tm_tu_basket = QPushButton('Подготовить', tab_3)
         b_tm_tu_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_tm_tu_basket.setToolTip('''Подготавливается таблица на 240 строк''')
-        b_tm_tu_basket.resize(80,23)
+        b_tm_tu_basket.resize(80, 23)
         b_tm_tu_basket.move(b_width_one + 860, b_height + 104) 
         b_tm_tu_basket.clicked.connect(self.filling_tmtu)
         b_clear_tm_tu = QPushButton('Очистить', tab_3)
         b_clear_tm_tu.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_tm_tu.setToolTip("Очистить таблицу Телемеханика - ТУ")
-        b_clear_tm_tu.resize(80,23)
+        b_clear_tm_tu.resize(80, 23)
         b_clear_tm_tu.move(b_width_two + 860, b_height + 104) 
         b_clear_tm_tu.clicked.connect(self.clear_tmtu_tabl)
         # TM_TR4
@@ -876,13 +853,13 @@ class Widget(QWidget):
         b_tm_tr4_basket = QPushButton('Подготовить', tab_3)
         b_tm_tr4_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_tm_tr4_basket.setToolTip('''Подготавливается таблица на 10 строк''')
-        b_tm_tr4_basket.resize(80,23)
+        b_tm_tr4_basket.resize(80, 23)
         b_tm_tr4_basket.move(b_width_one + 860, b_height + 130) 
         b_tm_tr4_basket.clicked.connect(self.filling_tmtr4)
         b_clear_tm_tr4 = QPushButton('Очистить', tab_3)
         b_clear_tm_tr4.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_tm_tr4.setToolTip("Очистить таблицу Телемеханика - ТP4")
-        b_clear_tm_tr4.resize(80,23)
+        b_clear_tm_tr4.resize(80, 23)
         b_clear_tm_tr4.move(b_width_two + 860, b_height + 130) 
         b_clear_tm_tr4.clicked.connect(self.clear_tmtr4_tabl)
         # TM_TR2
@@ -891,19 +868,18 @@ class Widget(QWidget):
         b_tm_tr2_basket = QPushButton('Подготовить', tab_3)
         b_tm_tr2_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_tm_tr2_basket.setToolTip('''Подготавливается таблица на 10 строк''')
-        b_tm_tr2_basket.resize(80,23)
+        b_tm_tr2_basket.resize(80, 23)
         b_tm_tr2_basket.move(b_width_one + 860, b_height + 156) 
         b_tm_tr2_basket.clicked.connect(self.filling_tmtr2)
         b_clear_tm_tr2 = QPushButton('Очистить', tab_3)
         b_clear_tm_tr2.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_tm_tr2.setToolTip("Очистить таблицу Телемеханика - ТP2")
-        b_clear_tm_tr2.resize(80,23)
+        b_clear_tm_tr2.resize(80, 23)
         b_clear_tm_tr2.move(b_width_two + 860, b_height + 156) 
         b_clear_tm_tr2.clicked.connect(self.clear_tmtr2_tabl)
        
         # ------------------Сообщения------------------
         self.list_gen_msg = []
-        self.gen_sql = Generate_database_SQL()
         # Диагностика
         l_msg_desc = QLabel('Сообщения', tab_4)
         l_msg_desc.move(150, 5)
@@ -1083,26 +1059,26 @@ class Widget(QWidget):
         b_export_list = QPushButton('Файл импорта', tab_4)
         b_export_list.setStyleSheet("border: 1px solid; border-radius: 3px;")
         b_export_list.setToolTip('''Создается отдельный файл таблиц для ручной генерации базы данных PostgreSQL''')
-        b_export_list.resize(120,23)
+        b_export_list.resize(120, 23)
         b_export_list.move(10, 180) 
         b_export_list.clicked.connect(self.export_list)
         b_export_sql = QPushButton('Генерировать в базу', tab_4)
         b_export_sql.setStyleSheet("border: 1px solid; border-radius: 3px;")
         b_export_sql.setToolTip('''Схема: messages\nТаблица: opmessages\nТаблица должна существовать. Повторяющиеся строки удаляются, и добавляются новые''')
-        b_export_sql.resize(120,23)
+        b_export_sql.resize(120, 23)
         b_export_sql.move(150, 180) 
         b_export_sql.clicked.connect(self.write_in_sql)
         # Подтверждение tabl
         b_export_list_tabl = QPushButton('Файл импорта', tab_4)
         b_export_list_tabl.setStyleSheet("border: 1px solid; border-radius: 3px;")
         b_export_list_tabl.setToolTip('''Создается отдельный файл таблиц для ручной генерации базы данных PostgreSQL''')
-        b_export_list_tabl.resize(120,23)
+        b_export_list_tabl.resize(120, 23)
         b_export_list_tabl.move(580, 115) 
         b_export_list_tabl.clicked.connect(self.export_list_tabl)
         b_export_sql_tabl = QPushButton('Генерировать в базу', tab_4)
         b_export_sql_tabl.setStyleSheet("border: 1px solid; border-radius: 3px;")
         b_export_sql_tabl.setToolTip('''Схема: objects\nСуществующая таблица чиститься, если нет, создается новая и заполняется''')
-        b_export_sql_tabl.resize(120,23)
+        b_export_sql_tabl.resize(120, 23)
         b_export_sql_tabl.move(730, 115) 
         b_export_sql_tabl.clicked.connect(self.write_in_sql_tabl)
         b_synh_sql_tabl = QPushButton('Синхронизация', tab_4)
@@ -1234,32 +1210,32 @@ class Widget(QWidget):
         b_omx_list = QPushButton('Заполнить\nструктуру', tab_6)
         b_omx_list.setStyleSheet("border: 1px solid; border-radius: 3px;")
         #b_omx_list.setToolTip('''Создается отдельный файл таблиц для ручной генерации базы данных PostgreSQL''')
-        b_omx_list.resize(120,30)
+        b_omx_list.resize(120, 30)
         b_omx_list.move(30, 170) 
         b_omx_list.clicked.connect(self.omx_list)
         b_omx_clear = QPushButton('Очистить\nструктуру', tab_6)
         b_omx_clear.setStyleSheet("border: 1px solid; border-radius: 3px;")
         #b_omx_clear.setToolTip('''Схема: messages\nТаблица: opmessages\nТаблица должна существовать. Повторяющиеся строки удаляются, и добавляются новые''')
-        b_omx_clear.resize(120,30)
+        b_omx_clear.resize(120, 30)
         b_omx_clear.move(30, 205) 
         b_omx_clear.clicked.connect(self.omx_clear)
 
         b_map_list = QPushButton('Заполнить\nкарту адресов', tab_6)
         b_map_list.setStyleSheet("border: 1px solid; border-radius: 3px;")
         #b_omx_list.setToolTip('''Создается отдельный файл таблиц для ручной генерации базы данных PostgreSQL''')
-        b_map_list.resize(120,30)
+        b_map_list.resize(120, 30)
         b_map_list.move(180, 170) 
         b_map_list.clicked.connect(self.map_list)
         b_map_clear = QPushButton('Очистить\nкарту адресов', tab_6)
         b_map_clear.setStyleSheet("border: 1px solid; border-radius: 3px;")
         #b_omx_clear.setToolTip('''Схема: messages\nТаблица: opmessages\nТаблица должна существовать. Повторяющиеся строки удаляются, и добавляются новые''')
-        b_map_clear.resize(120,30)
+        b_map_clear.resize(120, 30)
         b_map_clear.move(180, 205) 
         b_map_clear.clicked.connect(self.map_clear)
 
         b_hmi_list = QPushButton('Собрать\nPictures', tab_6)
         b_hmi_list.setStyleSheet("border: 1px solid; border-radius: 3px;")
-        b_hmi_list.resize(120,30)
+        b_hmi_list.resize(120, 30)
         b_hmi_list.move(400, 170) 
         b_hmi_list.clicked.connect(self.hmi_list)
         # ------------------СУ------------------
@@ -1361,91 +1337,105 @@ class Widget(QWidget):
         # Подготовить данные
         b_omx_list = QPushButton('Подготовить\nданные', tab_7)
         b_omx_list.setStyleSheet("border: 1px solid; border-radius: 3px;")
-        b_omx_list.resize(120,30)
+        b_omx_list.resize(120, 30)
         b_omx_list.move(120, 170) 
         b_omx_list.clicked.connect(self.su_list)
 
         # Logs
         self.logTextBox = QTextEdit(self)
-        self.logTextBox.setGeometry(5,284,1083,130)
+        self.logTextBox.setGeometry(5, 284, 1083, 130)
         self.logTextBox.setReadOnly(True)
-        self.logs_msg(f'Запущено меню разработки проекта', 1)
+        self.logs_msg('Запущено меню разработки проекта', 1)
         clearButton = QPushButton('Очистить журнал', self)
-        clearButton.setGeometry(952,390,120,25)
+        clearButton.setGeometry(952, 390, 120, 25)
         clearButton.clicked.connect(self.clear_textmsg)
 
         # Загружаем пути проекта
         self.path_file_prj()
     # ------------------Соединение------------------
+
     def check_base_sql_msg(self):
-        connect = self.gen_sql.check_database_connect(database_msg, user_msg, password_msg, host_msg, port_msg)
+        connect = self.gen_sql.check_database_connect(self.db_dev,
+                                                      self.user_dev,
+                                                      self.pw_dev,
+                                                      self.host_dev,
+                                                      self.port_dev)
+        if connect is True:
+            self.l_sql_dev_check.setText('Установлено')
+            self.l_sql_dev_check.setStyleSheet("background-color: lightgreen")
+        else:
+            self.l_sql_dev_check.setText('Не установлено')
+            self.l_sql_dev_check.setStyleSheet("background-color: red")
+
+    def check_base_sql_ust(self):
+        connect = self.gen_sql.check_database_connect(self.db_msg,
+                                                      self.user_msg,
+                                                      self.pw_msg,
+                                                      self.host_msg,
+                                                      self.port_msg)
         if connect is True:
             self.l_sql_msg_check.setText('Установлено')
             self.l_sql_msg_check.setStyleSheet("background-color: lightgreen")
         else:
             self.l_sql_msg_check.setText('Не установлено')
             self.l_sql_msg_check.setStyleSheet("background-color: red")
-    def check_base_sql_ust(self):
-        connect =self.gen_sql.check_database_connect(database_prj, user_prj, password_prj, host_prj, port_prj)
-        if connect is True:
-            self.l_sql_ust_check.setText('Установлено')
-            self.l_sql_ust_check.setStyleSheet("background-color: lightgreen")
-        else:
-            self.l_sql_ust_check.setText('Не установлено')
-            self.l_sql_ust_check.setStyleSheet("background-color: red")
     # ------------------Импорт КЗФКП------------------
+
     def update_fill_base(self):
         try:
             if self.сolumn_title_loaded is False: 
-                # Logs
-                self.logs_msg(f'Не загружена шапка таблицы!', 2)
+                self.logs_msg('Не загружена шапка таблицы!', 2)
                 return
 
             dict_column = self.hat_list()
-            data_uso = self.import_sql.import_table(self.select_uso.currentText(), self.select_row.text(), dict_column)
+            data_uso = self.import_sql.import_table(self.select_uso.currentText(),
+                                                    self.select_row.text(),
+                                                    dict_column)
             msg = self.import_sql.column_check()
             self.logs_msg('default', 1, msg, True)
-            msg = self.import_sql.update_for_sql(data_uso, self.select_uso.currentText())
+            msg = self.import_sql.update_for_sql(data_uso,
+                                                 self.select_uso.currentText())
             self.logs_msg('default', 1, msg, True)
-        except:
-            self.logs_msg(f'Ошибка импорта', 2)
+        except Exception:
+            self.logs_msg('Ошибка импорта', 2)
             return
+    
     def start_fill_base(self):
         try:
             if self.сolumn_title_loaded is False: 
-                # Logs
-                self.logs_msg(f'Не загружена шапка таблицы!', 2)
+                self.logs_msg('Не загружена шапка таблицы!', 2)
                 return
-        except:
-            self.logs_msg(f'Ошибка импорта', 2)
+        except Exception:
+            self.logs_msg('Ошибка импорта', 2)
             return
 
         dict_column = self.hat_list()
-        data_uso = self.import_sql.import_table(self.select_uso.currentText(), self.select_row.text(), dict_column)
+        data_uso = self.import_sql.import_table(self.select_uso.currentText(),
+                                                self.select_row.text(),
+                                                dict_column)
         msg = self.import_sql.column_check()
         self.logs_msg('default', 1, msg, True)
-        msg = self.import_sql.import_for_sql(data_uso, self.select_uso.currentText())
+        msg = self.import_sql.import_for_sql(data_uso,
+                                             self.select_uso.currentText())
         self.logs_msg('default', 1, msg, True)
+    
     def path_file_prj(self):
         try:
-            self.import_sql = Import_in_SQL(path_to_exel)
-            # Logs
-            self.logs_msg(f'Соединение с файлом КЗФКП установленно', 1)
-        except:
-            # Logs
-            self.logs_msg(f'Соединение с файлом КЗФКП не установленно', 2)
+            self.import_sql = Import_in_SQL(self.path_to_exel)
+            self.logs_msg('Соединение с файлом КЗФКП установленно', 1)
+        except Exception:
+            self.logs_msg('Соединение с файлом КЗФКП не установленно', 2)
             return
         
-        # Read tables exel
         tables = self.import_sql.read_table()
         self.select_uso.clear()    
         self.select_uso.addItems(tables)
     
     def read_hat_tabl(self):
-        try   : int(self.select_row.text())
-        except: 
-            # Logs
-            self.logs_msg(f'Строка заголовка должна быть заполнена цифрами!', 2)
+        try: 
+            int(self.select_row.text())
+        except Exception: 
+            self.logs_msg('Строка заголовка должна быть заполнена цифрами!', 2)
             return
 
         try:
@@ -1453,11 +1443,9 @@ class Widget(QWidget):
             text_uso = self.select_uso.currentText()
             # Search hat table
             hat_table = self.import_sql.search_hat_table(text_uso, num_row)
-            # Logs
             self.logs_msg(f'Выбран шкаф и строка заголовка таблицы: {text_uso}, {num_row}', 1)
-        except:
-            # Logs
-            self.logs_msg(f'Не выбран шкаф или не указана строка!', 2)
+        except Exception:
+            self.logs_msg('Не выбран шкаф или не указана строка!', 2)
             return
         
         try:
@@ -1470,29 +1458,34 @@ class Widget(QWidget):
             self.q_basket.addItems(hat_table)
             self.q_mod.addItems(hat_table)
             self.q_channel.addItems(hat_table)
-        except:
-            # Logs
-            self.logs_msg(f'Название столбцов должно имееть тип: string', 3)  
+        except Exception:
+            self.logs_msg('Название столбцов должно имееть тип: string', 3)  
             return
         # Column title loaded
         self.сolumn_title_loaded = True
+    
     def hat_list(self):
-        dict_column = {'type_signal' : self.q_type_sig.currentText(),
-                       'uso'         : '',
-                       'tag'         : self.q_tag.currentText(),
-                       'description' : self.q_dict.currentText(),
-                       'schema'      : self.q_schema.currentText(),
-                       'klk'         : self.q_klk.currentText(),
-                       'contact'     : self.q_kont.currentText(),
-                       'basket'      : self.q_basket.currentText(),
-                       'module'      : self.q_mod.currentText(),
-                       'channel'     : self.q_channel.currentText()}
+        dict_column = {'type_signal': self.q_type_sig.currentText(),
+                       'uso': '',
+                       'tag': self.q_tag.currentText(),
+                       'description': self.q_dict.currentText(),
+                       'schema': self.q_schema.currentText(),
+                       'klk': self.q_klk.currentText(),
+                       'contact': self.q_kont.currentText(),
+                       'basket': self.q_basket.currentText(),
+                       'module': self.q_mod.currentText(),
+                       'channel': self.q_channel.currentText()}
         return dict_column  
+    
     def click_comboBox(self):
         self.сolumn_title_loaded = False
+    
     def clear_table(self):
-        msg = self.import_sql.clear_tabl()
+        msg = self.dop_function.clear_tabl('signals',
+                                           'Signals',
+                                           self.list_tabl)
         self.logs_msg('default', 1, msg, True)
+
     # ------------------Импорт КЗФКП------------------
     # HardWare
     def kk_check(self, checked):
@@ -1502,8 +1495,11 @@ class Widget(QWidget):
         else:
             self.kk_is_true = False
             self.logs_msg(f'Добавить КК - флаг cнят', 3)
+    
     def clear_tabl(self):
-        msg = self.dop_function.clear_tabl('hardware', 'HardWare', self.list_tabl)
+        msg = self.dop_function.clear_tabl('hardware',
+                                           'HardWare',
+                                           self.list_tabl)
         self.logs_msg('default', 1, msg, True)
     def filling_hardware(self):
         hw_table = Filling_HardWare()
@@ -2094,7 +2090,7 @@ class Widget(QWidget):
     # Choose table
     def choose_tabl(self):
         name_table = self.combo.currentText()
-        self.ch_tabl = Window_update_sql(name_table)
+        self.ch_tabl = WinEditing(name_table)
         self.ch_tabl.show()
     # Update table
     def update_tabl(self):
@@ -2283,7 +2279,7 @@ class Widget(QWidget):
         if len(self.list_gen_hmi) == 0:             
             msg[f'{today} - HMI Pictures: не выбраны атрибуты'] = 2
             return msg
-        
+        alarm_map = Alarm_map()
         for tabl in self.list_gen_hmi: 
             if tabl == 'HMI_KTPR': 
                 msg.update(gen_station_defence('ktpr', False))
@@ -2298,10 +2294,10 @@ class Widget(QWidget):
                 msg.update(gen_station_defence('gmpna', True))
                 continue
             if tabl == 'HMI_UTS': 
-                msg.update(Alarm_map('UTS'))
+                msg.update(alarm_map.filling_template('uts'))
                 continue
             if tabl == 'HMI_UPTS': 
-                msg.update(Alarm_map('UPTS'))
+                msg.update(alarm_map.filling_template('upts'))
                 continue
         self.logs_msg('default', 1, msg, True)
     # ------------------------СУ-------------------------
@@ -2478,685 +2474,6 @@ class Widget(QWidget):
             elif number_color == 2: self.logTextBox.append(errorFormat.format(f'{today} - {logs}'))
             elif number_color == 3: self.logTextBox.append(warningFormat.format(f'{today} - {logs}'))
             elif number_color == 0: self.logTextBox.append(newFormat.format(f'{today} - {logs}'))
-
-
-# Тип таблицы
-class Window_type_tabl_sql(QWidget):
-    def __init__(self, table_list):
-        super(Window_type_tabl_sql, self).__init__()
-        self.setWindowTitle('Тип столбцов таблицы')
-        self.setStyleSheet("background-color: #e1e5e5;")
-        self.setWindowFlags(Qt.WindowCloseButtonHint)
-        self.resize(500, 600)
-
-        self.TableWidget = QTableWidget(self)
-        self.TableWidget.move(500,600)
-        self.TableWidget.verticalHeader().setVisible(False)
-        self.TableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-
-        innerOutLayout = QVBoxLayout()
-        innerOutLayout.addWidget(self.TableWidget)
-
-        self.TableWidget.setColumnCount(3)
-        self.TableWidget.setRowCount(len(table_list))
-        tabl = ['Имя_eng', 'Имя_rus', 'Тип']
-        self.TableWidget.setHorizontalHeaderLabels(tabl)
-        # Color header
-        style = "::section {""background-color: #bbbabf; }"
-        self.TableWidget.horizontalHeader().setStyleSheet(style)
-
-        for row_t in range(len(table_list)):
-            for column_t in range(3):
-                if column_t == 0: value = table_list[row_t][column_t]
-                if column_t == 1: value = table_list[row_t][column_t]
-                if column_t == 2: value = table_list[row_t][column_t]
-
-                item = QTableWidgetItem(value)
-                item.setFlags(Qt.ItemIsEnabled)
-                self.TableWidget.setItem(row_t, column_t, item)
-
-        self.setLayout(innerOutLayout)
-# Дополнительное окно контекстного меню
-class Window_contexmenu_sql(QMainWindow):
-    def __init__(self):
-        super(Window_contexmenu_sql, self).__init__()
-        self.setWindowTitle('Ссылки')
-        self.setStyleSheet("background-color: #e1e5e5;")
-        self.setWindowFlags(Qt.WindowCloseButtonHint)
-        self.setWindowFlag(Qt.WindowStaysOnTopHint)
-        self.resize(800, 675)
-
-        self.edit_SQL = Editing_table_SQL()
-        self.write_text_cell = ''
-        
-        # Выбор таблицы
-        self.combo = QComboBox(self)
-        self.combo.setStyleSheet("border-radius: 4px; border: 1px solid")
-        self.combo.resize(120,25)
-        self.combo.move(5, 5)
-        self.combo.setFont(QFont('Arial', 10))
-        self.tuple_tabl = {'AI':'ai', 'AO':'ao', 'DI':'di', 'DO':'do', 'ctrlDO':'do', 'NA':'umpna', 'ZD':'zd', 'VS':'vs', 'VSGRP':'vsgrp',
-                           'BUF':'buf', 'RSreq':'rsreq', 'KTPR':'ktpr', 'KTPRA':'ktpra', 'KTPRS':'ktprs', 'NPS':'nps', 'AIVisualValue':'ai', 
-                           'ctrlAO':'ao', 'Facility':'', 'BUFr':'bufr', 'PI':'pi', 'UTS':'uts', 'UPTS':'upts'}
-        for key, tabl in self.tuple_tabl.items():
-           self.combo.addItem(str(key))
-        # Кнопка открыть таблицу
-        open_Button = QPushButton('Открыть таблицу', self)
-        open_Button.setStyleSheet("background: #faf5cd;border-radius: 4px; border: 1px solid")
-        open_Button.move(130, 5)
-        open_Button.resize(120,25)
-        open_Button.clicked.connect(self.open_tabl)
-        # Тип
-        self.combo_type = QComboBox(self)
-        self.combo_type.setStyleSheet("border-radius: 4px; border: 1px solid")
-        self.combo_type.resize(200,25)
-        self.combo_type.move(270, 5)
-        self.combo_type.setFont(QFont('Arial', 10))
-        self.combo_type.activated.connect(self.do_something)
-        # Строка ввода сигнала для поиска
-        self.req_base = QLineEdit(self, placeholderText='Поиск сигнала', clearButtonEnabled=True)
-        self.req_base.setStyleSheet("border-radius: 4px; border: 1px solid")
-        self.req_base.move(500, 5)
-        self.req_base.resize(292,25)
-        self.req_base.textChanged.connect(self.request)
-        # Подтвердить выбранный сигнал
-        confirm_Button = QPushButton('Добавить', self)
-        confirm_Button.setStyleSheet("background: #bfd6bf;border-radius: 4px; border: 1px solid")
-        confirm_Button.move(672, 645)
-        confirm_Button.resize(120,25)
-        confirm_Button.clicked.connect(self.new_text_cell)
-        # Значение ссылки
-        self.link_value = QLineEdit(self, placeholderText='Значение ссылки', clearButtonEnabled=True)
-        self.link_value.setStyleSheet("border-radius: 4px; border: 1px solid")
-        self.link_value.move(315, 645)
-        self.link_value.resize(350,25)
-        # Результат загрузки таблицы
-        self.load = QLabel('', self)
-        self.load.move(10, 643)
-        self.load.resize(200,25)
-
-        self.TableWidget = QTableWidget(self)
-        self.TableWidget.setGeometry(5,40,790,600)
-        self.TableWidget.verticalHeader().setVisible(False)
-        self.TableWidget.horizontalHeader().setStretchLastSection(True) 
-        self.TableWidget.setColumnCount(3)
-        tabl = ['№', 'Тэг', 'Название']
-        self.TableWidget.setHorizontalHeaderLabels(tabl)
-        # Color header
-        style = "::section {""background-color: #bbbabf; }"
-        self.TableWidget.horizontalHeader().setStyleSheet(style)
-        self.TableWidget.cellClicked.connect(self.click_position)
-    # Стройка таблицы
-    def parent_click(self, row, column, qtablew):
-        self.row_parent = row
-        self.column_parent = column
-        self.tablew_parent = qtablew
-    def build(self, table_list):
-        self.list_signal = table_list
-        self.launch_windows(self.list_signal)
-    def launch_windows(self, table_list):
-        self.TableWidget.setRowCount(len(table_list))
-        for row_t in range(len(table_list)):
-            for column_t in range(3):
-                if column_t == 0: value = table_list[row_t][column_t]
-                if column_t == 1: value = table_list[row_t][column_t]
-                if column_t == 2: value = table_list[row_t][column_t]
-
-                if value is None:
-                    item = QTableWidgetItem('')
-                else:
-                    item = QTableWidgetItem(str(value))
-                item.setFlags(Qt.ItemIsEnabled)
-                self.TableWidget.setItem(row_t, column_t, item)
-    # Фильтр поиска
-    def request(self):
-        request = self.req_base.text()
-        if request == '': return
-        # Clear
-        rowcount = self.TableWidget.rowCount()
-        if rowcount != 0: 
-            while rowcount >= 0:
-                self.TableWidget.removeRow(rowcount)
-                rowcount -= 1
-
-        list_filter = self.edit_SQL.filter_text(request, self.list_signal)
-        self.launch_windows(list_filter) 
-    # Цвет строки
-    def setColortoRow(self, rowIndex):
-        for i in range(self.TableWidget.rowCount()):
-            for j in range(self.TableWidget.columnCount()):
-                self.TableWidget.item(i, j).setBackground(QColor(229, 229, 229))
-
-        for j in range(self.TableWidget.columnCount()):
-            self.TableWidget.item(rowIndex, j).setBackground(QColor(107, 219, 132))
-    # Выполнение действий
-    def new_text_cell(self):
-        try:
-            self.cell_value
-            self.tablew_parent.setItem(self.row_parent, self.column_parent, QTableWidgetItem(self.write_text_cell))
-        except: return
-    # Открытие таблицы
-    def open_tabl(self):
-        name_table = self.combo.currentText()
-        for key, tab_value in self.tuple_tabl.items():
-            if key == name_table:
-                need_open = tab_value
-        # Clear
-        rowcount = self.TableWidget.rowCount()
-        if rowcount != 0: 
-            while rowcount >= 0:
-                self.TableWidget.removeRow(rowcount)
-                rowcount -= 1
-        list_signal, msg, color = self.edit_SQL.dop_window_signal(need_open)
-        self.load.setText(msg)
-        self.load.setStyleSheet(f"background-color: {color}")
-        self.build(list_signal)
-
-        list_type = {'AI':['Norm','Warn','Avar','Ndv','LTMin','MTMax','Min6','Min5','Min4','Min3_IsMT10Perc','Min2_IsNdv2ndParam','Min1_IsHighVibStat',
-                           'Max1_IsHighVibStatNMNWR', 'Max2_IsHighVibNoStat', 'Max3_IsAvarVibStat', 'Max4_IsAvarVibStatNMNWR', 'Max5_IsAvarVibNoStat', 
-                           'Max6_IsAvar2Vib', 'Status'],
-                     'DI':['Value', 'Break', 'KZ', 'NC'],
-                     'BUF':['0','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15'],
-                     'RSreq':['ok'],
-                     'ZD':['State_1_Opening','State_2_Opened','State_3_Middle','State_4_Closing','State_5_Closed','Dist','Imit','NOT_EC','Open','Close','Stop',
-                           'StopClose','KVO','KVZ','MPO','MPZ','CorrCO','CorrCZ','VMMO','VMMZ','NOT_ZD_EC_KTP','Local','Mufta','Avar_BUR','CorrCOCorrCZ','ErrMPO',
-                           'ErrMPZ','EC','RS_OK','Blink','Neisprav','NeispravVU','Close_Fail','Open_Fail','Stop_Fail','Unpromted_Open',
-                           'Unpromted_Close','Avar','Diff','WarnClose','ECsign'],
-                     'VSGRP':['REZ_EXIST','REM','OTKL'],
-                     'VS':['State_1_VKL','State_2_OTKL','State_3_ZAPUSK','State_4_OSTANOV','Mode_1_OSN','Mode_2_REZ','Mode_3_RUCH','Mode_4_REM','NEISPRAV','SEC_EC',
-                           'EC','MP','Imit','BLOCK_WORK_IS_ACTIVE','BLOCK_STOP_IS_ACTIVE','WAITING_FOR_FUTURE_PUSK','WAITING_FOR_APV','STARTED_AS_DOP','REORDER_REZ',
-                           'PC','WarnOff','PC_FALL','PC_NOT_UP','MPC_CONTROL','PC_CONTROL','MPC_CEPI_OTKL','MPC_CEPI_VKL','EC_CONTROL','EC_FALL','MPC_FALL','MPC_NOT_FALL',
-                           'MPC_CONTROL_RUCH','PC_CONTROL_RUCH','EC_CONTROL_RUCH','MPC_NOT_UP','EXTERNAL'],
-                     'NA':['MainState_1_VKL','MainState_2_OTKL','MainState_3_PUSK','MainState_4_OSTANOV','SubState_1_GP','SubState_2_GORREZ','SubState_3_PP','SubState_4_PO',
-                              'Mode_1_OSN','Mode_2_TU','Mode_3_REZ','Mode_4_REM','KTPRA_P','SimAgr','Prog_1','Prog_2','HIGHVIB','HIGHVIBNas','QF3A','QF1A','BBon','BBoff',
-                              'KTPRA_FNM','KTPRA_M','GMPNA_M','BBErrOtkl_All','BBErrOtkl','BBErrOtkl1','BBErrVkl','SAR_Ramp','StartWork','StopWork','StopNoCmd_1','StopNoCmd_2',
-                              'StartNoCmd','StateAlarm','StateAlarm_ChRP','StateAlarm_All','ChRPRegError','LogicalChRPCrash','StateAlarm_VV','StopErr','StopErr2','StopErr_All',
-                              'StartErr','StartErr2','StartErr3','StartErr_All','KKCAlarm1','KKCAlarm2','KKCAlarm3','KKCAlarm4','InputPath','OutputPath','OIPVib','GMPNA_F',
-                              'GMPNA_P','KTPR_ACHR','KTPR_SAON','ZD_Unprompted_Close','needRez','needOverhaul','ED_IsMT10Perc','ED_IsNdv2ndParam','ED_IsHighVibStat',
-                              'ED_IsHighVibNoStat','ED_IsAvarVibStat','ED_IsAvarVibNoStat','ED_IsAvar2Vib','Pump_IsMT10Perc','Pump_IsNdv2ndParam','Pump_IsHighVibStat',
-                              'Pump_IsHighVibStatNMNWR','Pump_IsHighVibNoStat','Pump_IsAvarVibStat','Pump_IsAvarVibStatNMNWR','Pump_IsAvarVibNoStat','Pump_IsAvar2Vib'],
-                     'KTPR':['P','F','M','NP'],
-                     'KTPRA':['P','F','M','NP'],
-                     'KTPRS':['P','F','M','NP'],
-                     'NPS':['ModeNPSDst','MNSInWork','IsMNSOff','IsNPSModePsl','IsPressureReady','NeNomFeedInterval','OIPHighPressure','KTPR_P','KTPR_M','CSPAWorkDeny',
-                            'TSstopped','stopDisp','stopCSPA','stopARM','CSPAlinkOK'],
-                     'Facility':['ndv2Gas','gasKTPR','activeGas','startExcessHeat','stopExcessHeat','warnGasPoint1','warnGasPoint2','warnGasPoint3','warnGasPoint4',
-                                 'warnGasPoint5','warnGasPoint6','warnGasPoint7','warnGasPoint8','longGasPoint1','longGasPoint2','longGasPoint3','longGasPoint4',
-                                 'longGasPoint5','longGasPoint6','longGasPoint7','longGasPoint8'],
-                     'DO':['Value'],
-                     'ctrlDO':[''],
-                     'ctrlAO':[''],
-                     'AO':[''],
-                     'BUFr':[''],
-                     'AIVisualValue':['']}
-        
-        self.combo_type.clear()
-        for key, value in list_type.items():
-            if key == name_table:
-                for i in value:
-                    self.combo_type.addItem(str(i))
-    # Событие по типу
-    def do_something(self):
-        self.update_str()
-    # Событие по клику при выборе сигнала
-    def click_position(self):
-        row = self.TableWidget.currentRow()
-        self.setColortoRow(row)
-        self.cell_value = self.TableWidget.item(row, 0).text()
-        self.cell_value_ktpra = self.TableWidget.item(row, 1).text()
-        self.update_str() 
-    # Значение в строке
-    def update_str(self):
-        column = self.TableWidget.currentColumn()
-        row    = self.TableWidget.currentRow()
-        try:
-            if column == 0:
-                self.link_value.setText(str(row + 1))
-                self.write_text_cell = str(row + 1)
-            else:
-                if self.combo.currentText() in  ['ctrlDO', 'AO', 'AIVisualValue', 'ctrlAO', 'BUFr']: 
-                    self.link_value.setText(f'{self.combo.currentText()}[{self.cell_value}]')
-                    self.write_text_cell = f'{self.combo.currentText()}[{self.cell_value}]'
-                elif self.combo.currentText() == 'Facility': 
-                    self.link_value.setText(f'{self.combo.currentText()}[].{self.combo_type.currentText()}')
-                    self.load.setText('Добавь индекс вручную!')
-                    self.load.setStyleSheet("background-color: red")
-                    self.write_text_cell = f'{self.combo.currentText()}[].{self.combo_type.currentText()}'
-                elif self.combo.currentText() == 'KTPRA': 
-                    self.link_value.setText(f'{self.cell_value_ktpra}.{self.combo_type.currentText()}')
-                    self.write_text_cell = f'{self.cell_value_ktpra}.{self.combo_type.currentText()}'
-                else:
-                    self.link_value.setText(f'{self.combo.currentText()}[{self.cell_value}].{self.combo_type.currentText()}')
-                    self.write_text_cell = f'{self.combo.currentText()}[{self.cell_value}].{self.combo_type.currentText()}'
-        except: return
-# Основное окно просмотра и редактирования таблиц
-class Window_update_sql(QWidget): 
-    def __init__(self, table_used):
-        super(Window_update_sql, self).__init__()
-        self.setWindowTitle('Редактор базы данных')
-        self.setStyleSheet("background-color: #e1e5e5;")
-        self.setWindowFlags(Qt.WindowCloseButtonHint)
-        self.resize(1600, 860)
-
-        self.TableWidget = QTableWidget(self)
-        self.TableWidget.setGeometry(10,70,1580,680)
-        self.TableWidget_1 = QTableWidget(self)
-        self.TableWidget_1.move(10,70)
-        self.TableWidget_1.setVisible(False)
-        self.TableWidget.verticalScrollBar().valueChanged.connect(self.__chnge_position)
-        self.TableWidget_1.verticalScrollBar().valueChanged.connect(self.__chnge_position)
-        self.flag_once = True
-
-        self.logTextBox = QTextEdit(self)
-        self.logTextBox.setGeometry(10,750,1580,100)
-        self.logTextBox.setStyleSheet("border-radius: 4px; border: 1px solid")
-        self.logTextBox.setFont(QFont('Arial', 10))
-        self.logTextBox.setReadOnly(True)
-
-        self.table_used = table_used
-        self.edit_SQL = Editing_table_SQL()
-        column, row, self.hat_name, value, msg = self.edit_SQL.editing_sql(self.table_used)
-        self.logs_msg('default', 1, msg, True)
-
-        self.gen_func = General_functions()
-
-        self.value_tab1  = value
-        self.column_tab1 = column
-        self.row_tab1    = row
-        self.tablew(column, row, self.hat_name, value)
-
-        new_addrow_Button = QPushButton('Добавить строку', self)
-        new_addrow_Button.setStyleSheet("background: #bfd6bf; border-radius: 4px; border: 1px solid")
-        new_addrow_Button.resize(120,25)
-        new_addrow_Button.move(10, 8) 
-        new_addrow_Button.clicked.connect(self.add_row)
-
-        remoterow_Button = QPushButton('Удалить строку', self)
-        remoterow_Button.setStyleSheet("background: #d65860; border-radius: 4px; border: 1px solid")
-        remoterow_Button.resize(120,25)
-        remoterow_Button.move(10, 40) 
-        remoterow_Button.clicked.connect(self.delete_row)
-
-        self.namecolumn = QLineEdit(self, placeholderText='Название нового столбца', clearButtonEnabled=True)
-        self.namecolumn.setStyleSheet('border: 1px solid #6f7370; border-radius: 4px; border: 1px solid')
-        self.namecolumn.move(160, 8)
-        self.namecolumn.resize(260,25)
-        new_addcol_Button = QPushButton('Добавить столбец', self)
-        new_addcol_Button.setStyleSheet("background: #bfd6bf; border-radius: 4px; border: 1px solid")
-        new_addcol_Button.resize(120,25)
-        new_addcol_Button.move(160, 40) 
-        new_addcol_Button.clicked.connect(self.add_column)
-
-        remotecolumn_Button = QPushButton('Удалить столбец', self)
-        remotecolumn_Button.setStyleSheet("background: #d65860; border-radius: 4px; border: 1px solid")
-        remotecolumn_Button.resize(120,25)
-        remotecolumn_Button.move(300, 40) 
-        remotecolumn_Button.clicked.connect(self.delete_column)
-
-        cleartab_Button = QPushButton('Очистить таблицу', self)
-        cleartab_Button.setStyleSheet("background: #bbbabf; border-radius: 4px; border: 1px solid")
-        cleartab_Button.resize(120,25)
-        cleartab_Button.move(470, 8) 
-        cleartab_Button.clicked.connect(self.clear_tabl)
-
-        droptab_Button = QPushButton('Удалить таблицу', self)
-        droptab_Button.setStyleSheet("background: #bbbabf; border-radius: 4px; border: 1px solid")
-        droptab_Button.resize(120,25)
-        droptab_Button.move(470, 40) 
-        droptab_Button.clicked.connect(self.drop_tabl)
-
-        link_Button = QPushButton('Ссылки', self)
-        link_Button.setStyleSheet("background: #faf5cd; border-radius: 4px; border: 1px solid")
-        link_Button.resize(120,25)
-        link_Button.move(610, 40) 
-        link_Button.clicked.connect(self.link_tabl)
-
-        self.req_base = QLineEdit(self, placeholderText='Введите запрос к текущей таблице', clearButtonEnabled=True)
-        self.req_base.setStyleSheet('border: 1px solid #6f7370; border-radius: 4px; border: 1px solid')
-        self.req_base.setToolTip('Значения типа "string" обязательно брать в "ковычки"')
-        self.req_base.move(750, 8)
-        self.req_base.resize(820,25)
-        apply_query_Button = QPushButton('Применить запрос', self)
-        apply_query_Button.setStyleSheet("background: #bfd6bf; border-radius: 4px; border: 1px solid")
-        apply_query_Button.resize(120,25)
-        apply_query_Button.move(750, 40) 
-        apply_query_Button.clicked.connect(self.apply_database_query)
-        reset_request_Button = QPushButton('Сбросить запрос', self)
-        reset_request_Button.setStyleSheet("background: #bbbabf; border-radius: 4px; border: 1px solid")
-        reset_request_Button.setToolTip("Если используется выборка из таблицы!")
-        reset_request_Button.resize(120,25)
-        reset_request_Button.move(900, 40) 
-        reset_request_Button.clicked.connect(self.reset_database_query)
-
-        clickButton_type = QPushButton('Тип данных', self)
-        clickButton_type.setStyleSheet("background: #bfd6bf; border-radius: 4px; border: 1px solid")
-        clickButton_type.resize(120,25)
-        clickButton_type.move(1100, 40) 
-        clickButton_type.clicked.connect(self.type_tabl)
-
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(self.logTextBox)
-        self.layout.addWidget(new_addrow_Button)
-        self.layout.addWidget(new_addcol_Button)
-        self.layout.addWidget(remoterow_Button)
-        self.layout.addWidget(cleartab_Button)
-        self.layout.addWidget(self.TableWidget)
-        # Logs
-        self.logs_msg(f'Запущен редактор базы данных. Таблица: {self.table_used}', 1)
-    # Новое окно тип таблицы
-    def type_tabl(self):
-        type_list, msg = self.edit_SQL.type_column(self.table_used)
-        self.type_tabl = Window_type_tabl_sql(type_list)
-        self.type_tabl.show()
-        self.logs_msg('default', 1, msg, True)
-    # Ссылки
-    def link_tabl(self):
-        self.link_tabl = Window_contexmenu_sql()
-        self.link_tabl.show()
-    # Сompletely clear the table
-    def clear_tabl(self):
-        rowcount = self.TableWidget.rowCount()
-
-        if rowcount == 0: 
-            self.logs_msg(f'Таблица: {self.table_used} пустая', 3)
-            return
-
-        while rowcount >= 0:
-            self.TableWidget.removeRow(rowcount)
-            rowcount -= 1
-
-        self.edit_SQL.clear_tabl(self.table_used)
-         # Logs
-        self.logs_msg(f'Таблица: {self.table_used} полностью очищена!', 3)
-    # Drop the table
-    def drop_tabl(self):
-        self.close()
-        self.edit_SQL.drop_tabl(self.table_used)
-
-    # Adding new lines
-    def add_row(self):  
-        rowPos = self.TableWidget.rowCount()
-        
-        if rowPos == 0: 
-            text_cell = 0
-        else:
-            text_cell = self.TableWidget.item(rowPos - 1, 0).text()
-
-        self.TableWidget.insertRow(rowPos)
-        self.TableWidget.setItem(rowPos, 0, QTableWidgetItem (f'{int(text_cell) + 1}'))
-
-        self.edit_SQL.add_new_row(self.table_used, (rowPos + 1))
-        # Logs
-        self.logs_msg('В конец таблицы добавлена новая строка', 1)
-    # Removing rows
-    def delete_row(self):
-        row = self.TableWidget.currentRow()
-        if row <= 0: 
-            self.logs_msg('Невозможно удалить строки из пустой таблицы', 2)
-            return
-        
-        text_cell_id = self.TableWidget.item(int(row), 0).text()
-        if row > -1: 
-            self.TableWidget.removeRow(row)
-            self.TableWidget.selectionModel().clearCurrentIndex()
-
-        self.edit_SQL.delete_row(text_cell_id, self.table_used)
-        # Logs
-        self.logs_msg(f'Из таблицы: {self.table_used} удалена строка id={text_cell_id}', 3)
-    # Adding new column
-    def add_column(self):
-        def letters(name):
-            if len(name) == 0: name = 'newcolumn'
-            return name#''.join(filter(str.isalnum, name))
-        
-        namecolumn = letters(self.namecolumn.text())
-        hat_name = self.edit_SQL.column_names(self.table_used)
-        if namecolumn in hat_name: 
-            self.logs_msg('Дублирующие название столбца!', 2)
-            return
-
-        column_count = self.TableWidget.columnCount()
-        self.TableWidget.insertColumn(column_count)
-
-        self.edit_SQL.add_new_column(self.table_used, namecolumn)
-
-        hat_name = self.edit_SQL.column_names(self.table_used)
-        self.TableWidget.setHorizontalHeaderLabels(hat_name)
-        # Logs
-        self.logs_msg(f'В таблицу: {self.table_used} добавлен новый столбец: {namecolumn}', 1)
-    # Removing column
-    def delete_column(self):
-        if self.table_used == 'signals': 
-            self.logs_msg(f'Из таблицы: signals нельзя удалять столбцы!', 3)
-            return
-        column = self.TableWidget.currentColumn()
-        self.TableWidget.removeColumn(column)
-
-        hat_name = self.edit_SQL.column_names(self.table_used)
-        self.edit_SQL.delete_column(column, hat_name, self.table_used)
-        self.logs_msg(f'Из таблицы: {self.table_used} удален столбец', 3)
-    # Changing a table while entering a query
-    def apply_database_query(self):
-        request = self.req_base.text()
-        if request == '': 
-            self.logs_msg(f'Пустой запрос!', 2)
-            return
-        # Под запрос 'select' отдельная функция
-        find = General_functions()
-        if find.str_find(str(request).lower(), {'select'}):
-            column, row, hat_name, value, msg = self.edit_SQL.apply_request_select(request, self.table_used)
-            self.logs_msg('default', 1, msg, True)
-        else:
-            msg = self.edit_SQL.other_requests(request, self.table_used)
-            self.logs_msg('default', 1, msg, True)
-            column, row, hat_name, value, msg = self.edit_SQL.editing_sql(self.table_used)
-            self.logs_msg('default', 1, msg, True)
-        # Если запрос некорректный
-        if column == 'error': return
-        # Clear
-        rowcount = self.TableWidget.rowCount()
-        if rowcount != 0: 
-            while rowcount >= 0:
-                self.TableWidget.removeRow(rowcount)
-                rowcount -= 1
-        # Filling
-        self.tablew(column, row, hat_name, value)
-        #SELECT * FROM ai WHERE uso='МНС-2.КЦ' AND basket=3 AND module=3 AND channel=1
-    # Reset a table query
-    def reset_database_query(self):
-        rowcount = self.TableWidget.rowCount()
-        if rowcount != 0: 
-            while rowcount >= 0:
-                self.TableWidget.removeRow(rowcount)
-                rowcount -= 1
-                
-        self.req_base.clear()
-
-        column, row, self.hat_name, value, msg = self.edit_SQL.editing_sql(self.table_used)
-        self.logs_msg('default', 1, msg, True)
-        self.tablew(column, row, self.hat_name, value)
-    # Building the selected table
-    def tablew(self, column, row, hat_name, value):
-        # TableW
-        self.TableWidget.setColumnCount(column)
-        self.TableWidget.setRowCount(row)
-        self.TableWidget.setHorizontalHeaderLabels(hat_name)
-        # Color header
-        style = "::section {""background-color: #bbbabf; }"
-        self.TableWidget.horizontalHeader().setStyleSheet(style)
-        self.TableWidget.verticalHeader().setVisible(False)
-        self.TableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.TableWidget.installEventFilter(self)
-
-        for row_t in range(row):
-            for column_t in range(column):
-                if value[row_t][column_t] is None:
-                    item = QTableWidgetItem('')
-                else:
-                    item = QTableWidgetItem(str(value[row_t][column_t]))
-                    # Подсказки к ячейкам
-                    if self.gen_func.str_find(str(value[row_t][column_t]).lower(), {'di'}):
-                        name_signal = self.edit_SQL.search_name("di", str(value[row_t][column_t]))
-                        item.setToolTip(name_signal)
-                    elif self.gen_func.str_find(str(value[row_t][column_t]).lower(), {'do'}):
-                        name_signal = self.edit_SQL.search_name("do", str(value[row_t][column_t]))
-                        item.setToolTip(name_signal)
-                    elif self.gen_func.str_find(str(value[row_t][column_t]).lower(), {'ai'}):
-                        name_signal = self.edit_SQL.search_name("ai", str(value[row_t][column_t]))
-                        item.setToolTip(name_signal)
-                    else: item.setToolTip('')
-                    
-                if column_t == 0: item.setFlags(Qt.ItemIsEnabled)
-                self.TableWidget.setItem(row_t, column_t, item)
-
-        self.TableWidget.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
-        # Выравнивание по столбцов и строк по наибольшей длине
-        self.TableWidget.resizeColumnsToContents()
-        self.TableWidget.resizeRowsToContents()
-        # Events
-        self.TableWidget.itemChanged.connect(self.click_position)
-        self.TableWidget.cellClicked.connect(self.click_transfer)
-        self.TableWidget.horizontalScrollBar().valueChanged.connect(self.scrollToColumn)
-    
-    def eventFilter(self, obj: QObject, event: QEvent) -> bool:
-        row = self.TableWidget.currentRow()
-        count_row = self.TableWidget.rowCount()
-        if event.type() == QEvent.KeyPress:
-            if (event.key() == Qt.Key_Up): 
-                if row > 0: self.setColortoRow(row - 1)
-            elif (event.key() == Qt.Key_Down): 
-                if row < count_row-1: self.setColortoRow(row + 1)
-        return super().eventFilter(obj, event)
-    # Dubl windows
-    def tablew_1(self, column, row, hat_name, value):
-        # TableW
-        self.TableWidget_1.setColumnCount(column)
-        self.TableWidget_1.setRowCount(row)
-        self.TableWidget_1.setHorizontalHeaderLabels(hat_name)
-        # Color header
-        style = "::section {""background-color: #bbbabf; }"
-        self.TableWidget_1.horizontalHeader().setStyleSheet(style)
-        self.TableWidget_1.verticalHeader().setVisible(False)
-        self.TableWidget_1.setFocusPolicy(Qt.NoFocus)
-
-        for row_t in range(row):
-            for column_t in range(column):
-                if value[row_t][column_t] is None:
-                    item = QTableWidgetItem('')
-                else:
-                    item = QTableWidgetItem(str(value[row_t][column_t]))
-                # Блокировка изменений столбцов
-                for i in range(column): 
-                   if column_t == i: item.setFlags(Qt.ItemIsEnabled)
-                # Выравнивание всех столбцов по общей ширине
-                self.TableWidget_1.setItem(row_t, column_t, item)
-        # Выравнивание по столбцов и строк по наибольшей длине
-        self.TableWidget_1.resizeColumnsToContents()
-        self.TableWidget_1.resizeRowsToContents()
-    
-    def scrollToColumn(self, item):
-        def clear_widget():
-            rowcount = self.TableWidget_1.rowCount()
-            if rowcount != 0: 
-                while rowcount >= 0:
-                    self.TableWidget_1.removeRow(rowcount)
-                    rowcount -= 1
-        width = 0
-        for i in range(4): width += self.TableWidget.columnWidth(i) 
-        self.TableWidget_1.resize(width, 663)
-        self.TableWidget_1.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.TableWidget_1.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        currow = self.TableWidget.currentRow()
-        if (item > 0) and self.flag_once and (self.req_base.text() == ''): 
-            clear_widget()
-            column, row, hat_name, value, msg = self.edit_SQL.editing_sql(self.table_used)
-            self.tablew_1(column, row, hat_name, value)
-            self.TableWidget_1.setVisible(True)
-            self.flag_once = False
-            self.logs_msg('default', 1, msg, True)
-            # Выделение в зафиксированных ячейках
-            self.setColortoRow(currow)
-        elif item == 0: 
-            self.TableWidget_1.setVisible(False)
-            self.flag_once = True
-    
-    def __chnge_position(self,index):
-        self.TableWidget.verticalScrollBar().setValue(index)
-        self.TableWidget_1.verticalScrollBar().setValue(index)
-    
-    def setColortoRow(self, rowIndex):
-        if not self.TableWidget_1.isVisible(): return
-        for i in range(self.TableWidget_1.rowCount()):
-            for j in range(4):
-                self.TableWidget_1.item(i, j).setBackground(QColor(229, 229, 229))
-                self.TableWidget_1.item(i, j).setForeground(QColor(0, 0, 0))
-        for j in range(4):
-            self.TableWidget_1.item(rowIndex, j).setBackground(QColor(0, 120, 215))
-            self.TableWidget_1.item(rowIndex, j).setForeground(QColor(255, 255, 255))
-    
-    def click_transfer(self):
-        row    = self.TableWidget.currentRow()
-        column = self.TableWidget.currentColumn()
-        # Выделение в зафиксированных ячейках
-        try: self.setColortoRow(row)
-        except: pass
-
-        try   :  self.link_tabl.parent_click(row, column, self.TableWidget)
-        except: return
-    # Cell change on click
-    def click_position(self):
-        row    = self.TableWidget.currentRow()
-        column = self.TableWidget.currentColumn()
-
-        if row == 0 and column == 0: return
-        for currentQTableWidgetItem in self.TableWidget.selectedItems():
-            text_cell = self.TableWidget.item(currentQTableWidgetItem.row(), column).text()
-        # На случай, когда нет изменения в ячейке
-        try   : text_cell
-        except: return
-        
-        check_cell = self.TableWidget.item(int(row), 0)
-        if check_cell is None: return
-
-        text_cell_id = self.TableWidget.item(int(row), 0).text()
-
-        hat_name = self.edit_SQL.column_names(self.table_used)
-        flag_NULL = True if len(text_cell) == 0 else False
-        msg = self.edit_SQL.update_row_tabl(column, text_cell, text_cell_id, self.table_used, hat_name, flag_NULL)
-        self.logs_msg('default', 1, msg, True)
-    # Logging messeges
-    def logs_msg(self, logs=None, number_color=1, buffer_msg=None, msg=False):
-        today = datetime.now()
-        errorFormat   = '<span style="color:red;">{}</span>'
-        warningFormat = '<span style="color:#9ea108;">{}</span>'
-        validFormat   = '<span style="color:black;">{}</span>'
-        newFormat     = '<span style="color:green;">{}</span>'
-        if msg:
-            for string_msg, value in buffer_msg.items():
-                if   value == 1: 
-                    self.logTextBox.append(validFormat.format(string_msg))
-                elif value == 2: 
-                    self.logTextBox.append(errorFormat.format(string_msg))
-                elif value == 3: 
-                    self.logTextBox.append(warningFormat.format(string_msg))
-                elif value == 0: 
-                    self.logTextBox.append(newFormat.format(string_msg))
-        else:
-            if   number_color == 1: self.logTextBox.append(validFormat.format(f'{today} - {logs}'))
-            elif number_color == 2: self.logTextBox.append(errorFormat.format(f'{today} - {logs}'))
-            elif number_color == 3: self.logTextBox.append(warningFormat.format(f'{today} - {logs}'))
-            elif number_color == 0: self.logTextBox.append(newFormat.format(f'{today} - {logs}'))
-    
- 
-
-
-
-
-
-
-
-
-
 
 
 if __name__ == '__main__':

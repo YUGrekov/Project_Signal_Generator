@@ -1,7 +1,14 @@
+import uuid
+import math
+import os
+import shutil
+import traceback
 from lxml import etree
-import uuid, math, os, shutil
-from main_base import path_hmi
-from main_base import path_hmi_sample
+from main_base import connect
+from main_base import General_functions
+from datetime import datetime
+
+today = datetime.now()
 
 reset_button_designed = {'1' : ['X'       , '901', '2'],
                          '2' : ['Y'       , ''   , '2'],
@@ -78,7 +85,6 @@ button_init = {'1' : ['page_number'     , '4'],
                '11': ['_link_init_ApSource_type_defence_button', '4']
 }
 
-# Добавление кнопок переключения страниц с защитами
 def button_click(path_file, root, tree, max_value_list, max_value_list_1, num_item,
                  data_inf_button, init_1_target, attrib_top_1, attrib_button):
     count = 0
@@ -139,7 +145,7 @@ def button_click(path_file, root, tree, max_value_list, max_value_list_1, num_it
             object.append(init_1)
         root.append(object)
     tree.write(path_file, pretty_print=True)
-# Внесение изменения в шаблон
+
 def modification_list_defence(max_value_2, path_file, root, tree, list_active, pump, button_bool, str_pumps):
     if list_active == 'ktpr':
         name_title        = 'Карта общестанционных защит'
@@ -305,20 +311,20 @@ def gen_station_defence(work_tabl, pump_def):
         # Максимальное число агрегатов
         max_value_pump = dop_function.max_value_column(work_tabl, "number_pump_VU", False) if pump_def is True else 1
 
-        # Цикл по агрегатныи защитам и готовностям. Для общестанционных цикл = 1
+        # Цикл по агрегатныи защитам и готовностям. Для общестанционных цикл= 1
         for pump in range(max_value_pump):
-            str_pumps     = ''
+            str_pumps = ''
             pump_plus_one = pump + 1
-        
+
             # Проверим на существование файл, если есть то удалим
-            if   work_tabl == 'ktpr' : new_pic_path = f'{path_hmi}\\Form_Station_Defences.omobj'
-            elif work_tabl == 'ktprp': new_pic_path = f'{path_hmi}\\Form_Station_Defences.omobj'
-            elif work_tabl == 'ktpra': new_pic_path = f'{path_hmi}\\Form_MA{str(pump_plus_one)}_Defences.omobj'
-            elif work_tabl == 'gmpna': new_pic_path = f'{path_hmi}\\Form_MA{str(pump_plus_one)}_Readiness.omobj'
-            
+            if   work_tabl == 'ktpr': new_pic_path = f'{connect.path_hmi}\\Form_Station_Defences.omobj'
+            elif work_tabl == 'ktprp': new_pic_path = f'{connect.path_hmi}\\Form_Station_Defences.omobj'
+            elif work_tabl == 'ktpra': new_pic_path = f'{connect.path_hmi}\\Form_MA{str(pump_plus_one)}_Defences.omobj'
+            elif work_tabl == 'gmpna': new_pic_path = f'{connect.path_hmi}\\Form_MA{str(pump_plus_one)}_Readiness.omobj'
+
             if os.path.isfile(new_pic_path): os.remove(new_pic_path)
             # В любом случае создадим новый
-            shutil.copy2(f'{path_hmi_sample}\\Form_Defences_default.omobj', new_pic_path)
+            shutil.copy2(f'{connect.path_hmi_sample}\\Form_Defences_default.omobj', new_pic_path)
 
             # Счетчик всех защит в карте
             counter_defence = 0
@@ -329,28 +335,30 @@ def gen_station_defence(work_tabl, pump_def):
             else:
                 max_value_1 = dop_function.max_value_column(work_tabl, "number_list_VU", True, "number_pump_VU", pump_plus_one)
                 max_value_2 = dop_function.max_value_column(work_tabl, "number_protect_VU", True, "number_pump_VU", pump_plus_one)
+            
+            msg[f'{today} - Столбец таблицы {work_tabl} - number_list_VU или number_protect_VU не определены'] = 2
             button_bool = True if max_value_1 > 1 else False
 
             # Начало работы с созданным файлом
             parser = etree.XMLParser(remove_blank_text=True)
-            tree   = etree.parse(new_pic_path, parser)
-            root   = tree.getroot()
+            tree = etree.parse(new_pic_path, parser)
+            root = tree.getroot()
             # Узнаем название агрегата агрегатных защит и готовностей
-            if pump_def is True: 
+            if pump_def is True:
                 str_pumps = dop_function.connect_by_sql_condition(f'umpna', f'"name"', f'id={pump_plus_one}')
                 str_pumps = str_pumps[0][0]
-            
+
             if pump_def is True: msg[f'{today} - Генерация picture .omobj {work_tabl}. {str_pumps}'] = 1
-            else               : msg[f'{today} - Генерация picture .omobj {work_tabl}'] = 1
+            else: msg[f'{today} - Генерация picture .omobj {work_tabl}'] = 1
             # Исправляем координаты кнопки деблокировки и главного листа
             # Координаты зависят от количества защит на 1 листе
             modification_list_defence(max_value_2, new_pic_path, root, tree, work_tabl, pump_plus_one, button_bool, str_pumps)
 
             if pump_def is True: 
                 data_value = dop_function.connect_by_sql_order(f'{work_tabl}', f'"id", "name", "number_list_VU", "number_protect_VU", "number_pump_VU"', '''"number_pump_VU", "number_list_VU", "number_protect_VU"''')
-            else: 
+            else:
                 data_value = dop_function.connect_by_sql_order(f'{work_tabl}', f'"id", "name", "number_list_VU", "number_protect_VU"', '''"number_list_VU", "number_protect_VU"''')
-    
+
             # Цикл по вкладкам защит,максимум на 240, т.е. 10 листов
             for number_list in range(max_value_1):
                 # Счетчики

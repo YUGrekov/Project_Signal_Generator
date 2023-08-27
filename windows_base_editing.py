@@ -1,6 +1,5 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QTableWidget
@@ -16,7 +15,6 @@ from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtWidgets import QAbstractItemView
 from PyQt5.QtWidgets import QHeaderView
 from main_base import Editing_table_SQL
-import sys
 
 CONST_WIN_SIZE_MAIN_W = 1600
 CONST_WIN_SIZE_MAIN_H = 860
@@ -99,10 +97,10 @@ LIST_TYPE = {'AI': ['Norm', 'Warn', 'Avar', 'Ndv', 'LTMin', 'MTMax', 'Min6',
              'Facility': ['ndv2Gas', 'gasKTPR', 'activeGas',
                           'startExcessHeat', 'stopExcessHeat', 'warnGasPoint1',
                           'warnGasPoint2', 'warnGasPoint3', 'warnGasPoint4',
-                         'warnGasPoint5', 'warnGasPoint6', 'warnGasPoint7',
-                         'warnGasPoint8', 'longGasPoint1', 'longGasPoint2',
-                         'longGasPoint3', 'longGasPoint4', 'longGasPoint5',
-                         'longGasPoint6', 'longGasPoint7', 'longGasPoint8'],
+                          'warnGasPoint5', 'warnGasPoint6', 'warnGasPoint7',
+                          'warnGasPoint8', 'longGasPoint1', 'longGasPoint2',
+                          'longGasPoint3', 'longGasPoint4', 'longGasPoint5',
+                          'longGasPoint6', 'longGasPoint7', 'longGasPoint8'],
              'DO': ['Value'], 'RSreq': ['ok'], 'ctrlDO': [''], 'ctrlAO': [''],
              'AO': [''], 'BUFr': [''], 'AIVisualValue': ['']}
 
@@ -274,7 +272,7 @@ class TableWidgetLinks(QTableWidget):
         return self.rowCount()
 
     def data_cell(self):
-        '''Текущая позиция ячейки'''
+        '''Текущая позиция ячейки.'''
         return self.currentRow(), self.currentColumn()
 
     def tw_clear_lines(self, rowcount: int):
@@ -313,7 +311,7 @@ class ComboBox(QComboBox):
 
 
 class PushButton(QPushButton):
-    '''Конструктор класса кнопки'''
+    '''Конструктор класса кнопки.'''
     def __init__(self, text: str, color: str, parent=None):
         super(PushButton, self).__init__(parent)
 
@@ -350,7 +348,7 @@ class LineEdit(QLineEdit):
 
 
 class WindowContexMenuSQL(QMainWindow):
-    '''Отдельная форма для работы с ссылками'''
+    '''Отдельная форма для работы с ссылками.'''
     def __init__(self):
         super(WindowContexMenuSQL, self).__init__()
 
@@ -363,7 +361,7 @@ class WindowContexMenuSQL(QMainWindow):
         self.editSQL = Editing_table_SQL()
 
     def initObject(self, parent):
-        '''Инициализация объектов макета'''
+        '''Инициализация объектов макета.'''
         self.parent = parent
         self.tw_links = TableWidgetLinks(self)
         self.combo_table = ComboBox(self)
@@ -406,7 +404,7 @@ class WindowContexMenuSQL(QMainWindow):
         self.layout_v.addLayout(self.layout_g_bottom)
 
     def open_tabl(self):
-        '''Событие по нажатию кнопки открыть таблицу'''
+        '''Событие по нажатию кнопки открыть таблицу.'''
         name_table = self.combo_table.currentText()
         rowcount = self.tw_links.row_count()
         self.tw_links.tw_clear_lines(rowcount)
@@ -424,7 +422,7 @@ class WindowContexMenuSQL(QMainWindow):
         [self.combo_type.addItem(str(i)) for table, sign in LIST_TYPE.items() for i in sign if table == name_table]
 
     def search_text(self):
-        '''Поиск сигналов в таблице по запросу'''
+        '''Поиск сигналов в таблице по запросу.'''
         request = self.req_base.text()
         if request == '':
             return
@@ -465,7 +463,7 @@ class WindowContexMenuSQL(QMainWindow):
 
 
 class WindowTypeTableSQL(QMainWindow):
-    """Отдельно окно с типами столбцов, применяемое для запроса"""
+    """Отдельно окно с типами столбцов, применяемое для запроса."""
     def __init__(self, table_list):
         super(WindowTypeTableSQL, self).__init__()
 
@@ -533,7 +531,7 @@ class MainWindow(QMainWindow):
         b_addrow.clicked.connect(self.add_row)
         b_delrow.clicked.connect(self.delete_row)
         b_cleartabl.clicked.connect(self.clear_tabl)
-        b_deltabl.clicked.connect(self.clear_tabl)
+        b_deltabl.clicked.connect(self.drop_tabl)
         b_apply_query.clicked.connect(self.apply_query)
         b_reset_query.clicked.connect(self.reset_query)
         b_type_data.clicked.connect(self.type_tabl)
@@ -571,15 +569,15 @@ class MainWindow(QMainWindow):
         self.layout_v.addWidget(splitter_v)
 
     def on_Change_one(self):
-        '''Активность окна 1'''
+        '''Активность окна 1.'''
         self.fl_actives_windows = 1
 
     def on_Change_two(self):
-        '''Активность окна 2'''
+        '''Активность окна 2.'''
         self.fl_actives_windows = 2
 
     def type_tabl(self):
-        '''Запуск нового окна для просмотра типа столбцов'''
+        '''Запуск нового окна для просмотра типа столбцов.'''
         type_list, msg = self.editSQL.type_column(self.table_us)
         self.type_tabl = WindowTypeTableSQL(type_list)
         self.type_tabl.show()
@@ -592,12 +590,12 @@ class MainWindow(QMainWindow):
         self.link_tabl.show()
 
     def synh_position(self, index):
-        '''Синхронное перелистывание текста по вертикали'''
+        '''Синхронное перелистывание текста по вертикали.'''
         self.tableWidget.verticalScrollBar().setValue(index)
         self.tableWidget_dub.verticalScrollBar().setValue(index)
 
     def add_row(self):
-        '''Добавляем новые строки в объекты'''
+        '''Добавляем новые строки в объекты.'''
         rowcount = self.tableWidget.row_count_tabl()
 
         value = 0
@@ -613,7 +611,7 @@ class MainWindow(QMainWindow):
         # self.logs_msg('В конец таблицы добавлена новая строка', 1)
 
     def delete_row(self):
-        '''Удаляем выбранную строку'''
+        '''Удаляем выбранную строку.'''
         if self.fl_actives_windows == 1:
             row, column = self.tableWidget.data_cell()
         else:
@@ -634,7 +632,7 @@ class MainWindow(QMainWindow):
         # self.logs_msg(f'Таблица: {self.table_used} удалена строка id={value_id}', 3)
 
     def clear_tabl(self):
-        '''Удаления всех данных таблицы, без столбцов'''
+        '''Удаления всех данных таблицы, без столбцов.'''
         rowcount = self.tableWidget.row_count_tabl()
         if rowcount == 0:
             # self.logs_msg(f'Таблица: {self.table_used} пустая', 3)
@@ -648,11 +646,12 @@ class MainWindow(QMainWindow):
         # self.logs_msg(f'Таблица: {self.table_used} полностью очищена!', 3)
 
     def drop_tabl(self):
-        '''Удаление таблицы из базы данных'''
+        '''Удаление таблицы из базы данных.'''
         self.editSQL.drop_tabl(self.table_us)
+        self.close()
 
     def apply_query(self):
-        """Рукописный запрос к базе SQL
+        """Рукописный запрос к базе SQL.
 
         Args:
             input_query (str): текст запроса
@@ -681,7 +680,7 @@ class MainWindow(QMainWindow):
         self.tableWidget_dub.init_table(column, row, hat_name, value)
 
     def reset_query(self):
-        '''Сброс запроса и возврат таблицы к состоянию до запроса'''
+        '''Сброс запроса и возврат таблицы к состоянию до запроса.'''
         rowcount = self.tableWidget.row_count_tabl()
 
         self.tableWidget.table_us = self.table_us
@@ -700,14 +699,8 @@ class MainWindow(QMainWindow):
         # self.l_enter_req.clear()
 
     def update_text(self, text=None):
+        '''Обновление текста из окна ссылки.'''
         if self.fl_actives_windows == 1:
             self.tableWidget.value_change(text)
         else:
             self.tableWidget_dub.value_change(text)
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    myWin = MainWindow('ai')
-    myWin.show()
-    sys.exit(app.exec())

@@ -1,20 +1,21 @@
-from typing import Any
-from lxml import etree
 import uuid
 import shutil
 import os
-#from main_base import General_functions
-#from main_base import path_hmi
-#from main_base import path_hmi_sample
-from gen_gui import General_functions
-from gen_gui import path_hmi
-from gen_gui import path_hmi_sample
+import traceback
+from datetime import datetime
+from typing import Any
+from lxml import etree
+from main_base import General_functions
+from main_base import connect
 from enum import Enum
 from typing import NamedTuple
+
 
 CONST_SIZE_TABLE_OF_FALSE = 61
 CONST_SIZE_TABLE_OF_TRUE = 103
 CONST_HEIGHT_ROW = 26
+
+today = datetime.now()
 
 
 class NewRowsParams(NamedTuple):
@@ -356,93 +357,96 @@ class ParserFile():
 
 
 class Alarm_map():
-    '''Основной код заполнения формы'''
-    def __init__(self, work_tabl: str) -> None:
-        """Инициализация класса табло и сирен.
 
-        Args:
-            work_tabl (str): Таблица из базы SQL
-        """
-        self._work_tabl = work_tabl.lower()
-        self.filling_template()
-
-    def filling_template(self) -> dict:
-        """Заполнение шаблона табло и сирен.
-        """
+    def filling_template(self, work_tabl: str) -> dict:
+        """Заполнение шаблона табло и сирен."""
         data_inf_button = []
         msg = {}
 
         dop_function = General_functions()
-        table = UTS() if self._work_tabl == 'uts' else UPTS()
-        # Проверим на существование файл
-        new_pic_path = f'{path_hmi}\\Form_UTS.omobj' if self._work_tabl == 'uts' else f'{path_hmi}\\Form_UPTS.omobj'
 
-        if os.path.isfile(new_pic_path):
-            os.remove(new_pic_path)
-        # Копируем шаблон
-        shutil.copy2(f'{path_hmi_sample}\\Form_UTS_UPTS_default.omobj', new_pic_path)
-        # Счетчик всех табло и сирен в карте
-        counter_uts = 0
+        try:
+            table = UTS() if work_tabl == 'uts' else UPTS()
+            # Проверим на существование файл
+            new_pic_path = f'{connect.path_hmi}\\Form_UTS.omobj' if work_tabl == 'uts' else f'{connect.path_hmi}\\Form_UPTS.omobj'
 
-        # Максимальное число листов, необходимость переключения страниц
-        max_value_1 = dop_function.max_value_column(self._work_tabl, NumberColumn.NUMBER_LIST_VU.value, False)
-        max_value_2 = dop_function.max_value_column(self._work_tabl, NumberColumn.ORDER_NUMBER_FOR_VU.value, False)
-        button_bool = True if int(max_value_1) > 1 else False
+            msg[f'{today} - Генерация формы HMI - {work_tabl.upper()}'] = 1
+            msg[f'{today} - Расположение - {new_pic_path}'] = 1
 
-        # Начало работы с созданным файлом
-        parser = ParserFile(new_pic_path)
-        root, tree = parser()
+            if os.path.isfile(new_pic_path):
+                os.remove(new_pic_path)
+            # Копируем шаблон
+            shutil.copy2(f'{connect.path_hmi_sample}\\Form_UTS_UPTS_default.omobj', new_pic_path)
+            # Счетчик всех табло и сирен в карте
+            counter_uts = 0
 
-        # Исправляем размеры главного листа
-        # Размеры зависят от количества табло и сирен на 1 листе
-        parser.modification_list_uts_upts(int(max_value_2), new_pic_path,
-                                          self._work_tabl, button_bool)
+            # Максимальное число листов, необходимость переключения страниц
+            max_value_1 = dop_function.max_value_column(work_tabl, NumberColumn.NUMBER_LIST_VU.value, False)
+            max_value_2 = dop_function.max_value_column(work_tabl, NumberColumn.ORDER_NUMBER_FOR_VU.value, False)
 
-        data_value = dop_function.connect_by_sql_order(self._work_tabl,
-                                f'{NumberColumn.TAG.value}, "{NumberColumn.NUMBER_LIST_VU.value}", "{NumberColumn.ORDER_NUMBER_FOR_VU.value}"',
-                                f'"{NumberColumn.NUMBER_LIST_VU.value}", "{NumberColumn.ORDER_NUMBER_FOR_VU.value}"')
-        # Цикл по вкладкам табло и сирен,максимум на 240, т.е. 10 листов
-        for number_list in range(int(max_value_1)):
-            count_uts = 0
-            # Уровень первой строчки - type
-            for lvl_one in root.iter('type'):
+            msg[f'{today} - Столбец таблицы {work_tabl} - number_list_VU или order_number_for_VU не определены'] = 2
+            button_bool = True if int(max_value_1) > 1 else False
 
-                object = parser.parser_page(table, number_list, root)
+            # Начало работы с созданным файлом
+            parser = ParserFile(new_pic_path)
+            root, tree = parser()
 
-                for lvl_two in lvl_one.iter('object'):
-                    if lvl_two.attrib['name'] == f'{table.attrib_top_1}{str(number_list + 1)}':
+            # Исправляем размеры главного листа
+            # Размеры зависят от количества табло и сирен на 1 листе
+            parser.modification_list_uts_upts(int(max_value_2), new_pic_path,
+                                            work_tabl, button_bool)
 
-                        if not number_list:
-                            parser.parser_siren(table, object)
+            data_value = dop_function.connect_by_sql_order(work_tabl,
+                                    f'{NumberColumn.TAG.value}, "{NumberColumn.NUMBER_LIST_VU.value}", "{NumberColumn.ORDER_NUMBER_FOR_VU.value}"',
+                                    f'"{NumberColumn.NUMBER_LIST_VU.value}", "{NumberColumn.ORDER_NUMBER_FOR_VU.value}"')
+            # Цикл по вкладкам табло и сирен,максимум на 240, т.е. 10 листов
+            for number_list in range(int(max_value_1)):
+                count_uts = 0
+                # Уровень первой строчки - type
+                for lvl_one in root.iter('type'):
 
-                        # Ходим ищем текущий активный лист
-                        for item in data_value:
-                            uts_tag = item[0]
-                            active_list_uts = item[1]
-                            position_on_list = item[2]
+                    object = parser.parser_page(table, number_list, root)
 
-                            if int(active_list_uts) == (number_list + 1):
+                    for lvl_two in lvl_one.iter('object'):
+                        if lvl_two.attrib['name'] == f'{table.attrib_top_1}{str(number_list + 1)}':
 
-                                # Информации в кнопке переключения
-                                data_inf_button.append(f'{uts_tag}.s_State')
+                            if not number_list:
+                                parser.parser_siren(table, object)
 
-                                counter_uts += 1
-                                count_uts += 1
+                            # Ходим ищем текущий активный лист
+                            for item in data_value:
+                                uts_tag = item[0]
+                                active_list_uts = item[1]
+                                position_on_list = item[2]
 
-                                parser.parser_uts_signal(table, object,
-                                                         count_uts,
-                                                         int(position_on_list),
-                                                         uts_tag)
+                                if (active_list_uts or position_on_list) is None:
+                                    continue
 
-                        # Добавляем кнопку переключения
-                        if button_bool:
-                            init_1_target = f'ApSource_form_{self._work_tabl}s'
-                            parser.adding_button(table, new_pic_path, root, tree,
-                                                 int(max_value_1), int(max_value_2),
-                                                 (number_list + 1), data_inf_button,
-                                                 init_1_target)
-                        # Массив с данными
-                        data_inf_button.clear()
+                                if int(active_list_uts) == (number_list + 1):
 
-        tree.write(new_pic_path, pretty_print=True)
-        return msg
+                                    # Информации в кнопке переключения
+                                    data_inf_button.append(f'{uts_tag}.s_State')
+
+                                    counter_uts += 1
+                                    count_uts += 1
+
+                                    parser.parser_uts_signal(table, object,
+                                                            count_uts,
+                                                            int(position_on_list),
+                                                            uts_tag)
+
+                            # Добавляем кнопку переключения
+                            if button_bool:
+                                init_1_target = f'ApSource_form_{work_tabl.upper()}s'
+                                parser.adding_button(table, new_pic_path, root, tree,
+                                                    int(max_value_1), int(max_value_2),
+                                                    (number_list + 1), data_inf_button,
+                                                    init_1_target)
+                            # Массив с данными
+                            data_inf_button.clear()
+            tree.write(new_pic_path, pretty_print=True)
+            msg[f'{today} - Генерация picture .omobj {work_tabl}: завершена'] = 1
+            return msg
+        except Exception:
+            msg[f'{today} - Генерация picture .omobj {work_tabl}: {traceback.format_exc()}'] = 2
+            return msg
