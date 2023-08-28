@@ -1,5 +1,4 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QTableWidget
@@ -10,11 +9,11 @@ from PyQt5.QtWidgets import QVBoxLayout
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QGridLayout
 from PyQt5.QtWidgets import QSplitter
-from PyQt5.QtWidgets import QTextEdit
 from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtWidgets import QAbstractItemView
 from PyQt5.QtWidgets import QHeaderView
 from main_base import Editing_table_SQL
+from logging_text import LogsTextEdit
 
 CONST_WIN_SIZE_MAIN_W = 1600
 CONST_WIN_SIZE_MAIN_H = 860
@@ -106,21 +105,22 @@ LIST_TYPE = {'AI': ['Norm', 'Warn', 'Avar', 'Ndv', 'LTMin', 'MTMax', 'Min6',
 
 
 class TableWidget(QTableWidget):
-    def __init__(self, edit_SQL, table_used,
+    def __init__(self, edit_SQL, table_used, logging,
                  tw_dub: bool = False, parent=None):
         super(TableWidget, self).__init__(parent)
 
         self.table_us = table_used
         self.tw_dub = tw_dub
         self.edit_SQL = edit_SQL
-        column, row, hat_name, value, msg = self.object_data_table()
+        self.logging = logging
+        column, row, hat_name, value = self.object_data_table()
 
         self.init_table(column, row, hat_name, value)
 
     def object_data_table(self) -> tuple:
         '''Данные из базы SQL для построения таблицы'''
-        column, row, hat_name, value, msg = self.edit_SQL.editing_sql(self.table_us)
-        return column, row, hat_name, value, msg
+        column, row, hat_name, value = self.edit_SQL.editing_sql(self.table_us)
+        return column, row, hat_name, value
 
     def init_table(self, column: int, row: int, hat_name: list, value: list):
         """Построение таблицы с данными
@@ -226,6 +226,10 @@ class TableWidget(QTableWidget):
         '''Отработка события при изменении ячейки'''
         row, column = self.data_cell()
 
+        # При добавлении новой строки она == -1
+        if row == -1:
+            return
+
         try:
             value = self.text_cell(row, column)
             value_id = self.text_cell(row, 0)
@@ -235,9 +239,8 @@ class TableWidget(QTableWidget):
 
         hat_name = self.edit_SQL.column_names(self.table_us)
 
-        msg = self.edit_SQL.update_row_tabl(column, value, value_id,
-                                            self.table_us, hat_name)
-        # self.logs_msg('default', 1, msg, True)
+        self.edit_SQL.update_row_tabl(column, value, value_id,
+                                      self.table_us, hat_name, self.logging)
 
     def value_change(self, text):
         '''Отработка события при изменении ячейки'''
@@ -247,8 +250,8 @@ class TableWidget(QTableWidget):
 
         self.setItem(row, column, QTableWidgetItem(text))
 
-        msg = self.edit_SQL.update_row_tabl(column, text, value_id,
-                                            self.table_us, hat_name)
+        self.edit_SQL.update_row_tabl(column, text, value_id,
+                                      self.table_us, hat_name, self.logging)
 
 
 class TableWidgetLinks(QTableWidget):
@@ -326,16 +329,6 @@ class PushButton(QPushButton):
                            "padding: 4px 0;}"
                            "*:hover{"f"background:'#707370';""color:'white'}"
                            "*:pressed{background: '#4f45ba'}")
-
-
-class LogsTextEdit(QTextEdit):
-    def __init__(self, parent=None):
-        super(LogsTextEdit, self).__init__(parent)
-
-        self.setStyleSheet('''border-radius: 4px;
-                              border: 1px solid''')
-        self.setFont(QFont('Arial', 12))
-        self.setReadOnly(True)
 
 
 class LineEdit(QLineEdit):
@@ -508,8 +501,13 @@ class MainWindow(QMainWindow):
         self.table_us = table_used
 
         self.logsTextEdit = LogsTextEdit(self)
-        self.tableWidget = TableWidget(self.editSQL, self.table_us)
-        self.tableWidget_dub = TableWidget(self.editSQL, self.table_us, True)
+        self.tableWidget = TableWidget(self.editSQL,
+                                       self.table_us,
+                                       self.logsTextEdit)
+        self.tableWidget_dub = TableWidget(self.editSQL,
+                                           self.table_us,
+                                           self.logsTextEdit,
+                                           True)
 
         self.centralwidget = QWidget()
         self.setCentralWidget(self.centralwidget)
@@ -568,6 +566,8 @@ class MainWindow(QMainWindow):
         self.layout_v.addLayout(self.layout_g)
         self.layout_v.addWidget(splitter_v)
 
+        self.logsTextEdit.logs_msg('Запуск редактора базы SQL', 1)
+
     def on_Change_one(self):
         '''Активность окна 1.'''
         self.fl_actives_windows = 1
@@ -578,10 +578,9 @@ class MainWindow(QMainWindow):
 
     def type_tabl(self):
         '''Запуск нового окна для просмотра типа столбцов.'''
-        type_list, msg = self.editSQL.type_column(self.table_us)
+        type_list = self.editSQL.type_column(self.table_us, self.logsTextEdit)
         self.type_tabl = WindowTypeTableSQL(type_list)
         self.type_tabl.show()
-        # self.logs_msg('default', 1, msg, True)
 
     def link_tabl(self):
         '''Создание и запуск нового окна - Ссылки.'''
@@ -607,8 +606,8 @@ class MainWindow(QMainWindow):
         self.tableWidget.setItem(rowcount, 0, QTableWidgetItem(f'{int(value) + CONST_COUNT_ONE}'))
         self.tableWidget_dub.insertRow(rowcount)
         self.tableWidget_dub.setItem(rowcount, 0, QTableWidgetItem(f'{int(value) + CONST_COUNT_ONE}'))
-        # Logs
-        # self.logs_msg('В конец таблицы добавлена новая строка', 1)
+
+        self.logsTextEdit.logs_msg('В конец таблицы добавлена новая строка', 1)
 
     def delete_row(self):
         '''Удаляем выбранную строку.'''
@@ -618,7 +617,7 @@ class MainWindow(QMainWindow):
             row, column = self.tableWidget_dub.data_cell()
 
         if (row == -1) and (column == -1):
-            # self.logs_msg(f'Выбери строку для удаления!', 3)
+            self.logsTextEdit.logs_msg('Выбери строку для удаления!', 3)
             return
         if self.fl_actives_windows == 1:
             value_id = self.tableWidget.text_cell(row, 0)
@@ -629,13 +628,14 @@ class MainWindow(QMainWindow):
         self.tableWidget.selectionModel().clearCurrentIndex()
         self.tableWidget_dub.removeRow(row)
         self.tableWidget_dub.selectionModel().clearCurrentIndex()
-        # self.logs_msg(f'Таблица: {self.table_used} удалена строка id={value_id}', 3)
+
+        self.logsTextEdit.logs_msg(f'Таблица: {self.table_us} удалена строка id={value_id}', 3)
 
     def clear_tabl(self):
         '''Удаления всех данных таблицы, без столбцов.'''
         rowcount = self.tableWidget.row_count_tabl()
         if rowcount == 0:
-            # self.logs_msg(f'Таблица: {self.table_used} пустая', 3)
+            self.logsTextEdit.logs_msg(f'Таблица: {self.table_us} пустая', 3)
             return
         while rowcount >= 0:
             self.tableWidget.removeRow(rowcount)
@@ -643,7 +643,8 @@ class MainWindow(QMainWindow):
             rowcount -= 1
         self.editSQL.clear_tabl(self.table_us)
         self.l_enter_req.clear()
-        # self.logs_msg(f'Таблица: {self.table_used} полностью очищена!', 3)
+
+        self.logsTextEdit.logs_msg(f'Таблица: {self.table_us} полностью очищена!', 3)
 
     def drop_tabl(self):
         '''Удаление таблицы из базы данных.'''
@@ -658,17 +659,15 @@ class MainWindow(QMainWindow):
         """
         rowcount = self.tableWidget.row_count_tabl()
         if not len(self.l_enter_req.text()):
-            # self.logs_msg(f'Пустой запрос!', 2)
-            print('пустой')
+            self.logsTextEdit.logs_msg('Пустой запрос!', 2)
             return
-        table_now, column, row, hat_name, value, msg = self.editSQL.apply_request_select(self.l_enter_req.text(), self.table_us)
-        # self.logs_msg('default', 1, msg, True)
-
-        self.tableWidget.table_us = table_now
-        self.tableWidget_dub.table_us = table_now
-
+        table_now, column, row, hat_name, value = self.editSQL.apply_request_select(self.l_enter_req.text(),
+                                                                                    self.table_us,
+                                                                                    self.logsTextEdit)
         if column == 'error':
             return
+        self.tableWidget.table_us = table_now
+        self.tableWidget_dub.table_us = table_now
 
         self.tableWidget.tw_clear_lines(rowcount)
         self.tableWidget_dub.tw_clear_lines(rowcount)
@@ -689,14 +688,12 @@ class MainWindow(QMainWindow):
         self.tableWidget.tw_clear_lines(rowcount)
         self.tableWidget_dub.tw_clear_lines(rowcount)
 
-        column, row, hat_name, value, msg = self.tableWidget.object_data_table()
-        # self.logs_msg('default', 1, msg, True)
+        column, row, hat_name, value = self.tableWidget.object_data_table()
         self.tableWidget.blockSignals(True)
         self.tableWidget_dub.blockSignals(True)
 
         self.tableWidget.init_table(column, row, hat_name, value)
         self.tableWidget_dub.init_table(column, row, hat_name, value)
-        # self.l_enter_req.clear()
 
     def update_text(self, text=None):
         '''Обновление текста из окна ссылки.'''

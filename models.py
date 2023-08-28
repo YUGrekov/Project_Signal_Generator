@@ -1027,3 +1027,50 @@ class TM_TR2(BaseModel):
 
     class Meta:
         table_name = 'tm_tr2'
+
+
+class RSReq(BaseModel):
+    variable = CharField(null=True)
+    tag = CharField(null=True)
+    name = CharField(null=True)
+    Route = CharField(null=True)
+    Requests = IntegerField(null=True)
+    Port = IntegerField(null=True)
+    SlaveId = IntegerField(null=True)
+    ModbusFunction = IntegerField(null=True)
+    Address = IntegerField(null=True)
+    Count = IntegerField(null=True)
+    ResultOffset = IntegerField(null=True)
+    SingleRequest = IntegerField(null=True)
+    OnModifyRequest = IntegerField(null=True)
+    RepeatOverScan = IntegerField(null=True)
+    SkipRepeatsWhenBad = IntegerField(null=True)
+    Enable = IntegerField(null=True)
+
+    class Meta:
+        table_name = 'rsreq'
+
+
+class RSData(BaseModel):
+    module_index = CharField(null=True)
+    array_index = CharField(null=True)
+    name = CharField(null=True)
+    bit_0 = CharField(null=True)
+    bit_1 = CharField(null=True)
+    bit_2 = CharField(null=True)
+    bit_3 = CharField(null=True)
+    bit_4 = CharField(null=True)
+    bit_5 = CharField(null=True)
+    bit_6 = CharField(null=True)
+    bit_7 = CharField(null=True)
+    bit_8 = CharField(null=True)
+    bit_9 = CharField(null=True)
+    bit_10 = CharField(null=True)
+    bit_11 = CharField(null=True)
+    bit_12 = CharField(null=True)
+    bit_13 = CharField(null=True)
+    bit_14 = CharField(null=True)
+    bit_15 = CharField(null=True)
+
+    class Meta:
+        table_name = 'rsdata'

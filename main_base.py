@@ -12,7 +12,9 @@ from models import *
 from lxml import etree
 from datetime import datetime
 from sql_metadata import Parser
+from logging_text import LogsTextEdit
 today = datetime.now()
+
 
 
 # Additional general features
@@ -522,6 +524,7 @@ class Import_in_SQL():
             values.append(uso)
             array = {k: v for k, v in zip(keys, values)}
             data.append(array)
+
         # Количество строк в таблице
         cursor = db.cursor()
         try:
@@ -579,7 +582,7 @@ class Import_in_SQL():
 
     def update_for_sql(self, data, uso):
         msg = {}
-        with db:
+        with db.atomic():
             try:
                 # Filter by uso, basket, modul, channel
                 for row_exel in data:
@@ -588,22 +591,11 @@ class Import_in_SQL():
                                                     Signals.module  == str(row_exel['module']),
                                                     Signals.channel == str(row_exel['channel']))
                     if not bool(exist_row):
-                        # new record
-                        Signals.create(
-                            type_signal=row_exel['type_signal'],
-                            uso        =row_exel['uso'],
-                            tag        =row_exel['tag'],
-                            description=row_exel['description'],
-                            schema     =row_exel['schema'],
-                            klk        =row_exel['klk'],
-                            contact    =row_exel['contact'],
-                            basket     =row_exel['basket'],
-                            module     =row_exel['module'],
-                            channel    =row_exel['channel'],
-                        )
-                        msg[f'''{today} - Добавлен новый сигнал: Tag - {row_exel["tag"]}, description - {row_exel["description"]}, 
+                        Signals.create(**row_exel)
+                        msg[f'''{today} - Добавлен новый сигнал: id - {row_exel["id"]}, description - {row_exel["description"]}, 
                                                                 basket - {row_exel["basket"]}, module - {row_exel["module"]}, 
                                                                 channel - {row_exel["channel"]}'''] = 0
+                        continue
 
                     for row_sql in Signals.select().dicts():
 
@@ -666,9 +658,8 @@ class Editing_table_SQL():
         self.cursor = db.cursor()
         self.dop_function = General_functions()
     
-    def editing_sql(self, table_sql):
+    def editing_sql(self, table_sql: str):
         '''Сбор данных для построения(столбцы, значения ячеек)'''
-        msg = {}
         try:
             eng_name_column = self.column_names(table_sql)
 
@@ -676,10 +667,9 @@ class Editing_table_SQL():
             rus_eng_name = self.russian_name_column(dict_rus, eng_name_column)
 
             value = self.cursor.fetchall()
-            return len(eng_name_column), len(value), rus_eng_name, value, msg
+            return len(eng_name_column), len(value), rus_eng_name, value
         except Exception:
-            msg[f'{today} - Ошибка открытия редактора: {traceback.format_exc()}'] = 2
-            return 0, 0, 0, 0, msg
+            return 0, 0, 0, 0
 
     def read_json(self, table: str) -> tuple:
         '''Русификация шапки таблицы из файла .json.'''
@@ -712,59 +702,32 @@ class Editing_table_SQL():
         self.cursor.execute(f'SELECT * FROM "{table_used}" ORDER BY id')
         return next(zip(*self.cursor.description))
 
-    def apply_request_select(self, request, table_used):
-        msg = {}
-        try:
-            try:
-                self.cursor.execute(f'''{request}''')
-                query_table = Parser(f'''{request}''').tables
-                name_column = next(zip(*self.cursor.description))
-                table_used = query_table[0]
-            except Exception:
-                self.cursor.execute(f'SELECT * FROM "{table_used}" ORDER BY id')
-                name_column = next(zip(*self.cursor.description))
-            
-            array_name_column = []
-            for tabl, name_c in rus_list.items():
-
-                if tabl == table_used:
-
-                    for name in name_column:
-                        if name in name_c.keys():
-
-                            for key, value in name_c.items():
-                                if name == key:
-                                    array_name_column.append(value)
-                                    break
-                        else:
-                            array_name_column.append(name)
-
-            records = self.cursor.fetchall()
-
-            count_column = len(name_column)
-            count_row = len(records)
-            return table_used, count_column, count_row, array_name_column, records, msg
-        except Exception:
-            print(traceback.format_exc())
-            msg[f'{today} - Таблица: {table_used} некорректный запрос: {traceback.format_exc()}'] = 2
-            return 'error', 'error', 'error', 'error', msg
-        
-    def other_requests(self, request, table_used):
-        msg = {}
+    def apply_request_select(self, request, table_used: str, logging):
         try:
             self.cursor.execute(f'''{request}''')
-            msg[f'{today} - Таблица: {table_used} запрос применен!'] = 1
-            return msg
-        except:
-            msg[f'{today} - Таблица: {table_used} некорректный запрос!'] = 2
-            return msg
+            query_table = Parser(f'''{request}''').tables
+            name_column = next(zip(*self.cursor.description))
+            table_used = query_table[0]
+
+            eng_name_column = self.column_names(table_used)
+
+            dict_rus = self.read_json(table_used)
+            rus_eng_name = self.russian_name_column(dict_rus, eng_name_column)
+
+            value = self.cursor.fetchall()
+
+            count_column = len(name_column)
+            count_row = len(value)
+            return table_used, count_column, count_row, rus_eng_name, value
+        except Exception:
+            logging.logs_msg(f'Таблица: {table_used} некорректный запрос: {traceback.format_exc()}', 2)
+            return 'error', 'error', 'error', 'error', 'error'
 
     def update_row_tabl(self, column: int, text_cell: str, text_cell_id: int, 
-                        table_used: str, hat_name: list, flag_NULL=None) -> tuple:
-        msg = {}
+                        table_used: str, hat_name: list, logging):
         active_column = list(hat_name)[column]
         try:
-            if not len(text_cell):
+            if text_cell is None:
                 self.cursor.execute(f"""UPDATE "{table_used}" 
                                         SET "{active_column}"= NULL
                                         WHERE id={text_cell_id}""")
@@ -772,10 +735,10 @@ class Editing_table_SQL():
                 self.cursor.execute(f"""UPDATE "{table_used}" 
                                         SET "{active_column}"='{text_cell}'
                                         WHERE id={text_cell_id}""")
-            return msg
+            return 
         except Exception:
-            msg[f'{today} - Таблица: {table_used}, ошибка при изменении ячейки: {traceback.format_exc()}'] = 2
-            return msg
+            logging.logs_msg(f'Таблица: {table_used}, ошибка при изменении ячейки: {traceback.format_exc()}', 2)
+            return
 
     def add_new_row(self, table_used: str, row: int) -> None:
         '''Добавление новой строки'''
@@ -787,15 +750,6 @@ class Editing_table_SQL():
         self.cursor.execute(f'''DELETE FROM "{table_used}"
                                 WHERE id={text_cell_id}''')
 
-    def add_new_column(self, table_used: str, new_column: str) -> None:
-        self.cursor.execute(f'''ALTER TABLE "{table_used}" 
-                                ADD "{new_column}" VARCHAR(255)''')
-
-    def delete_column(self, column, hat_name, table_used):
-        active_column = list(hat_name)[column]
-        self.cursor.execute(f'''ALTER TABLE "{table_used}" 
-                                DROP COLUMN "{active_column}"''')
-
     def clear_tabl(self, table_used: str) -> None:
         '''Очистка таблицы'''
         self.cursor.execute(f'''DELETE FROM "{table_used}"''')
@@ -805,11 +759,11 @@ class Editing_table_SQL():
         self.cursor.execute(f'''DROP TABLE "{table_used}"''')
 
     def get_tabl(self):
+        '''Сбор таблиц базы'''
         return db.get_tables()
     
-    def type_column(self, table_used: str):
+    def type_column(self, table_used: str, logging):
         '''Собираем тип столбцов, и названия на рус и англ'''
-        msg = {}
         type_list = []
         try:
             self.cursor.execute(f"""SELECT column_name, data_type
@@ -829,9 +783,9 @@ class Editing_table_SQL():
                 type_list.append(list_a)
 
         except Exception:
-            msg[f'{today} - Окно тип данных: ошибка: {traceback.format_exc()}'] = 2
+            logging.logs_msg(f'Окно тип данных: ошибка: {traceback.format_exc()}', 2)
 
-        return type_list, msg
+        return type_list
     
     def dop_window_signal(self, table_used):
         type_list = []
@@ -845,8 +799,8 @@ class Editing_table_SQL():
                                         FROM "{table_used}" 
                                         ORDER BY id""")
             for i in self.cursor.fetchall():
-                id_  = i[0]
-                tag  = i[1]
+                id_ = i[0]
+                tag = i[1]
                 name = i[2]
 
                 list_a = [id_, tag, name]
@@ -860,10 +814,11 @@ class Editing_table_SQL():
         return type_list, msg, color
     
     def filter_text(self, text, list_signal):
+        '''Поиск сигналов в окне ссылки'''
         list_request = []
         for i in list_signal:
-            id_  = i[0]
-            tag  = i[1]
+            id_ = i[0]
+            tag = i[1]
             name = i[2]
 
             if self.dop_function.str_find(str(name).lower(), {text}):
@@ -7855,6 +7810,30 @@ class Filling_RS():
         list_default = ['variable', 'tag', 'name', 'array_number_modul', 'pValue', 'pHealth', 'Pic', 'uso', 'basket', 'module', 'channel']
         msg = self.dop_function.column_check(RS, 'rs', list_default)
         return msg 
+class Filling_RSreq():
+    def __init__(self):
+        self.cursor = db.cursor()
+        self.dop_function = General_functions()
+    def column_check(self):
+        list_default = ['variable', 'tag', 'name', 'Route', 'Requests', 'Port',
+                        'SlaveId', 'ModbusFunction', 'Address', 'Count',
+                        'ResultOffset', 'SingleRequest', 'OnModifyRequest',
+                        'RepeatOverScan', 'SkipRepeatsWhenBad', 'Enable']
+        msg = self.dop_function.column_check(RSReq, 'rsreq', list_default)
+        msg[f'{today} - Таблица: rsreq подготовлена'] = 1
+        return msg 
+class Filling_RSdata():
+    def __init__(self):
+        self.cursor = db.cursor()
+        self.dop_function = General_functions()
+    def column_check(self):
+        list_default = ['module_index', 'array_index', 'name',
+                        'bit_0', 'bit_1', 'bit_2', 'bit_3', 'bit_4', 'bit_5',
+                        'bit_6', 'bit_7', 'bit_8', 'bit_9', 'bit_10', 'bit_11',
+                        'bit_12', 'bit_13', 'bit_14', 'bit_15']
+        msg = self.dop_function.column_check(RSData, 'rsdata', list_default)
+        msg[f'{today} - Таблица: rsdata подготовлена'] = 1
+        return msg 
 class Filling_KTPRP():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -8903,7 +8882,7 @@ class Filling_VS_tm():
         return msg 
 class Filling_VSGRP():
     def __init__(self):
-        self.cursor   = db.cursor()
+        self.cursor = db.cursor()
         self.dop_function = General_functions()
     # Заполняем таблицу VSGRP
     def column_check(self):

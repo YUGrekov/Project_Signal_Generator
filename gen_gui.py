@@ -472,6 +472,36 @@ class Widget(QWidget):
         b_clear_dps.resize(80, 23)
         b_clear_dps.move(b_width_two + 210, b_height + 130) 
         b_clear_dps.clicked.connect(self.clear_dps_tabl)
+        # RSreq
+        l_rsreq = QLabel('RSreq:', tab_3)
+        l_rsreq.move(b_width_one + 170, l_height + 156)
+        b_rsreq_basket = QPushButton('Подготовить', tab_3)
+        b_rsreq_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
+        b_rsreq_basket.setToolTip('''Запросы по Modbus RTU. Таблица не заполняется!''')
+        b_rsreq_basket.resize(80, 23)
+        b_rsreq_basket.move(b_width_one + 210, b_height + 156) 
+        b_rsreq_basket.clicked.connect(self.filling_rsreq)
+        b_clear_rsreq = QPushButton('Очистить', tab_3)
+        b_clear_rsreq.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
+        b_clear_rsreq.setToolTip("Очистить таблицу RSreq")
+        b_clear_rsreq.resize(80, 23)
+        b_clear_rsreq.move(b_width_two + 210, b_height + 156) 
+        b_clear_rsreq.clicked.connect(self.clear_rsreq_tabl)
+        # RSdata
+        l_rsdata = QLabel('RSdata:', tab_3)
+        l_rsdata.move(b_width_one + 170, l_height + 182)
+        b_rsdata_basket = QPushButton('Подготовить', tab_3)
+        b_rsdata_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
+        b_rsdata_basket.setToolTip('''Сигналы, формируемые в программе или по интерфейсу. Таблица не заполняется!''')
+        b_rsdata_basket.resize(80, 23)
+        b_rsdata_basket.move(b_width_one + 210, b_height + 182) 
+        b_rsdata_basket.clicked.connect(self.filling_rsdata)
+        b_clear_rsdata = QPushButton('Очистить', tab_3)
+        b_clear_rsdata.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
+        b_clear_rsdata.setToolTip("Очистить таблицу RSdata")
+        b_clear_rsdata.resize(80, 23)
+        b_clear_rsdata.move(b_width_two + 210, b_height + 182) 
+        b_clear_rsdata.clicked.connect(self.clear_rsdata_tabl)
 
 
         # UMPNA
@@ -1624,6 +1654,22 @@ class Widget(QWidget):
         self.logs_msg('default', 1, msg, True)
     def clear_dps_tabl(self):
         msg = self.dop_function.clear_tabl('dps', 'DPS', self.list_tabl)
+        self.logs_msg('default', 1, msg, True)
+    # RSreq
+    def filling_rsreq(self):
+        rsreq_table = Filling_RSreq()
+        msg = rsreq_table.column_check()
+        self.logs_msg('default', 1, msg, True)
+    def clear_rsreq_tabl(self):
+        msg = self.dop_function.clear_tabl('rsreq', 'RSreq', self.list_tabl)
+        self.logs_msg('default', 1, msg, True)
+    # RSdata
+    def filling_rsdata(self):
+        rsdata_table = Filling_RSdata()
+        msg = rsdata_table.column_check()
+        self.logs_msg('default', 1, msg, True)
+    def clear_rsdata_tabl(self):
+        msg = self.dop_function.clear_tabl('rsdata', 'RSdata', self.list_tabl)
         self.logs_msg('default', 1, msg, True)
     # UMPNA
     def filling_umpna(self):
