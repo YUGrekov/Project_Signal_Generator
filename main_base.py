@@ -225,7 +225,6 @@ class General_functions():
         root = tree.getroot()
 
         list_msg = []
-        flag_str = True
 
         for lvl_one in root.iter('Row'):
             category = lvl_one.attrib['Category']
@@ -657,34 +656,48 @@ class Editing_table_SQL():
     def __init__(self):
         self.cursor = db.cursor()
         self.dop_function = General_functions()
-    
+
     def editing_sql(self, table_sql: str):
         '''Сбор данных для построения(столбцы, значения ячеек)'''
         try:
             eng_name_column = self.column_names(table_sql)
-
-            dict_rus = self.read_json(table_sql)
+            
+            dict_rus = self.exist_check_array(self.read_json(), table_sql)
             rus_eng_name = self.russian_name_column(dict_rus, eng_name_column)
 
-            value = self.cursor.fetchall()
-            return len(eng_name_column), len(value), rus_eng_name, value
-        except Exception:
-            return 0, 0, 0, 0
+            count_column = self.exist_check_int(self.read_json(), table_sql)
 
-    def read_json(self, table: str) -> tuple:
-        '''Русификация шапки таблицы из файла .json.'''
-        value = {}
-        with open(connect.path_rus_text, "r", encoding='utf-8') as outfile:
-            data = json.load(outfile)
-        try:
-            return data[table]
+            value = self.cursor.fetchall()
+            return len(eng_name_column), len(value), rus_eng_name, value, count_column
         except Exception:
-            return value
+            return 0, 0, 0, 0, 0
+
+    def read_json(self) -> tuple:
+        '''Русификация шапки таблицы из файла .json.'''
+
+        with open(connect.path_rus_text, "r", encoding='utf-8') as outfile:
+            return json.load(outfile)
     
     def russian_name_column(self, dict_rus, name_column):
         '''Расшифровка с английского на русский'''
         return [dict_rus[eng_t] if eng_t in dict_rus.keys() else eng_t for eng_t in name_column]
+    
+    def exist_check_array(self, array: dict, table: str):
+        '''Проверка на существование данных столбцов из файла'''
+        try:
+            return array[table]
+        except Exception:
+            return {}
 
+    def exist_check_int(self, array: dict, table: str):
+        '''Проверка на существование данных для
+          видимости столбцов левой таблицы в params_visible_column'''
+        try:
+            value = array['params_visible_column']
+            return value[table]
+        except Exception:
+            return 4
+        
     def search_name(self, tabl, value):
         '''Поиск подписи к ячейке'''
         try:
@@ -711,17 +724,19 @@ class Editing_table_SQL():
 
             eng_name_column = self.column_names(table_used)
 
-            dict_rus = self.read_json(table_used)
+            dict_rus = self.exist_check_array(self.read_json(), table_used)
             rus_eng_name = self.russian_name_column(dict_rus, eng_name_column)
+
+            c_col = self.exist_check_int(self.read_json(), table_used)
 
             value = self.cursor.fetchall()
 
             count_column = len(name_column)
             count_row = len(value)
-            return table_used, count_column, count_row, rus_eng_name, value
+            return table_used, count_column, count_row, rus_eng_name, value, c_col
         except Exception:
             logging.logs_msg(f'Таблица: {table_used} некорректный запрос: {traceback.format_exc()}', 2)
-            return 'error', 'error', 'error', 'error', 'error'
+            return 'error', 'error', 'error', 'error', 'error', 'error'
 
     def update_row_tabl(self, column: int, text_cell: str, text_cell_id: int, 
                         table_used: str, hat_name: list, logging):
@@ -830,6 +845,7 @@ class Editing_table_SQL():
 class Generate_database_SQL():
     def __init__(self):
         self.dop_function = General_functions()
+        
     def check_database_connect(self, dbname, user, password, host, port):
         try:
             connect = psycopg2.connect(f"dbname={dbname} user={user} host={host} password={password} port={port} connect_timeout=1 ")
@@ -850,6 +866,21 @@ class Generate_database_SQL():
         except Exception:
             return kod_msg, addr_offset
         return kod_msg, addr_offset
+    def exist_table(self):
+        cursor = db_prj.cursor()
+        cursor.execute('CREATE SCHEMA IF NOT EXISTS messages;')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS messages.OPMessages(
+                       Category INT NOT NULL,
+                       Message VARCHAR(1024),
+                       IsAck BOOLEAN NOT NULL,
+                       SoundFile VARCHAR(1024),
+                       IsCycle BOOLEAN NOT NULL,
+                       IsSound BOOLEAN NOT NULL,
+                       IsHide BOOLEAN NOT NULL,
+                       Priority INT NOT NULL,
+                       IsAlert BOOLEAN NOT NULL,
+                       CONSTRAINT OPMessages_pkey PRIMARY KEY (Category));''')
+        
     def write_file(self, list_str, tabl, name_file):
         msg = {}
         # Создаём файл запроса
@@ -1068,33 +1099,47 @@ class Generate_database_SQL():
             if addr_offset == 0 or kod_msg is None or addr_offset is None: 
                 msg[f'{today} - Сообщения ai: ошибка. Адреса из таблицы msg не определены'] = 2
                 return msg
-            cursor.execute(f"""SELECT id, "name", "AnalogGroupId" FROM ai""")
+            cursor.execute(f"""SELECT id, "name", "AnalogGroupId" FROM ai ORDER BY id""")
             list_ai = cursor.fetchall()
+
+            self.exist_table()
+
             for analog in list_ai:
                 id_ai = analog[0]
                 name_ai = analog[1]
                 group_ai = analog[2]
 
                 start_addr = kod_msg + ((id_ai - 1) * int(addr_offset))
+
+                cursor.execute(f"""SELECT "tabl_msg" 
+                                    FROM ai_grp
+                                    WHERE name='{group_ai}'""")
                 try:
-                    cursor.execute(f"""SELECT "table_msg" 
-                                       FROM ai_grp
-                                       WHERE name_group='{group_ai}'""")
                     list_group = cursor.fetchall()[0][0]
+                    
                     path = f'{connect.path_sample}\{list_group}.xml'
+                    
                     if not os.path.isfile(path):
-                        msg[f'{today} - Сообщения ai: отсутствует шаблон - {list_group}'] = 2
+                        msg[f'{today} - Сообщения ai: id = {id_ai}, отсутствует шаблон - {list_group}. Используем по умолчанию: TblAnalogsDefault.xml'] = 2
+                        raise
+                    gen_list.append(self.dop_function.parser_sample(path, start_addr, name_ai, flag_write_db, 'AI'))
+                
+                except Exception:
+                    path = f'{connect.path_sample}\TblAnalogsDefault.xml'
+                    if not os.path.isfile(path):
+                        msg[f'{today} - Сообщения ai: отсутствует шаблон по умолчанию. Пропускаем сигнал'] = 2
                         continue
                     gen_list.append(self.dop_function.parser_sample(path, start_addr, name_ai, flag_write_db, 'AI'))
-                except Exception:
-                    msg[f'{today} - Сообщения ai: отсутствует шаблон: {id_ai} - {name_ai}'] = 2
                     continue
+
             if not flag_write_db:
                 msg.update(self.write_file(gen_list, 'AI', 'PostgreSQL_Messages-AI'))
                 msg[f'{today} - Сообщения ai: файл скрипта создан'] = 1
                 return(msg)
+            
         except Exception:
             msg[f'{today} - Сообщения ai: ошибка генерации: {traceback.format_exc()}'] = 2
+
         msg[f'{today} - Сообщения ai: генерация завершена'] = 1
         return(msg) 
     def gen_msg_di(self, flag_write_db, tabl, sign, script_file):
@@ -1107,6 +1152,8 @@ class Generate_database_SQL():
                 msg[f'{today} - Сообщения {tabl}: ошибка. Адреса из таблицы msg не определены'] = 2
                 return msg
             
+            self.exist_table()
+
             cursor.execute(f"""SELECT id, name, "tabl_msg", "msg_priority_0", "msg_priority_1", "sound_msg_0", "sound_msg_1" FROM "{tabl}" ORDER BY id""")
             list_signal = cursor.fetchall()
             for signal in list_signal:
@@ -1143,6 +1190,8 @@ class Generate_database_SQL():
                 msg[f'{today} - Сообщения {tabl}: ошибка. Адреса из таблицы msg не определены'] = 2
                 return msg
             
+            self.exist_table()
+
             cursor.execute(f"""SELECT id, name, "msg_priority_0", "msg_priority_1", "sound_msg_0", "sound_msg_1" FROM "{tabl}" ORDER BY id""")
             list_signal = cursor.fetchall()
 
@@ -1181,6 +1230,8 @@ class Generate_database_SQL():
                 msg[f'{today} - Сообщения {tabl}: ошибка. Адреса из таблицы msg не определены'] = 2
                 return msg
             
+            self.exist_table()
+            
             cursor.execute(f"""SELECT id, name, tabl_msg, replacement_uso_signal_vv_1, replacement_uso_signal_vv_2
                                 FROM "{tabl}" ORDER BY id""")
             list_signal = cursor.fetchall()
@@ -1218,6 +1269,8 @@ class Generate_database_SQL():
             if addr_offset == 0 or kod_msg is None or addr_offset is None: 
                 msg[f'{today} - Сообщения {tabl}: ошибка. Адреса из таблицы msg не определены'] = 2
                 return msg
+            
+            self.exist_table()
 
             cursor.execute(f"""SELECT id, name FROM "{tabl}" ORDER BY id""")
             list_signal = cursor.fetchall()
@@ -1261,14 +1314,16 @@ class Generate_database_SQL():
                 msg[f'{today} - Сообщения {tabl}: ошибка. Адреса из таблицы msg не определены'] = 2
                 return msg
             
+            self.exist_table()
+            
             if sign == 'KTPRA' or sign == 'GMPNA':
                 cursor.execute(f"""SELECT id, name, "NA" FROM "{tabl}" ORDER BY id""")
             else:
                 cursor.execute(f"""SELECT id, name FROM "{tabl}" ORDER BY id""")
             list_signal = cursor.fetchall()
             for signal in list_signal:
-                id_       = signal[0]
-                name      = signal[1]
+                id_ = signal[0]
+                name = signal[1]
                 if sign == 'KTPRA' or sign == 'GMPNA': na = signal[2]
 
                 start_addr = kod_msg + ((id_ - 1) * int(addr_offset))
@@ -1300,6 +1355,8 @@ class Generate_database_SQL():
                 msg[f'{today} - Сообщения {tabl}: ошибка. Адреса из таблицы msg не определены'] = 2
                 return msg
             
+            self.exist_table()
+            
             cursor.execute(f"""SELECT id, name, tabl_msg FROM "{tabl}" ORDER BY id""")
             list_signal = cursor.fetchall()
             for signal in list_signal:
@@ -1330,6 +1387,8 @@ class Generate_database_SQL():
         count_CN, count_CPU, count_EthEx = 0, 0, 0
         count_MN, count_PCU, count_RS = 0, 0, 0 
         try:
+            self.exist_table()
+
             for column in HardWare.select().dicts():
                 id_basket = column['id']
                 uso       = column['uso']
@@ -1453,6 +1512,8 @@ class Generate_database_SQL():
             msg[f'{today} - Сообщения {tabl}: ошибка. Адреса из таблицы msg не определены'] = 2
             return msg
         try:
+            self.exist_table()
+
             cursor.execute(f"""SELECT id, text, priority, "isAck", "IsAlert", "IsCycle", "IsSound", "SoundFile", "IsHide"
                                 FROM "{tabl}" ORDER BY id""")
             list_signal = cursor.fetchall()
@@ -1504,6 +1565,8 @@ class Generate_database_SQL():
             if addr_offset == 0 or kod_msg is None or addr_offset is None: 
                 msg[f'{today} - Сообщения {tabl}: ошибка. Адреса из таблицы msg не определены'] = 2
                 return msg
+            
+            self.exist_table()
             
             path = f'{connect.path_sample}\{table_msg}.xml'
             if not os.path.isfile(path):
@@ -1568,6 +1631,8 @@ class Generate_database_SQL():
                 path = f'{connect.path_sample}\{i}.xml'
                 if not os.path.isfile(path):
                     msg[f'{today} - Сообщения {tabl}: в папке отсутствует шаблон - {i}'] = 2
+            
+            self.exist_table()
 
             cursor.execute(f"""SELECT id, name, "type_zone" FROM "{tabl}" ORDER BY id""")
             list_zone = cursor.fetchall()
@@ -9309,24 +9374,13 @@ class Filling_PI():
                                             tag = tag_ai,
                                             name = name_ai,
                                             Type_PI = type_pi,
-                                            Fire_0 = f'stateAI[{number_ai}].state.reg',
-                                            Attention_1 = attention,
-                                            Fault_1_glass_pollution_broken_2 = f'stateAI[{number_ai}].state.reg',
-                                            Fault_2_fault_KZ_3 = f'stateAI[{number_ai}].state.reg',
-                                            Yes_connection_4 = '',
-                                            Frequency_generator_failure_5 = '',
-                                            Parameter_loading_error_6 = '',
-                                            Communication_error_module_IPP_7 = '',
-                                            Supply_voltage_fault_8 = '',
-                                            Optics_contamination_9 = '',
-                                            IK_channel_failure_10 = '',
-                                            UF_channel_failure_11 = '',
-                                            Loading_12 = '',
-                                            Test_13 = '',
-                                            Reserve_14 = '',
+                                            Fire = f'stateAI[{number_ai}].state.reg',
+                                            Attention = attention,
+                                            Fault_1 = f'stateAI[{number_ai}].state.reg',
+                                            Fault_2 = f'stateAI[{number_ai}].state.reg',
                                             Reset_Link = ctrl_DO,
-                                            Reset_Request = '0',
-                                            Through_loop_number_for_interface = '0',
+                                            Reset_Request = 0,
+                                            Through_loop_number_for_interface = 0,
                                             location = '',
                                             Pic = '',
                                             Normal = ''))
@@ -9340,13 +9394,13 @@ class Filling_PI():
         return(msg)
     # Заполняем таблицу VS
     def column_check(self):
-        list_default = ['variable', 'tag', 'name', 'Type_PI', 'Fire_0', 'Attention_1', 'Fault_1_glass_pollution_broken_2', 
-                        'Fault_2_fault_KZ_3', 'Yes_connection_4', 'Frequency_generator_failure_5', 
-                        'Parameter_loading_error_6', 'Communication_error_module_IPP_7', 'Supply_voltage_fault_8', 'Optics_contamination_9',
-                        'IK_channel_failure_10', 'UF_channel_failure_11', 'Loading_12', 'Test_13', 'Reserve_14',
-                        'Reset_Link', 'Reset_Request', 'Through_loop_number_for_interface', 'location', 'Pic','Normal']
+        list_default = ['variable', 'tag', 'name', 'Type_PI', 'Fire', 'Attention', 'Fault_1', 'Fault_2', 'Yes_connection', 'Normal',
+                        'Param_1', 'Param_2', 'Param_3', 'Param_4', 'Param_5', 'Param_6', 'Param_7', 'Param_8', 'Param_9', 'Param_10', 
+                        'Reset_Link', 'Reset_Request', 'Through_loop_number_for_interface', 'location', 'Pic']
         msg = self.dop_function.column_check(PI, 'pi', list_default)
         return msg 
+    
+
 class Filling_PT():
     def __init__(self):
         self.cursor   = db.cursor()

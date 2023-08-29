@@ -3,12 +3,27 @@ from models import db
 from models import connect
 from models import Signals
 from datetime import datetime
+from enum import Enum
 import traceback
 
 SHIFT = 1
 LIST_MODULE = ['CPU', 'PSU', 'CN', 'MN', 'AI', 'AO', 'DI', 'RS', 'DO']
 
 today = datetime.now()
+
+
+class NumberColumn(Enum):
+    '''Перечисление статических столбцов таблицы.'''
+    ID = 'id'
+    TYPE_SIGNAL = 'type_signal'
+    TAG = 'tag'
+    NAME = 'description'
+    SCHEMA = 'schema'
+    KLK = 'klk'
+    CONTACT = 'contact'
+    BASKET = 'basket'
+    MODULE = 'module'
+    CHANNEL = 'channel'
 
 
 class Import_in_SQL():
@@ -142,12 +157,11 @@ class Import_in_SQL():
         msg = {}
         with db.atomic():
             try:
-                # Filter by uso, basket, modul, channel
                 for row_exel in data:
                     exist_row = Signals.select().where(Signals.uso == uso,
-                                                       Signals.basket == str(row_exel['basket']),
-                                                       Signals.module == str(row_exel['module']),
-                                                       Signals.channel == str(row_exel['channel']))
+                                                       Signals.basket == str(row_exel[NumberColumn.BASKET.value]),
+                                                       Signals.module == str(row_exel[NumberColumn.MODULE.value]),
+                                                       Signals.channel == str(row_exel[NumberColumn.CHANNEL.value]))
                     if not bool(exist_row):
                         Signals.create(**row_exel)
                         msg[f'''{today} - Добавлен новый сигнал: id - {row_exel["id"]}, description - {row_exel["description"]},
@@ -155,48 +169,43 @@ class Import_in_SQL():
                                                                 channel - {row_exel["channel"]}'''] = 0
                         continue
 
-                    for row_sql in Signals.select().dicts():
+                    else:
 
-                        if row_sql['uso'] == uso and \
-                            row_sql['basket'] == str(row_exel['basket']) and \
-                            row_sql['module'] == str(row_exel['module']) and \
-                            row_sql['channel'] == str(row_exel['channel']):
+                        if str(row_sql['tag']) == str(row_exel['tag']) and \
+                            str(row_sql['description']) == str(row_exel['description']) and \
+                            str(row_sql['scheme']) == str(row_exel['scheme']) and \
+                            str(row_sql['klk']) == str(row_exel['klk']) and \
+                            str(row_sql['contact']) == str(row_exel['contact']):
 
-                            if str(row_sql['tag']) == str(row_exel['tag']) and \
-                                str(row_sql['description']) == str(row_exel['description']) and \
-                                str(row_sql['scheme']) == str(row_exel['scheme']) and \
-                                str(row_sql['klk']) == str(row_exel['klk']) and \
-                                str(row_sql['contact']) == str(row_exel['contact']):
-
-                                continue
-                            else:
-                                Signals.update(
-                                    type_signal=row_exel['type_signal'],
-                                    tag        =row_exel['tag'],
-                                    description=row_exel['description'],
-                                    schema     =row_exel['scheme'],
-                                    klk        =row_exel['klk'],
-                                    contact    =row_exel['contact'],
-                                ).where(Signals.id == row_sql['id']).execute()
-                                msg[f'''{today} - Обновление сигнала id = {row_sql["id"]}: Было, 
-                                                    uso - {row_sql['uso']}, 
-                                                    type_signal - {row_sql['type_signal']}, 
-                                                    tag - {row_sql['tag']},                      
-                                                    description - {row_sql['description']}, 
-                                                    schema - {row_sql['scheme']}, 
-                                                    klk - {row_sql['klk']},
-                                                    contact - {row_sql['contact']} = 
-                                                    Стало, 
-                                                    uso - {row_exel['uso']}, 
-                                                    type_signal - {row_exel['type_signal']}, 
-                                                    tag - {row_exel['tag']}, 
-                                                    description - {row_exel['description']}, 
-                                                    scheme - {row_exel['scheme']}, 
-                                                    klk - {row_exel['klk']},
-                                                    contact - {row_exel['contact']}'''] = 3
-                                continue
-                        else:
                             continue
+                        else:
+                            Signals.update(
+                                type_signal=row_exel['type_signal'],
+                                tag        =row_exel['tag'],
+                                description=row_exel['description'],
+                                schema     =row_exel['scheme'],
+                                klk        =row_exel['klk'],
+                                contact    =row_exel['contact'],
+                            ).where(Signals.id == row_sql['id']).execute()
+                            msg[f'''{today} - Обновление сигнала id = {row_sql["id"]}: Было, 
+                                                uso - {row_sql['uso']}, 
+                                                type_signal - {row_sql['type_signal']}, 
+                                                tag - {row_sql['tag']},                      
+                                                description - {row_sql['description']}, 
+                                                schema - {row_sql['scheme']}, 
+                                                klk - {row_sql['klk']},
+                                                contact - {row_sql['contact']} = 
+                                                Стало, 
+                                                uso - {row_exel['uso']}, 
+                                                type_signal - {row_exel['type_signal']}, 
+                                                tag - {row_exel['tag']}, 
+                                                description - {row_exel['description']}, 
+                                                scheme - {row_exel['scheme']}, 
+                                                klk - {row_exel['klk']},
+                                                contact - {row_exel['contact']}'''] = 3
+                            continue
+                    else:
+                        continue
             except Exception:
                 msg[f'{today} - Таблица: signals, ошибка при обновлении: {traceback.format_exc()}'] = 2
         return(msg)

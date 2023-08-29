@@ -1,4 +1,5 @@
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QTableWidget
@@ -113,16 +114,17 @@ class TableWidget(QTableWidget):
         self.tw_dub = tw_dub
         self.edit_SQL = edit_SQL
         self.logging = logging
-        column, row, hat_name, value = self.object_data_table()
+        column, row, hat_name, value, end = self.object_data_table()
 
-        self.init_table(column, row, hat_name, value)
+        self.init_table(column, row, hat_name, value, end)
 
     def object_data_table(self) -> tuple:
         '''Данные из базы SQL для построения таблицы'''
-        column, row, hat_name, value = self.edit_SQL.editing_sql(self.table_us)
-        return column, row, hat_name, value
+        column, row, hat_name, value, end = self.edit_SQL.editing_sql(self.table_us)
+        return column, row, hat_name, value, end
 
-    def init_table(self, column: int, row: int, hat_name: list, value: list):
+    def init_table(self, column: int, row: int,
+                   hat_name: list, value: list, end: int):
         """Построение таблицы с данными
 
         Args:
@@ -130,6 +132,7 @@ class TableWidget(QTableWidget):
             row (int): кол-во строк
             hat_name (list): заголовки столбцов
             value (list): значения ячеек
+            end (list): видимость столбцов в левой таблице
         """
         self.setColumnCount(column)
         self.setRowCount(row)
@@ -157,10 +160,13 @@ class TableWidget(QTableWidget):
                 self.setItem(tw_row, tw_column, item)
         # Видимость столбцов
         if not self.tw_dub:
-            [self.setColumnHidden(idx, True) for idx in range(0, 4)]
+            if end:
+                [self.setColumnHidden(idx, True) for idx in range(0, end)]
         else:
+            [self.setColumnHidden(idx, True) for idx in range(end, column)]
             self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
             self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            self.setVisible(False) if not end else True
 
         self.blockSignals(False)
         self.resizeColumnsToContents()
@@ -661,22 +667,21 @@ class MainWindow(QMainWindow):
         if not len(self.l_enter_req.text()):
             self.logsTextEdit.logs_msg('Пустой запрос!', 2)
             return
-        table_now, column, row, hat_name, value = self.editSQL.apply_request_select(self.l_enter_req.text(),
-                                                                                    self.table_us,
-                                                                                    self.logsTextEdit)
+        table_now, column, row, hat_name, value, end = self.editSQL.apply_request_select(self.l_enter_req.text(),
+                                                                                         self.table_us,
+                                                                                         self.logsTextEdit)
         if column == 'error':
             return
         self.tableWidget.table_us = table_now
-        self.tableWidget_dub.table_us = table_now
-
         self.tableWidget.tw_clear_lines(rowcount)
-        self.tableWidget_dub.tw_clear_lines(rowcount)
-
         self.tableWidget.blockSignals(True)
-        self.tableWidget_dub.blockSignals(True)
+        self.tableWidget.init_table(column, row, hat_name, value, end)
 
-        self.tableWidget.init_table(column, row, hat_name, value)
-        self.tableWidget_dub.init_table(column, row, hat_name, value)
+        if end:
+            self.tableWidget_dub.table_us = table_now
+            self.tableWidget_dub.tw_clear_lines(rowcount)
+            self.tableWidget_dub.blockSignals(True)
+            self.tableWidget_dub.init_table(column, row, hat_name, value, end)
 
     def reset_query(self):
         '''Сброс запроса и возврат таблицы к состоянию до запроса.'''
@@ -688,12 +693,12 @@ class MainWindow(QMainWindow):
         self.tableWidget.tw_clear_lines(rowcount)
         self.tableWidget_dub.tw_clear_lines(rowcount)
 
-        column, row, hat_name, value = self.tableWidget.object_data_table()
+        column, row, hat_name, value, end = self.tableWidget.object_data_table()
         self.tableWidget.blockSignals(True)
         self.tableWidget_dub.blockSignals(True)
 
-        self.tableWidget.init_table(column, row, hat_name, value)
-        self.tableWidget_dub.init_table(column, row, hat_name, value)
+        self.tableWidget.init_table(column, row, hat_name, value, end)
+        self.tableWidget_dub.init_table(column, row, hat_name, value, end)
 
     def update_text(self, text=None):
         '''Обновление текста из окна ссылки.'''

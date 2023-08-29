@@ -58,12 +58,22 @@ class Widget(QWidget):
         self.combo.resize(240, 25)
         self.combo.setStyleSheet("border-radius: 3px; border: 1px solid")
         self.combo.setFont(QFont('Arial', 10))
+        self.combo_2 = QComboBox(tab_5)
+        self.combo_2.move(10, 100) 
+        self.combo_2.resize(240, 25)
+        self.combo_2.setStyleSheet("border-radius: 3px; border: 1px solid")
+        self.combo_2.setFont(QFont('Arial', 10))
 
         clickButton = QPushButton('Подключиться к таблице', tab_5)
         clickButton.setStyleSheet("border-radius: 3px; border: 1px solid")
         clickButton.resize(240, 23)
         clickButton.move(10, 55) 
         clickButton.clicked.connect(self.choose_tabl)
+        clickButton_2 = QPushButton('Подключиться к таблице', tab_5)
+        clickButton_2.setStyleSheet("border-radius: 3px; border: 1px solid")
+        clickButton_2.resize(240, 23)
+        clickButton_2.move(10, 135) 
+        clickButton_2.clicked.connect(self.choose_tabl_2)
 
         updateButton = QPushButton('Обновить', tab_5)
         updateButton.setStyleSheet("border-radius: 3px; border: 1px solid")
@@ -73,6 +83,7 @@ class Widget(QWidget):
 
         for tabl in list_tabl:
             self.combo.addItem(str(tabl))
+            self.combo_2.addItem(str(tabl))
 
         # ------------------Соединение------------------
         # SQL
@@ -2138,13 +2149,19 @@ class Widget(QWidget):
         name_table = self.combo.currentText()
         self.ch_tabl = WinEditing(name_table)
         self.ch_tabl.show()
+    def choose_tabl_2(self):
+        name_table = self.combo_2.currentText()
+        self.ch_tabl_2 = WinEditing(name_table)
+        self.ch_tabl_2.show()
     # Update table
     def update_tabl(self):
         list_tabl = self.dop_function.all_tables()
         list_tabl.sort()
         self.combo.clear()
+        self.combo_2.clear()
         for tabl in list_tabl:
            self.combo.addItem(str(tabl))
+           self.combo_2.addItem(str(tabl))
     # ------------------------ВУ-------------------------
     def check_all_omx(self, checked):
         if checked: 
