@@ -144,8 +144,9 @@ class DataExel():
 
 
 class Import_in_SQL(DataExel):
-    '''Запись и обновление сигналов в базе SQL'''
+    '''Запись и обновление сигналов в базе SQL.'''
     def import_for_sql(self, data: dict, uso: str):
+        '''Импорт таблицы в базу SQL'''
         msg = {}
         with db.atomic():
             try:
@@ -155,20 +156,33 @@ class Import_in_SQL(DataExel):
                 msg[f'{today} - Таблица: signals, ошибка при заполнении: {traceback.format_exc()}'] = 2
         return msg
 
+    def exists_signals(self, row, uso: str) -> bool:
+        '''Проверяем существование сигнала в базе
+        по корзине, модулю, каналу.'''
+        exist_row = Signals.select().where(Signals.uso == uso,
+                                           Signals.basket == str(row[NameColumn.BASKET.value]),
+                                           Signals.module == str(row[NameColumn.MODULE.value]),
+                                           Signals.channel == str(row[NameColumn.CHANNEL.value]))
+        return bool(exist_row)
+
+    def  compare_signals(self, ):
+        if str(row_sql[NameColumn.TAG.value]) != str(row_exel[NameColumn.TAG.value]):
+            Signals.update(type_signal=row_exel[NameColumn.TAG.value]).where(Signals.id == row_sql['id']).execute()
+
     def update_for_sql(self, data, uso):
         msg = {}
         with db.atomic():
             try:
                 for row_exel in data:
-                    exist_row = Signals.select().where(Signals.uso == uso,
-                                                       Signals.basket == str(row_exel[NumberColumn.BASKET.value]),
-                                                       Signals.module == str(row_exel[NumberColumn.MODULE.value]),
-                                                       Signals.channel == str(row_exel[NumberColumn.CHANNEL.value]))
-                    if not bool(exist_row):
+
+                    if not self.exists_signals(uso, row_exel):
+
                         Signals.create(**row_exel)
-                        msg[f'''{today} - Добавлен новый сигнал: id - {row_exel["id"]}, description - {row_exel["description"]},
-                                                                basket - {row_exel["basket"]}, module - {row_exel["module"]},
-                                                                channel - {row_exel["channel"]}'''] = 0
+                        msg[f'''{today} - Добавлен новый сигнал:
+                            id - {row_exel[NameColumn.ID.value]},
+                            description - {row_exel[NameColumn.NAME.value]},
+                            module - {row_exel[NameColumn.MODULE .value]},
+                            channel - {row_exel[NameColumn.CHANNEL.value]}'''] = 0
                         continue
 
                     else:
@@ -189,22 +203,25 @@ class Import_in_SQL(DataExel):
                                 klk        =row_exel['klk'],
                                 contact    =row_exel['contact'],
                             ).where(Signals.id == row_sql['id']).execute()
-                            msg[f'''{today} - Обновление сигнала id = {row_sql["id"]}: Было, 
-                                                uso - {row_sql['uso']}, 
-                                                type_signal - {row_sql['type_signal']}, 
-                                                tag - {row_sql['tag']},                      
-                                                description - {row_sql['description']}, 
-                                                schema - {row_sql['scheme']}, 
-                                                klk - {row_sql['klk']},
-                                                contact - {row_sql['contact']} = 
-                                                Стало, 
-                                                uso - {row_exel['uso']}, 
-                                                type_signal - {row_exel['type_signal']}, 
-                                                tag - {row_exel['tag']}, 
-                                                description - {row_exel['description']}, 
-                                                scheme - {row_exel['scheme']}, 
-                                                klk - {row_exel['klk']},
-                                                contact - {row_exel['contact']}'''] = 3
+
+                            msg[f'''{today} - Обновление сигнала:
+                                id = {row_sql["id"]}:
+                                Было,
+                                uso - {row_sql['uso']},
+                                type_signal - {row_sql['type_signal']},
+                                tag - {row_sql['tag']},                      
+                                description - {row_sql['description']},
+                                schema - {row_sql['scheme']},
+                                klk - {row_sql['klk']},
+                                contact - {row_sql['contact']} =
+                                Стало,
+                                uso - {row_exel['uso']},
+                                type_signal - {row_exel['type_signal']},
+                                tag - {row_exel['tag']},
+                                description - {row_exel['description']},
+                                scheme - {row_exel['scheme']},
+                                klk - {row_exel['klk']},
+                                contact - {row_exel['contact']}'''] = 3
                             continue
             except Exception:
                 msg[f'{today} - Таблица: signals, ошибка при обновлении: {traceback.format_exc()}'] = 2
