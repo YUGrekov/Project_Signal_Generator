@@ -786,7 +786,7 @@ class Editing_table_SQL():
                                     WHERE table_schema = 'public' AND 
                                         table_name = '{table_used}'""")
             
-            dict_rus = self.read_json(table_used) 
+            dict_rus = self.exist_check_array(self.read_json(), table_used)
 
             for i in self.cursor.fetchall():
                 column_name = i[0]

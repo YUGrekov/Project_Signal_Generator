@@ -162,11 +162,17 @@ class TableWidget(QTableWidget):
         if not self.tw_dub:
             if end:
                 [self.setColumnHidden(idx, True) for idx in range(0, end)]
+            else:
+                [self.setColumnHidden(idx, False) for idx in range(0, column)]
         else:
-            [self.setColumnHidden(idx, True) for idx in range(end, column)]
             self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
             self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-            self.setVisible(False) if not end else True
+            if end:
+                [self.setColumnHidden(idx, True) for idx in range(end, column)]
+                if not self.isVisible():
+                    self.setVisible(True)
+            else:
+                self.setVisible(False)
 
         self.blockSignals(False)
         self.resizeColumnsToContents()
@@ -573,6 +579,7 @@ class MainWindow(QMainWindow):
         self.layout_v.addWidget(splitter_v)
 
         self.logsTextEdit.logs_msg('Запуск редактора базы SQL', 1)
+        self.logsTextEdit.logs_msg(f'Открыта таблица {self.table_us}', 1)
 
     def on_Change_one(self):
         '''Активность окна 1.'''
@@ -606,14 +613,15 @@ class MainWindow(QMainWindow):
         value = 0
         if rowcount:
             value = self.tableWidget.text_cell(rowcount - 1, 0)
+        sum_cell = int(value) + CONST_COUNT_ONE
 
-        self.editSQL.add_new_row(self.table_us, (rowcount + 1))
+        self.editSQL.add_new_row(self.table_us, sum_cell)
         self.tableWidget.insertRow(rowcount)
-        self.tableWidget.setItem(rowcount, 0, QTableWidgetItem(f'{int(value) + CONST_COUNT_ONE}'))
+        self.tableWidget.setItem(rowcount, 0, QTableWidgetItem(f'{sum_cell}'))
         self.tableWidget_dub.insertRow(rowcount)
-        self.tableWidget_dub.setItem(rowcount, 0, QTableWidgetItem(f'{int(value) + CONST_COUNT_ONE}'))
+        self.tableWidget_dub.setItem(rowcount, 0, QTableWidgetItem(f'{sum_cell}'))
 
-        self.logsTextEdit.logs_msg('В конец таблицы добавлена новая строка', 1)
+        self.logsTextEdit.logs_msg('В конец таблицы добавлена новая строка', 0)
 
     def delete_row(self):
         '''Удаляем выбранную строку.'''
@@ -623,7 +631,7 @@ class MainWindow(QMainWindow):
             row, column = self.tableWidget_dub.data_cell()
 
         if (row == -1) and (column == -1):
-            self.logsTextEdit.logs_msg('Выбери строку для удаления!', 3)
+            self.logsTextEdit.logs_msg('Выбери строку для удаления', 2)
             return
         if self.fl_actives_windows == 1:
             value_id = self.tableWidget.text_cell(row, 0)
@@ -635,13 +643,13 @@ class MainWindow(QMainWindow):
         self.tableWidget_dub.removeRow(row)
         self.tableWidget_dub.selectionModel().clearCurrentIndex()
 
-        self.logsTextEdit.logs_msg(f'Таблица: {self.table_us} удалена строка id={value_id}', 3)
+        self.logsTextEdit.logs_msg(f'Удалена строка, id = {value_id}', 3)
 
     def clear_tabl(self):
         '''Удаления всех данных таблицы, без столбцов.'''
         rowcount = self.tableWidget.row_count_tabl()
         if rowcount == 0:
-            self.logsTextEdit.logs_msg(f'Таблица: {self.table_us} пустая', 3)
+            self.logsTextEdit.logs_msg('Таблица пустая', 3)
             return
         while rowcount >= 0:
             self.tableWidget.removeRow(rowcount)
@@ -650,7 +658,7 @@ class MainWindow(QMainWindow):
         self.editSQL.clear_tabl(self.table_us)
         self.l_enter_req.clear()
 
-        self.logsTextEdit.logs_msg(f'Таблица: {self.table_us} полностью очищена!', 3)
+        self.logsTextEdit.logs_msg('Таблица полностью очищена', 3)
 
     def drop_tabl(self):
         '''Удаление таблицы из базы данных.'''
@@ -665,23 +673,25 @@ class MainWindow(QMainWindow):
         """
         rowcount = self.tableWidget.row_count_tabl()
         if not len(self.l_enter_req.text()):
-            self.logsTextEdit.logs_msg('Пустой запрос!', 2)
+            self.logsTextEdit.logs_msg('Пустой запрос', 2)
             return
         table_now, column, row, hat_name, value, end = self.editSQL.apply_request_select(self.l_enter_req.text(),
                                                                                          self.table_us,
                                                                                          self.logsTextEdit)
         if column == 'error':
             return
+
         self.tableWidget.table_us = table_now
         self.tableWidget.tw_clear_lines(rowcount)
         self.tableWidget.blockSignals(True)
         self.tableWidget.init_table(column, row, hat_name, value, end)
 
-        if end:
-            self.tableWidget_dub.table_us = table_now
-            self.tableWidget_dub.tw_clear_lines(rowcount)
-            self.tableWidget_dub.blockSignals(True)
-            self.tableWidget_dub.init_table(column, row, hat_name, value, end)
+        self.tableWidget_dub.table_us = table_now
+        self.tableWidget_dub.tw_clear_lines(rowcount)
+        self.tableWidget_dub.blockSignals(True)
+        self.tableWidget_dub.init_table(column, row, hat_name, value, end)
+
+        self.logsTextEdit.logs_msg(f'Открыта таблица {table_now}', 1)
 
     def reset_query(self):
         '''Сброс запроса и возврат таблицы к состоянию до запроса.'''
