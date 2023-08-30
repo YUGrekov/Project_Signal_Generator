@@ -16,8 +16,6 @@ from logging_text import LogsTextEdit
 today = datetime.now()
 
 
-
-# Additional general features
 class General_functions():
     def str_find(self, str1, arr):
         i = 0
@@ -356,7 +354,7 @@ class General_functions():
         # Чистка объектов
         msg = {}
         msg_bool, el1, tree = self.parser_omx(directory)
-        tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+        tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
 
         if msg_bool == 1: 
             msg[f'{today} - Файл omx: ошибка при чистке {directory}'] = 2
@@ -367,7 +365,7 @@ class General_functions():
         # Чистка объектов
         msg = {}
         msg_bool, el1, tree = self.parser_diag_omx(directory)
-        tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+        tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
 
         if msg_bool == 1: 
             msg[f'{today} - Файл omx: ошибка при чистке {directory}'] = 2
@@ -386,13 +384,13 @@ class General_functions():
     
     def parser_omx(self, directory):
         parser = etree.XMLParser(remove_blank_text=True)
-        tree = etree.parse(f'{connect.path_to_devstudio}\\typical_prj.omx', parser)
+        tree = etree.parse(f'{connect.path_to_devstudio_omx}', parser)
         root = tree.getroot()
         try:
             for el in root.iter('{automation.deployment}application-object'):
                 if el.attrib['name'] == "Application_PLC":
                     for item in el.iter('{automation.control}object'):
-                        if item.attrib['name'] == 'Root' + connect.prefix_system:
+                        if item.attrib['name'] == f'Root{connect.prefix_system}':
                             for el1 in item.iter('{automation.control}object'):
                                 if el1.attrib['name'] == directory:
                                     item.remove(el1)
@@ -407,7 +405,7 @@ class General_functions():
             return 1, 0, 0
     def parser_diag_omx(self, directory):
         parser = etree.XMLParser(remove_blank_text=True)
-        tree = etree.parse(f'{connect.path_to_devstudio}\\typical_prj.omx', parser)
+        tree = etree.parse(f'{connect.path_to_devstudio_omx}', parser)
         root = tree.getroot()
         try:
             for el in root.iter('{automation.deployment}application-object'):
@@ -513,6 +511,7 @@ class Import_in_SQL():
                 for key, value in name_column.items():
                     if value == cell:
                         hat_num[key] = j - 1
+        print(hat_num)
         data = []
         for row in sheet.iter_rows(min_row=(int(number_row) + 1)):
             keys = []
@@ -2347,7 +2346,7 @@ class Generate_database_SQL():
         msg[f'{today} - {sign}: синхронизация завершена!'] = 1
         return(msg)
     
-# Filling attribute DevStudio
+
 class Filling_attribute_DevStudio():
     def __init__(self):
         self.dop_function = General_functions()
@@ -2853,7 +2852,7 @@ class Filling_attribute_DevStudio():
                     self.dop_function.new_attr(object, "unit.Library.Attributes.AI_Ref_KZFKP", tag)
 
                     el1.append(object)
-                tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+                tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
                 msg[f'{today} - Файл omx: Analogs добавлены'] = 1
                 return msg
             except Exception:
@@ -2923,7 +2922,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.Library.Attributes.AI_Ref_KZFKP", tag_ai_ref)
 
                 el1.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
             msg[f'{today} - Файл omx: Diskrets добавлены'] = 1
             return msg
         except Exception:
@@ -2955,7 +2954,7 @@ class Filling_attribute_DevStudio():
                     self.dop_function.new_attr(object, "unit.System.Attributes.Description", name_pic)
                     
                     el1.append(object)
-                tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+                tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
                 msg[f'{today} - Файл omx: Pictures добавлены'] = 1
                 return msg
             except Exception:
@@ -3042,7 +3041,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.Library.Attributes.DO_ref", tag_close)
 
                 el1.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
             msg[f'{today} - Файл omx: AuxSystems добавлены'] = 1
             return msg
         except Exception:
@@ -3121,7 +3120,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.Library.Attributes.DO_ref", tag_do)
 
                 el1.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
             msg[f'{today} - Файл omx: Valves добавлены'] = 1
             return msg
         except Exception:
@@ -3154,7 +3153,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.System.Attributes.Description", name)
                 
                 el1.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
             msg[f'{today} - Файл omx: NAs добавлены'] = 1
             return msg
         except Exception:
@@ -3187,7 +3186,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.System.Attributes.Description", name)
 
                 el1.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
             msg[f'{today} - Файл omx: SSs добавлены'] = 1
             return msg
         except Exception:
@@ -3229,7 +3228,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.System.Attributes.Description", name)
                 
                 el1.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
             msg[f'{today} - Файл omx: UTSs добавлены'] = 1
             return msg
         except Exception:
@@ -3269,7 +3268,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.Library.Attributes.Place", place)
                 
                 el1.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
             msg[f'{today} - Файл omx: UPTSs добавлены'] = 1
             return msg
         except Exception:
@@ -3298,7 +3297,7 @@ class Filling_attribute_DevStudio():
                 object.attrib['base-type'] = "unit.Library.PLC_Types.KTPRx_PLC"
                 object.attrib['aspect'] = "unit.Library.PLC_Types.PLC"
                 el1.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
             msg[f'{today} - Файл omx: KTPRs добавлены'] = 1
             return msg
         except Exception:
@@ -3327,7 +3326,7 @@ class Filling_attribute_DevStudio():
                     object.attrib['base-type'] = "unit.Library.PLC_Types.KTPRx_PLC"
                     object.attrib['aspect'] = "unit.Library.PLC_Types.PLC"
                     el1.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
             msg[f'{today} - Файл omx: KTPRPs добавлены'] = 1
             return msg
         except Exception:
@@ -3369,7 +3368,7 @@ class Filling_attribute_DevStudio():
                     group.attrib['aspect'] = "unit.Library.PLC_Types.PLC"
                     object.append(group)
                 el1.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
             msg[f'{today} - Файл omx: KTPRAs добавлены'] = 1
             return msg
         except Exception:
@@ -3411,7 +3410,7 @@ class Filling_attribute_DevStudio():
                     group.attrib['aspect'] = "unit.Library.PLC_Types.PLC"
                     object.append(group)
                 el1.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
             msg[f'{today} - Файл omx: GMPNAs добавлены'] = 1
             return msg
         except Exception:
@@ -3453,7 +3452,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.Library.Attributes.Place", place)
 
                 el1.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
             msg[f'{today} - Файл omx: PIs добавлены'] = 1
             return msg
         except Exception:
@@ -3488,7 +3487,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.Library.Attributes.Index", number)
                 
                 el1.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
             msg[f'{today} - Файл omx: PZs добавлены'] = 1
             return msg
         except Exception:
@@ -3648,7 +3647,7 @@ class Filling_attribute_DevStudio():
                     self.dop_function.new_attr(object, "unit.Library.Attributes.SignalName_2", rs_port2)
 
                 el1.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+            tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
             msg[f'{today} - Файл omx: Diag.{variable_mod} добавлены'] = 1
             return msg
         except Exception:
@@ -3675,7 +3674,7 @@ class Filling_attribute_DevStudio():
                     object.attrib['aspect'] = "unit.Library.PLC_Types.PLC"
                     
                     el1.append(object)
-                tree.write(f'{connect.path_to_devstudio}\\typical_prj.omx', pretty_print=True)
+                tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
                 msg[f'{today} - Файл omx: Diag.RackStates добавлены'] = 1
                 return msg
             except Exception:
@@ -4342,7 +4341,7 @@ class Filling_attribute_DevStudio():
             msg[f'{today} - Карта адресов: ошибка при заполнении карты адресов Diag.RackStates: {traceback.format_exc()}'] = 2
             return msg  
 
-# Filling attribute DevStudio
+
 class Filling_CodeSys():     
     def __init__(self):
         self.dop_function = General_functions()
@@ -6830,7 +6829,7 @@ class Filling_CodeSys():
             msg[f'{today} - Файл СУ: ошибка при заполнении cfg_ai_sim: {traceback.format_exc()}'] = 2
             return msg  
 
-# Work with filling in the table 
+
 class Filling_HardWare():
     def __init__(self):
         self.cursor = db.cursor()
