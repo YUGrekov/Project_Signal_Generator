@@ -1,7 +1,7 @@
 import openpyxl as wb
 from models import db
-from models import connect
 from models import Signals
+from models import connect
 from datetime import datetime
 from enum import Enum
 import traceback
@@ -23,7 +23,7 @@ class NameColumn(Enum):
     CONTACT = 'contact'
     BASKET = 'basket'
     MODULE = 'module'
-    CHANNEL = 'channel'
+    CHANNEl = 'channel'
 
 
 class DataExel():
@@ -50,7 +50,7 @@ class DataExel():
 
     def read_sheet(self, row: int, column: int) -> str:
         '''Чтение ячейки таблицы Exel.'''
-        return self.sheet.cell(row=row + 1, column=column + 1).value
+        return self.sheet.cell(row=row, column=column).value
 
     def read_hat_table(self, uso: str, number_row: int,
                        is_tuple: bool,
@@ -121,7 +121,7 @@ class DataExel():
             schema = row[select_col[NameColumn.SCHEMA.value]].value
             basket = row[select_col[NameColumn.BASKET.value]].value
             module = row[select_col[NameColumn.MODULE.value]].value
-            channel = row[select_col[NameColumn.CHANNEL.value]].value
+            channel = row[select_col[NameColumn.CHANNEl.value]].value
 
             if (basket or module or channel) is None:
                 continue
@@ -145,87 +145,111 @@ class DataExel():
 
 class Import_in_SQL(DataExel):
     '''Запись и обновление сигналов в базе SQL.'''
-    def import_for_sql(self, data: dict, uso: str):
-        '''Импорт таблицы в базу SQL'''
-        msg = {}
-        with db.atomic():
-            try:
-                Signals.insert_many(data).execute()
-                msg[f'{today} - Таблица: signals. Добавлено новое УСО: {uso}'] = 1
-            except Exception:
-                msg[f'{today} - Таблица: signals, ошибка при заполнении: {traceback.format_exc()}'] = 2
-        return msg
-
-    def exists_signals(self, row, uso: str) -> bool:
+    def exists_signals(self, row: object, uso: str):
         '''Проверяем существование сигнала в базе
         по корзине, модулю, каналу.'''
         exist_row = Signals.select().where(Signals.uso == uso,
                                            Signals.basket == str(row[NameColumn.BASKET.value]),
                                            Signals.module == str(row[NameColumn.MODULE.value]),
-                                           Signals.channel == str(row[NameColumn.CHANNEL.value]))
-        return bool(exist_row)
+                                           Signals.channel == str(row[NameColumn.CHANNEl.value]))
+        return exist_row
 
-    def  compare_signals(self, ):
-        if str(row_sql[NameColumn.TAG.value]) != str(row_exel[NameColumn.TAG.value]):
-            Signals.update(type_signal=row_exel[NameColumn.TAG.value]).where(Signals.id == row_sql['id']).execute()
+    def compare_row(self, row_exel: dict, msg: str,
+                    object_sql: object, object_exel: str) -> str:
+        """Сравнение значений строки из базы SQL и таблицы Exel.
 
-    def update_for_sql(self, data, uso):
+        Args:
+            row_exel (dict): строка сигнала из Exel
+            msg (str): сообщении о событии
+            object_sql (object): запрос из базы SQL
+            object_exel (str): имя столбца Exel
+
+        Returns:
+            str: сообщение
+        """
+        if str(object_sql) != str(row_exel[object_exel]):
+            msg = f'{msg}{object_exel}: {row_exel[object_exel]}({object_sql}),'
+
+        return msg
+
+    def record_row(self, row_exel: dict, req_sql: object) -> str:
+        """Обновление значения в строке сигнала.
+        Формирование корректного сообщения об изменении.
+
+        Args:
+            row_exel (dict): строка сигнала из Exel
+            req_sql (object): запрос из базы SQl
+
+        Returns:
+            str: cсообщение
+        """
+        dop_msg = ''
+        for row in req_sql:
+            dop_msg = self.compare_row(row_exel, dop_msg, row.tag,
+                                       NameColumn.TAG.value)
+            dop_msg = self.compare_row(row_exel, dop_msg, row.description,
+                                       NameColumn.NAME.value)
+            dop_msg = self.compare_row(row_exel, dop_msg, row.schema,
+                                       NameColumn.SCHEMA.value)
+            dop_msg = self.compare_row(row_exel, dop_msg, row.klk,
+                                       NameColumn.KLK.value)
+            dop_msg = self.compare_row(row_exel, dop_msg, row.contact,
+                                       NameColumn.CONTACT.value)
+            if dop_msg != '':
+                Signals.update(**{NameColumn.TAG.value: row_exel[NameColumn.TAG.value],
+                                  NameColumn.NAME.value: row_exel[NameColumn.NAME.value],
+                                  NameColumn.SCHEMA.value: row_exel[NameColumn.SCHEMA.value],
+                                  NameColumn.KLK.value: row_exel[NameColumn.KLK.value],
+                                  NameColumn.CONTACT.value: row_exel[NameColumn.CONTACT.value]}).where(
+                    Signals.id == row.id).execute()
+                return f'Signals, id = {row.id}, {dop_msg} сигнал обновлен'
+
+    def database_entry_SQL(self, data: dict, uso: str):
+        '''По кнопке добавить новое УСО.
+        Запись новых строк в базу SQL.'''
+        msg = {}
+
+        with db.atomic():
+            try:
+                Signals.insert_many(data).execute()
+                msg[f'{today} - Signals. Добавлено новое УСО: {uso}'] = 1
+            except Exception:
+                msg[f'{today} - Signals, ошибка при заполнении: {traceback.format_exc()}'] = 2
+        return msg
+
+    def row_update_SQL(self, data: dict, uso: str):
+        '''По кнопке обновить данные.
+        Обновление старой записи, если имеется или запись новой строки.'''
         msg = {}
         with db.atomic():
             try:
                 for row_exel in data:
 
-                    if not self.exists_signals(uso, row_exel):
+                    exists_s = self.exists_signals(row_exel, uso)
+
+                    if not bool(exists_s):
 
                         Signals.create(**row_exel)
                         msg[f'''{today} - Добавлен новый сигнал:
                             id - {row_exel[NameColumn.ID.value]},
                             description - {row_exel[NameColumn.NAME.value]},
                             module - {row_exel[NameColumn.MODULE .value]},
-                            channel - {row_exel[NameColumn.CHANNEL.value]}'''] = 0
+                            channel - {row_exel[NameColumn.CHANNEl.value]}'''] = 0
                         continue
-
                     else:
+                        messages = self.record_row(row_exel, exists_s)
+                        if messages is not None:
+                            msg[f'''{today} - {messages}'''] = 3
 
-                        if str(row_sql['tag']) == str(row_exel['tag']) and \
-                            str(row_sql['description']) == str(row_exel['description']) and \
-                            str(row_sql['scheme']) == str(row_exel['scheme']) and \
-                            str(row_sql['klk']) == str(row_exel['klk']) and \
-                            str(row_sql['contact']) == str(row_exel['contact']):
-
-                            continue
-                        else:
-                            Signals.update(
-                                type_signal=row_exel['type_signal'],
-                                tag        =row_exel['tag'],
-                                description=row_exel['description'],
-                                schema     =row_exel['scheme'],
-                                klk        =row_exel['klk'],
-                                contact    =row_exel['contact'],
-                            ).where(Signals.id == row_sql['id']).execute()
-
-                            msg[f'''{today} - Обновление сигнала:
-                                id = {row_sql["id"]}:
-                                Было,
-                                uso - {row_sql['uso']},
-                                type_signal - {row_sql['type_signal']},
-                                tag - {row_sql['tag']},                      
-                                description - {row_sql['description']},
-                                schema - {row_sql['scheme']},
-                                klk - {row_sql['klk']},
-                                contact - {row_sql['contact']} =
-                                Стало,
-                                uso - {row_exel['uso']},
-                                type_signal - {row_exel['type_signal']},
-                                tag - {row_exel['tag']},
-                                description - {row_exel['description']},
-                                scheme - {row_exel['scheme']},
-                                klk - {row_exel['klk']},
-                                contact - {row_exel['contact']}'''] = 3
-                            continue
             except Exception:
                 msg[f'{today} - Таблица: signals, ошибка при обновлении: {traceback.format_exc()}'] = 2
-        return(msg)
+
+        msg[f'{today} - Таблица: signals, обновление завершено'] = 0
+        return msg
+
+
+
+
 
     def column_check(self):
         with db:
@@ -236,80 +260,27 @@ class Import_in_SQL(DataExel):
         return msg
 
 
+#a = Import_in_SQL(connect.path_to_exel)
+# # ['МНС.КЦ', 'МНС.УСО.1(1) c БРУ', 'МНС.УСО.1(2)', 'МНС.УСО.1(3)', 'МНС.УСО.2', 'МНС.УСО.3', 'МНС.УСО.4', 'МНС.УСО.5']
+#a.read_table()
+# column = a.max_column('МНС.КЦ')
+# # {'type_signal': 0, 'tag': 2, 'description': 3, 'schema': 4, 'klk': 6, 'contact': 7, 'basket': 10, 'module': 11, 'channel': 12}
+# # Чтение шапки таблицы
+# print(a.read_hat_table('МНС.КЦ', 13, False))
+# # Получение значений ячеек
+# select_col = a.read_hat_table('МНС.КЦ', 13,
+#                                 True, {'type_signal': 'Тип сигнала',
+#                                         'uso': '',
+#                                         'tag': 'Tэг',
+#                                         'description': 'Наименование',
+#                                         'schema': 'Схема',
+#                                         'klk': 'КлК',
+#                                         'contact': 'Конт',
+#                                         'basket': 'Корз',
+#                                         'module': 'Мод',
+#                                         'channel': 'Кан'})
+# # Формирование массива для записи
+# data = a.preparation_import('МНС.КЦ', 13, select_col)
 
-
-
-
-
-a = Import_in_SQL(connect.path_to_exel)
-a.read_table() # ['МНС.КЦ', 'МНС.УСО.1(1) c БРУ', 'МНС.УСО.1(2)', 'МНС.УСО.1(3)', 'МНС.УСО.2', 'МНС.УСО.3', 'МНС.УСО.4', 'МНС.УСО.5']
-a.max_column('МНС.КЦ')
-a.read_hat_table('МНС.КЦ', 13, False)
-a.read_hat_table('МНС.КЦ', 13, True, {'type_signal': 'Тип сигнала', 'tag': 'Тэг', 'description': 'Наименование'})
-
-c = a.preparation_import('МНС.КЦ', 13, {'type_signal': 0,
-                                          'tag': 2,
-                                          'description': 3,
-                                          'schema': 4,
-                                          'klk': 6,
-                                          'contact': 7,
-                                          'basket': 10,
-                                          'module': 11,
-                                          'channel': 12})
-
-for i in c:
-    print(i)
-
-
-
-#print(a.read_hat_table('МНС.КЦ', 13, True, {'type_signal': 'Тип сигнала', 'tag': 'Тэг', 'description': 'Наименование'}))
-#a.import_table('МНС.КЦ', 13, {'type_signal': 'Тип сигнала', 'tag': 'Тэг', 'description': 'Наименование'})
-
-
-# def value_cell(self, uso: str,
-#                 number_row: int,
-#                 select_column: tuple):
-#     '''Вычисляем шапку таблицы или значения ячеек.'''
-#     data = []
-
-#     hat_table = self.read_hat_table(uso, number_row, True, select_column)
-
-#     for row in self.sheet.iter_rows(min_row=(int(number_row) + 1)):
-#         keys = []
-#         values = []
-#         for name, number in hat_table.items():
-#             keys.append(name)
-#             values.append(row[number].value)
-#         values.append(uso)
-#         array = {k: v for k, v in zip(keys, values)}
-#         data.append(array)
-#     return data
-
-# def preparation_import(self, data_array: tuple):
-#         '''Подготавливаем таблицу к импорту.'''
-#         data = []
-
-#         for row in data_array:
-#             type_signal = row[NumberColumn.TYPE_SIGNAL.value]
-#             scheme = row[NumberColumn.SCHEMA.value]
-#             basket = row[NumberColumn.BASKET.value]
-#             module = row[NumberColumn.MODULE.value]
-#             channel = row[NumberColumn.CHANNEL.value]
-
-#             if (basket or module or channel) is None:
-#                 continue
-
-#             type_signal = self.search_type(scheme, type_signal)
-
-#             dict_column = {'type_signal': type_signal,
-#                            'uso': row['uso'],
-#                            'tag': row['tag'],
-#                            'description': row['description'],
-#                            'schema': row['schema'],
-#                            'klk': row['klk'],
-#                            'contact': row['contact'],
-#                            'basket': basket,
-#                            'module': row['module'],
-#                            'channel': row['channel']}
-#             data.append(dict_column)
-#         return data
+# # msg = a.database_entry_SQL(data, 'МНС.КЦ')
+# msg = a.row_update_SQL(data, 'МНС.КЦ')

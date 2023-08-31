@@ -497,6 +497,8 @@ class Import_in_SQL():
     def import_table(self, uso, number_row, name_column):
         hat_num = {}
 
+        print(name_column)
+
         sheet, column = self.read_select_table(uso)
 
         for i in range(int(number_row), int(number_row) + 1):
@@ -511,7 +513,6 @@ class Import_in_SQL():
                 for key, value in name_column.items():
                     if value == cell:
                         hat_num[key] = j - 1
-        print(hat_num)
         data = []
         for row in sheet.iter_rows(min_row=(int(number_row) + 1)):
             keys = []
@@ -588,6 +589,7 @@ class Import_in_SQL():
                                                     Signals.basket  == str(row_exel['basket']),
                                                     Signals.module  == str(row_exel['module']),
                                                     Signals.channel == str(row_exel['channel']))
+                    print(exist_row.description)
                     if not bool(exist_row):
                         Signals.create(**row_exel)
                         msg[f'''{today} - Добавлен новый сигнал: id - {row_exel["id"]}, description - {row_exel["description"]}, 
