@@ -451,207 +451,6 @@ class General_functions():
         return root, tree
 
 
-class Import_in_SQL():
-    def __init__(self, exel: str):
-        self.exel = exel
-        self.connect = wb.load_workbook(self.exel,
-                                        read_only=True,
-                                        data_only=True)
-
-    def read_table(self) -> list:
-        '''Список таблиц Exel.'''
-        return [sheet.title for sheet in self.connect.worksheets]
-    
-    def read_select_table(self, uso: str):
-        """Читаем выбранную таблицу и получаем макс-ное кол-во стобцов.
-
-        Args:
-            uso (str): название шкафа
-        """
-        sheet = self.connect[uso]
-        column = sheet.max_column
-        return sheet, column
-
-    def search_hat_table(self, uso: str, number_row: int) -> list:
-        """Поиск названий столбцов таблицы.
-
-        Args:
-            uso (str): название шкафа
-            number_row (int): номер строки с шапкой
-
-        Returns:
-            list: список столбцов
-        """
-        hat_tabl = []
-
-        sheet, column = self.read_select_table(uso)
-
-        for i in range(int(number_row), int(number_row) + 1):
-            for j in range(1, column + 1):
-                cell = sheet.cell(row=i, column=j).value
-                if cell is None: 
-                    continue
-                hat_tabl.append(cell)
-        return hat_tabl
-    
-    def import_table(self, uso, number_row, name_column):
-        hat_num = {}
-
-        print(name_column)
-
-        sheet, column = self.read_select_table(uso)
-
-        for i in range(int(number_row), int(number_row) + 1):
-
-            for j in range(1, column + 1):
-
-                cell = sheet.cell(row=i, column=j).value
-
-                if cell is None:
-                    continue
-
-                for key, value in name_column.items():
-                    if value == cell:
-                        hat_num[key] = j - 1
-        data = []
-        for row in sheet.iter_rows(min_row=(int(number_row) + 1)):
-            keys = []
-            values = []
-            for name, number in hat_num.items():
-                keys.append(name)
-                values.append(row[number].value)
-            values.append(uso)
-            array = {k: v for k, v in zip(keys, values)}
-            data.append(array)
-
-        # Количество строк в таблице
-        cursor = db.cursor()
-        try:
-            cursor.execute('''SELECT COUNT(*) FROM signals''')
-            count_row = cursor.fetchall()[0][0]
-        except Exception:
-            count_row = 0
-
-        # Delete basket is None
-        data_new = []
-        for row in data:
-            type_signal = row['type_signal']
-            scheme = row['schema']
-            basket = row['basket']
-            module = row['module']
-            channel = row['channel']
-
-            if (basket or module or channel) is None:
-                continue
-            count_row += 1
-
-            list_type = ['CPU', 'PSU', 'CN', 'MN',
-                         'AI', 'AO', 'DI', 'RS', 'DO']
-            for value in list_type:
-                if str(scheme).find(value) != -1: 
-                    type_signal = value
-                    break
-
-            dict_column = {'id': count_row,
-                           'type_signal': type_signal,
-                           'uso': uso,
-                           'tag': row['tag'],
-                           'description': row['description'],
-                           'schema': row['schema'],
-                           'klk': row['klk'],
-                           'contact': row['contact'],
-                           'basket': basket,
-                           'module': row['module'],
-                           'channel': row['channel']}
-            if basket is None: 
-                continue
-            data_new.append(dict_column)
-        return data_new
-
-    def import_for_sql(self, data, uso):
-        msg = {}
-        # Checking for the existence of a database
-        with db.atomic():
-            try:
-                Signals.insert_many(data).execute()
-                msg[f'{today} - Добавлено новое УСО: {uso}'] = 1
-            except Exception:
-                msg[f'{today} - Таблица: signals, ошибка при заполнении: {traceback.format_exc()}'] = 2
-        return(msg)
-
-    def update_for_sql(self, data, uso):
-        msg = {}
-        with db.atomic():
-            try:
-                # Filter by uso, basket, modul, channel
-                for row_exel in data:
-                    exist_row = Signals.select().where(Signals.uso == uso,
-                                                    Signals.basket  == str(row_exel['basket']),
-                                                    Signals.module  == str(row_exel['module']),
-                                                    Signals.channel == str(row_exel['channel']))
-                    print(exist_row.description)
-                    if not bool(exist_row):
-                        Signals.create(**row_exel)
-                        msg[f'''{today} - Добавлен новый сигнал: id - {row_exel["id"]}, description - {row_exel["description"]}, 
-                                                                basket - {row_exel["basket"]}, module - {row_exel["module"]}, 
-                                                                channel - {row_exel["channel"]}'''] = 0
-                        continue
-
-                    for row_sql in Signals.select().dicts():
-
-                        if row_sql['uso']     == uso                     and \
-                        row_sql['basket']  == str(row_exel['basket']) and \
-                        row_sql['module']  == str(row_exel['module']) and \
-                        row_sql['channel'] == str(row_exel['channel']):
-                            
-                            if str(row_sql['tag'])         == str(row_exel['tag'])         and \
-                               str(row_sql['description']) == str(row_exel['description']) and \
-                               str(row_sql['scheme'])      == str(row_exel['scheme'])      and \
-                               str(row_sql['klk'])         == str(row_exel['klk'])         and \
-                               str(row_sql['contact'])     == str(row_exel['contact']):
-            
-                                continue
-                            else:
-                                Signals.update(
-                                    type_signal=row_exel['type_signal'],
-                                    tag        =row_exel['tag'],
-                                    description=row_exel['description'],
-                                    schema     =row_exel['scheme'],
-                                    klk        =row_exel['klk'],
-                                    contact    =row_exel['contact'],
-                                ).where(Signals.id == row_sql['id']).execute()
-                                msg[f'''{today} - Обновление сигнала id = {row_sql["id"]}: Было, 
-                                                    uso - {row_sql['uso']}, 
-                                                    type_signal - {row_sql['type_signal']}, 
-                                                    tag - {row_sql['tag']},                      
-                                                    description - {row_sql['description']}, 
-                                                    schema - {row_sql['scheme']}, 
-                                                    klk - {row_sql['klk']},
-                                                    contact - {row_sql['contact']} = 
-                                                    Стало, 
-                                                    uso - {row_exel['uso']}, 
-                                                    type_signal - {row_exel['type_signal']}, 
-                                                    tag - {row_exel['tag']}, 
-                                                    description - {row_exel['description']}, 
-                                                    scheme - {row_exel['scheme']}, 
-                                                    klk - {row_exel['klk']},
-                                                    contact - {row_exel['contact']}'''] = 3
-                                continue
-                        else:
-                            continue
-            except Exception:
-                msg[f'{today} - Таблица: signals, ошибка при обновлении: {traceback.format_exc()}'] = 2
-        return(msg)
-
-    def column_check(self):
-        with db:
-            list_default = ['id', 'type_signal', 'uso', 'tag', 'description', 'schema', 'klk', 'contact', 'basket', 'module', 'channel']
-
-            self.dop_func = General_functions()
-            msg = self.dop_func.column_check(Signals, 'signals', list_default)
-        return msg
-
-
 class Editing_table_SQL():
     '''Редактирование базы SQL'''
     def __init__(self):
@@ -5441,8 +5240,9 @@ class Filling_CodeSys():
     def cfg_di(self):
         msg = {}
         try:
-            data_value = self.dop_function.connect_by_sql('di', f'''"id", "name", "pValue", "pHealth", "pNC_AI", "TS_ID", "priority_0", "priority_1", 
-                                                                    "isModuleNC", "Msg", "isAI_Avar", "isAI_Warn", "isDI_NC", "ErrValue", "Inv"''')
+            data_value = self.dop_function.connect_by_sql('di', f'''"id", "name", "pValue", "pHealth", "pNC_AI", "TS_ID",
+                                                                    "priority_0", "priority_1", "isModuleNC", "Msg", "isAI_Avar",
+                                                                    "isAI_Warn", "isDI_NC", "ErrValue", "Inv", "tag"''')
             # Проверяем файл на наличие в папке, если есть удаляем и создаем новый
             write_file = self.file_check('сfg_DI')
 
@@ -5456,6 +5256,7 @@ class Filling_CodeSys():
                 name    = value[1]
                 pValue  = value[2]
                 pHealth = value[3]
+                tag = value[15]
                 
                 pNC_AI    = value[4] if value[4] is not None else '0'
                 TS_ID     = value[5] if value[5] is not None else '0'
@@ -5465,7 +5266,7 @@ class Filling_CodeSys():
                 cfg = str(hex(int(s, 2))).replace('0x', '16#')
                 
                 if pValue is not None:
-                    cfg_txt = f'(*{numbers} - {name}*)\n' \
+                    cfg_txt = f'(*{tag} - {name}*)\n' \
                               f'cfgDI[{numbers}].pValue             REF={pValue};\n' \
                               f'cfgDI[{numbers}].pHealth            REF={pHealth};\n' \
                               f'cfgDI[{numbers}].TS_ID                :={TS_ID};\n' \
@@ -5475,7 +5276,7 @@ class Filling_CodeSys():
                     write_file.write(cfg_txt)
 
                 if value[4] is not None:
-                    cfg_txt = f'(*{numbers} - {name}*)\n' \
+                    cfg_txt = f'(*{tag} - {name}*)\n' \
                               f'cfgDI[{numbers}].pNC_AI             REF={str(pNC_AI).replace("_union.state", ".reg")};\n' \
                               f'cfgDI[{numbers}].TS_ID                :={TS_ID};\n' \
                               f'cfgDI[{numbers}].priority[0]          :={priority0};\n' \
@@ -5519,8 +5320,10 @@ class Filling_CodeSys():
     def cfg_ai(self):
         msg = {}
         try:
-            data_value = self.dop_function.connect_by_sql('ai', f'''"id", "name", "pValue", "pHealth", "number_ust_min_avar", "number_ust_min_pred", "number_ust_max_pred", 
-                                                                    "number_ust_max_avar", "IsPumpVibration", "vibration_motor", "current_motor", "number_NA_or_aux", "fuse"''')
+            data_value = self.dop_function.connect_by_sql('ai', f'''"id", "name", "pValue", "pHealth", "number_ust_min_avar",
+                                                                    "number_ust_min_pred", "number_ust_max_pred", "number_ust_max_avar",
+                                                                    "IsPumpVibration", "vibration_motor", "current_motor",
+                                                                    "number_NA_or_aux", "fuse", "tag"''')
             # Проверяем файл на наличие в папке, если есть удаляем и создаем новый
             write_file = self.file_check('сfg_AI')
 
@@ -5533,6 +5336,7 @@ class Filling_CodeSys():
                 minWarn = value[5]
                 maxWarn = value[6]
                 maxAvar = value[7]
+                tag = value[13]
 
                 if self.dop_function.str_find(str(name).lower(), {'резерв'}): continue
 
@@ -5549,7 +5353,7 @@ class Filling_CodeSys():
                 cfgWarnAvar = '16#'+ (str(maxAvar)+str(maxWarn)+str(minWarn)+str(minAvar))
 
                 if pValue is None: continue
-                cfg_txt = f'(* {numbers} - {name} *)\n' \
+                cfg_txt = f'(* {tag} - {name} *)\n' \
                           f'cfgAI[{numbers}].pValue                 REF={pValue};\n'
                 if pHealth is not None:
                     cfg_txt = cfg_txt + \
@@ -7308,10 +7112,10 @@ class Filling_AI():
                                             vibration_motor = vibration_motor,
                                             current_motor = current_motor,
                                             aux_outlet_pressure = None,
-                                            number_ust_min_avar = None,
-                                            number_ust_min_pred = None,
-                                            number_ust_max_pred = None,
-                                            number_ust_max_avar = None,
+                                            number_ust_min_avar = 3,
+                                            number_ust_min_pred = 1,
+                                            number_ust_max_pred = 2,
+                                            number_ust_max_avar = 3,
                                             LoLimField = 4000,
                                             HiLimField = 20000,
                                             LoLimEng = eng_min,

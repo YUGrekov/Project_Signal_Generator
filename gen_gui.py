@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import QTextEdit
 from defence_hmi import gen_station_defence
 from uts_upts_hmi import Alarm_map
 from windows_base_editing import MainWindow as WinEditing
+from import_exel_back import Import_in_SQL as KD_import
 from main_base import *
 
 # ГРАФИЧЕСКИЙ ИНТЕРФЕЙС ДЛЯ ЗАПУСКА ГЕНЕРАТОРА
@@ -1420,52 +1421,60 @@ class Widget(QWidget):
         else:
             self.l_sql_msg_check.setText('Не установлено')
             self.l_sql_msg_check.setStyleSheet("background-color: red")
+    
     # ------------------Импорт КЗФКП------------------
 
     def update_fill_base(self):
         try:
             if self.сolumn_title_loaded is False: 
-                self.logs_msg('Не загружена шапка таблицы!', 2)
+                self.logs_msg('Импорт КЗФКП. Не загружена шапка таблицы', 2)
                 return
 
             dict_column = self.hat_list()
-            data_uso = self.import_sql.import_table(self.select_uso.currentText(),
-                                                    self.select_row.text(),
-                                                    dict_column)
+            data_uso = self.import_sql.preparation_import(self.select_uso.currentText(),
+                                                          self.select_row.text(),
+                                                          dict_column)
             msg = self.import_sql.column_check()
             self.logs_msg('default', 1, msg, True)
-            msg = self.import_sql.update_for_sql(data_uso,
+            msg = self.import_sql.row_update_SQL(data_uso,
                                                  self.select_uso.currentText())
             self.logs_msg('default', 1, msg, True)
         except Exception:
-            self.logs_msg('Ошибка импорта', 2)
+            self.logs_msg(f'Импорт КЗФКП. Ошибка импорта: {traceback.format_exc()}', 2)
             return
     
     def start_fill_base(self):
         try:
             if self.сolumn_title_loaded is False: 
-                self.logs_msg('Не загружена шапка таблицы!', 2)
+                self.logs_msg('Импорт КЗФКП. Не загружена шапка таблицы', 2)
                 return
         except Exception:
-            self.logs_msg('Ошибка импорта', 2)
+            self.logs_msg(f'Импорт КЗФКП. Ошибка импорта: {traceback.format_exc()}', 2)
             return
 
         dict_column = self.hat_list()
-        data_uso = self.import_sql.import_table(self.select_uso.currentText(),
-                                                self.select_row.text(),
-                                                dict_column)
-        msg = self.import_sql.column_check()
-        self.logs_msg('default', 1, msg, True)
-        msg = self.import_sql.import_for_sql(data_uso,
-                                             self.select_uso.currentText())
-        self.logs_msg('default', 1, msg, True)
+
+        try:
+            data_uso = self.import_sql.preparation_import(self.select_uso.currentText(),
+                                                        self.select_row.text(),
+                                                        dict_column)
+            msg = self.import_sql.column_check()
+            self.logs_msg('default', 1, msg, True)
+
+            msg = self.import_sql.database_entry_SQL(data_uso,
+                                                    self.select_uso.currentText())
+            self.logs_msg('default', 1, msg, True)
+
+        except Exception:
+            self.logs_msg(f'Импорт КЗФКП. Ошибка импорта: {traceback.format_exc()}', 2)
+            return
     
     def path_file_prj(self):
         try:
-            self.import_sql = Import_in_SQL(self.path_to_exel)
-            self.logs_msg('Соединение с файлом КЗФКП установленно', 1)
+            self.import_sql = KD_import(self.path_to_exel)
+            self.logs_msg('Импорт КЗФКП. Соединение с файлом КЗФКП установленно', 0)
         except Exception:
-            self.logs_msg('Соединение с файлом КЗФКП не установленно', 2)
+            self.logs_msg('Импорт КЗФКП. Соединение с файлом КЗФКП не установленно', 2)
             return
         
         tables = self.import_sql.read_table()
@@ -1476,17 +1485,17 @@ class Widget(QWidget):
         try: 
             int(self.select_row.text())
         except Exception: 
-            self.logs_msg('Строка заголовка должна быть заполнена цифрами!', 2)
+            self.logs_msg('Импорт КЗФКП. Строка заголовка должна быть заполнена цифрами', 2)
             return
 
         try:
             num_row = self.select_row.text()
             text_uso = self.select_uso.currentText()
             # Search hat table
-            hat_table = self.import_sql.search_hat_table(text_uso, num_row)
-            self.logs_msg(f'Выбран шкаф и строка заголовка таблицы: {text_uso}, {num_row}', 1)
+            hat_table = self.import_sql.read_hat_table(text_uso, num_row, False)
+            self.logs_msg(f'Импорт КЗФКП. Выбран шкаф и строка заголовка таблицы: {text_uso}, {num_row}', 1)
         except Exception:
-            self.logs_msg('Не выбран шкаф или не указана строка!', 2)
+            self.logs_msg('Импорт КЗФКП. Не выбран шкаф или не указана строка', 2)
             return
         
         try:
@@ -1500,7 +1509,7 @@ class Widget(QWidget):
             self.q_mod.addItems(hat_table)
             self.q_channel.addItems(hat_table)
         except Exception:
-            self.logs_msg('Название столбцов должно имееть тип: string', 3)  
+            self.logs_msg('Импорт КЗФКП. Название столбцов должно имееть тип: string', 3)  
             return
         # Column title loaded
         self.сolumn_title_loaded = True

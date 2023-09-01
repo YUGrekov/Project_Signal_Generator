@@ -1,7 +1,7 @@
 import openpyxl as wb
 from models import db
 from models import Signals
-from models import connect
+from main_base import General_functions
 from datetime import datetime
 from enum import Enum
 import traceback
@@ -115,13 +115,15 @@ class DataExel():
 
         count_row = self.database_count_row()
 
+        tuple_name = self.read_hat_table(uso, number_row, True, select_col)
+
         for row in self.sheet.iter_rows(min_row=(int(number_row) + 1)):
 
-            type_s = row[select_col[NameColumn.TYPE_SIGNAL.value]].value
-            schema = row[select_col[NameColumn.SCHEMA.value]].value
-            basket = row[select_col[NameColumn.BASKET.value]].value
-            module = row[select_col[NameColumn.MODULE.value]].value
-            channel = row[select_col[NameColumn.CHANNEl.value]].value
+            type_s = row[tuple_name[NameColumn.TYPE_SIGNAL.value]].value
+            schema = row[tuple_name[NameColumn.SCHEMA.value]].value
+            basket = row[tuple_name[NameColumn.BASKET.value]].value
+            module = row[tuple_name[NameColumn.MODULE.value]].value
+            channel = row[tuple_name[NameColumn.CHANNEl.value]].value
 
             if (basket or module or channel) is None:
                 continue
@@ -132,11 +134,11 @@ class DataExel():
             data.append(dict(id=count_row,
                              type_signal=type_s,
                              uso=uso,
-                             tag=row[select_col[NameColumn.TAG.value]].value,
-                             description=row[select_col[NameColumn.NAME.value]].value,
+                             tag=row[tuple_name[NameColumn.TAG.value]].value,
+                             description=row[tuple_name[NameColumn.NAME.value]].value,
                              schema=schema,
-                             klk=row[select_col[NameColumn.KLK.value]].value,
-                             contact=row[select_col[NameColumn.CONTACT.value]].value,
+                             klk=row[tuple_name[NameColumn.KLK.value]].value,
+                             contact=row[tuple_name[NameColumn.CONTACT.value]].value,
                              basket=basket,
                              module=module,
                              channel=channel))
@@ -202,7 +204,10 @@ class Import_in_SQL(DataExel):
                                   NameColumn.KLK.value: row_exel[NameColumn.KLK.value],
                                   NameColumn.CONTACT.value: row_exel[NameColumn.CONTACT.value]}).where(
                     Signals.id == row.id).execute()
-                return f'Signals, id = {row.id}, {dop_msg} сигнал обновлен'
+
+                return f'''Импорт КЗФКП. Таблица: signals,
+                           name = {row_exel[NameColumn.NAME.value]},
+                           id = {row.id}, {dop_msg} сигнал обновлен'''
 
     def database_entry_SQL(self, data: dict, uso: str):
         '''По кнопке добавить новое УСО.
@@ -212,9 +217,9 @@ class Import_in_SQL(DataExel):
         with db.atomic():
             try:
                 Signals.insert_many(data).execute()
-                msg[f'{today} - Signals. Добавлено новое УСО: {uso}'] = 1
+                msg[f'{today} - Импорт КЗФКП. Таблица: signals, добавлено новое УСО: {uso}'] = 1
             except Exception:
-                msg[f'{today} - Signals, ошибка при заполнении: {traceback.format_exc()}'] = 2
+                msg[f'{today} - Импорт КЗФКП. Таблица: signals, ошибка при заполнении: {traceback.format_exc()}'] = 2
         return msg
 
     def row_update_SQL(self, data: dict, uso: str):
@@ -242,45 +247,17 @@ class Import_in_SQL(DataExel):
                             msg[f'''{today} - {messages}'''] = 3
 
             except Exception:
-                msg[f'{today} - Таблица: signals, ошибка при обновлении: {traceback.format_exc()}'] = 2
+                msg[f'{today} - Импорт КЗФКП. Таблица: signals, ошибка при обновлении: {traceback.format_exc()}'] = 2
 
-        msg[f'{today} - Таблица: signals, обновление завершено'] = 0
+        msg[f'{today} - Импорт КЗФКП. Таблица: signals, обновление завершено'] = 0
         return msg
-
-
-
-
 
     def column_check(self):
         with db:
-            list_default = ['id', 'type_signal', 'uso', 'tag', 'description', 'schema', 'klk', 'contact', 'basket', 'module', 'channel']
+            list_default = ['id', 'type_signal', 'uso', 'tag', 'description',
+                            'schema', 'klk', 'contact', 'basket', 'module',
+                            'channel']
 
             self.dop_func = General_functions()
             msg = self.dop_func.column_check(Signals, 'signals', list_default)
         return msg
-
-
-#a = Import_in_SQL(connect.path_to_exel)
-# # ['МНС.КЦ', 'МНС.УСО.1(1) c БРУ', 'МНС.УСО.1(2)', 'МНС.УСО.1(3)', 'МНС.УСО.2', 'МНС.УСО.3', 'МНС.УСО.4', 'МНС.УСО.5']
-#a.read_table()
-# column = a.max_column('МНС.КЦ')
-# # {'type_signal': 0, 'tag': 2, 'description': 3, 'schema': 4, 'klk': 6, 'contact': 7, 'basket': 10, 'module': 11, 'channel': 12}
-# # Чтение шапки таблицы
-# print(a.read_hat_table('МНС.КЦ', 13, False))
-# # Получение значений ячеек
-# select_col = a.read_hat_table('МНС.КЦ', 13,
-#                                 True, {'type_signal': 'Тип сигнала',
-#                                         'uso': '',
-#                                         'tag': 'Tэг',
-#                                         'description': 'Наименование',
-#                                         'schema': 'Схема',
-#                                         'klk': 'КлК',
-#                                         'contact': 'Конт',
-#                                         'basket': 'Корз',
-#                                         'module': 'Мод',
-#                                         'channel': 'Кан'})
-# # Формирование массива для записи
-# data = a.preparation_import('МНС.КЦ', 13, select_col)
-
-# # msg = a.database_entry_SQL(data, 'МНС.КЦ')
-# msg = a.row_update_SQL(data, 'МНС.КЦ')
