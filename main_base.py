@@ -4236,6 +4236,21 @@ class Filling_CodeSys():
             if tabl == 'cfg_AI_sim': 
                 msg.update(self.cfg_ai_sim())
                 continue
+            if tabl == 'cfg_BD': 
+                msg.update(self.cfg_bd())
+                continue
+            if tabl == 'cfg_KTPRP': 
+                msg.update(self.cfg_ktprp())
+                continue
+            if tabl == 'cfg_PI': 
+                msg.update(self.cfg_pi())
+                continue
+            if tabl == 'cfg_PT': 
+                msg.update(self.cfg_pt())
+                continue
+            if tabl == 'cfg_PZ': 
+                msg.update(self.cfg_pz())
+                continue
         return msg
     def file_check(self, name_file):
         path_request = f'{connect.path_su}\\{name_file}.txt'
@@ -6634,7 +6649,341 @@ class Filling_CodeSys():
         except Exception:
             msg[f'{today} - Файл СУ: ошибка при заполнении cfg_ai_sim: {traceback.format_exc()}'] = 2
             return msg  
+    
 
+    def check_condition(self, param):
+        '''Проверка ячейки чтобы она была не пустой или None'''
+        return True if (param is not None) and (param != '') else False
+
+    def pIn_num_reg(self, original_str: str, cfg_tabl: str, id_: int,
+                    param: str, pInVar: str, num: int, reg: str) -> str:
+        """Дополнительный метод для сборки значений: pInputVar-num-cfg.reg
+
+        Args:
+            original_str (str): Оригинальная строка задания
+            cfg_tabl (str): Название переменной
+            id_ (int): id строки
+            param (str): Параметр
+            pInVar (str): pInputVar
+            num (int): num
+            reg (str): cfg.reg
+
+        Returns:
+            str: Строка после изменения
+        """
+        if self.check_condition(pInVar):
+            original_str = original_str + f'{cfg_tabl}[{id_}].{param}.pInputVar\tREF= {pInVar};\n' \
+                f'{cfg_tabl}[{id_}].{param}.num\t\t:= {num};\n'\
+                f'{cfg_tabl}[{id_}].{param}.cfg.reg\t\t:= {reg};\n'
+        return original_str
+    
+    def one_line_ref(self, original_str: str, cfg_tabl: str, id_: int,
+                     param: str, value: str) -> str:
+        """Дополнительный метод для сборки значений REF
+
+        Args:
+            original_str (str): Оригинальная строка задания
+            cfg_tabl (str): Название переменной
+            id_ (int): id строки
+            param (str): Параметр
+            value (str): pInputVar
+
+        Returns:
+            str: Строка после изменения
+        """
+        if self.check_condition(value):
+            original_str = original_str + f'{cfg_tabl}[{id_}].{param}\tREF= {value};\n' 
+
+        return original_str
+
+    def one_line(self, original_str: str, cfg_tabl: str,
+                 id_: int, param: str, value: int) -> str:
+        """Дополнительный метод для сборки значений в одну строку
+
+        Args:
+            original_str (str): Оригинальная строка задания
+            cfg_tabl (str): Название переменной
+            id_ (int): id строки
+            param (str): Параметр
+            value (int): Значение ссылки
+
+        Returns:
+            str: Строка после изменения
+        """
+        if not self.check_condition(value):
+            value = '0'
+        original_str = original_str + f'{cfg_tabl}[{id_}].{param}\t\t:= {value};\n'
+
+        return original_str
+
+    def cfg_bd(self):
+        msg = {}
+        try:
+            data_value = self.dop_function.connect_by_sql('bd', f'''"id", "name", "tank_empty", "tank_full", "lower_level",
+                                                                    "number_group", "number_in_zd", "number_out_zd"''')
+            # Проверяем файл на наличие в папке, если есть удаляем и создаем новый
+            write_file = self.file_check('сfg_BD')
+
+            for value in data_value:
+                id_bd = value[0]
+                name = value[1]
+                tank_empty = value[2]
+                tank_full = value[3]
+                lower_level = value[4]
+                number_group = value[5]
+                number_in_zd = value[6]
+                number_out_zd = value[7]
+
+                cfg_txt = f'(* {name} *)\n'
+                cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgBD', id_bd, 'pEmpty', tank_empty, 0, '2#0000_0000')
+                cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgBD', id_bd, 'pFull', tank_full, 0, '2#0000_0000')
+                cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgBD', id_bd, 'pLow', lower_level, 0, '2#0000_0000')
+
+                cfg_txt = self.one_line(cfg_txt, 'cfgBD', id_bd, 'grpNum', number_group)
+                cfg_txt = self.one_line(cfg_txt, 'cfgBD', id_bd, 'nZDIn', number_in_zd)
+                cfg_txt = self.one_line(cfg_txt, 'cfgBD', id_bd, 'nZDOut', number_out_zd)
+
+                write_file.write(cfg_txt)
+            write_file.close()
+            msg[f'{today} - Файл СУ: cfg_bd заполнен'] = 1
+            return msg
+        except Exception:
+            msg[f'{today} - Файл СУ: ошибка при заполнении cfg_bd: {traceback.format_exc()}'] = 2
+            return msg  
+    
+    def cfg_ktprp(self):
+        msg = {}
+        try:
+            data_value = self.dop_function.connect_by_sql('ktprp', f'''"id", "name", "Number_PZ", "Type"''')
+            # Проверяем файл на наличие в папке, если есть удаляем и создаем новый
+            write_file = self.file_check('сfg_KTPRP')
+
+            for value in data_value:
+                id_ktprp = value[0]
+                name = value[1]
+                number_pz = value[2]
+                type_pz = value[3]
+
+                cfg_txt = f'(* {name} *)\n'
+                cfg_txt = self.one_line(cfg_txt, 'cfgKTPRP', id_ktprp, 'nPZ', number_pz)
+                cfg_txt = self.one_line(cfg_txt, 'cfgKTPRP', id_ktprp, 'nType', type_pz)
+
+                write_file.write(cfg_txt)
+            write_file.close()
+            msg[f'{today} - Файл СУ: cfg_ktprp заполнен'] = 1
+            return msg
+        except Exception:
+            msg[f'{today} - Файл СУ: ошибка при заполнении cfg_ktprp: {traceback.format_exc()}'] = 2
+            return msg  
+
+    def cfg_pi(self):
+        # def split_value(value):
+        #     try:
+        #         if 
+        #         print(f'{re.split("]=|].", value)[0]}]')
+        #         return f'{re.split("]=|].", value)[0]}]'
+        #     except:
+        #         return value
+
+        def bit_mask(value):
+            try:
+                number = int(re.split("]=|].", value)[1])
+            except:
+                return value
+            
+            bin_str = f'2#{number:08b}'
+            bin_str = f'{bin_str[:6]}_{bin_str[6:]}'
+
+            return bin_str
+
+        msg = {}
+        try:
+            data_value = self.dop_function.connect_by_sql('pi', f'''"id", "tag", "name", "Type_PI", "Fire",
+                                                                    "Fault_1", "Fault_2", "Yes_connection", "Normal",
+                                                                    "Param_1", "Param_2", "Param_3", "Param_4", "Param_5",
+                                                                    "Param_6", "Param_7", "Param_8", "Param_9", "Param_10",
+                                                                    "Reset_Link", "Reset_Request",
+                                                                    "Through_loop_number_for_interface", "Attention"''')
+            # Проверяем файл на наличие в папке, если есть удаляем и создаем новый
+            write_file = self.file_check('сfg_PI')
+
+            for value in data_value:
+                id_pi = value[0]
+                tag = value[1]
+                name = value[2]
+                type_pi = value[3]
+                fire = value[4]
+                fault_1 = value[5]
+                fault_2 = value[6]
+                yes_conn = value[7]
+                normal = value[8]
+                reset_link = value[19]
+                reset_request = value[20]
+                number_for_interface = value[21]
+                attention = value[22]
+
+                cfg_txt = f'(* {tag} - {name} *)\n'
+                cfg_txt = self.one_line(cfg_txt, 'cfgPI', id_pi, 'TypePI', type_pi)
+                cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, 'pFire', fire, bit_mask(fire), '2#0000_0000')
+
+            #     cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, 'pFault1', fault_1, '2#0000_1011', '2#0000_0000')
+            #     cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, 'pFault2', fault_2, '2#0000_1110', '2#0000_0000')
+                
+            #     if type_pi == '1':
+            #         cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, 'pNorm', normal, 3, '2#0000_0000')
+            #         cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, 'pLinkOk', yes_conn, '2#0000_0000', '2#0000_0000')
+            #         for i in range(1, 11): 
+            #             cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, f'pParams[{i}]', value[8 + i], '2#0000_1101', '2#0000_0000')
+            #         cfg_txt = self.one_line(cfg_txt, 'cfgPI', id_pi, 'pResRS', reset_link)
+
+            #     if type_pi == '3':
+            #         cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, 'pAttention', attention, '2#0000_1110', '2#0000_0000')
+            #         cfg_txt = self.one_line_ref(cfg_txt, 'cfgPI', id_pi, 'pRes', reset_link)
+                    
+            #     cfg_txt = self.one_line(cfg_txt, 'cfgPI', id_pi, 'nRSreq', reset_request)
+            #     cfg_txt = self.one_line(cfg_txt, 'cfgPI', id_pi, 'nBus', number_for_interface)
+
+            #     write_file.write(cfg_txt)
+            # write_file.close()
+            msg[f'{today} - Файл СУ: cfg_pi заполнен'] = 1
+            return msg
+        except Exception:
+            msg[f'{today} - Файл СУ: ошибка при заполнении cfg_pi: {traceback.format_exc()}'] = 2
+            return msg  
+
+    def cfg_pt(self):
+        msg = {}
+        try:
+            data_value = self.dop_function.connect_by_sql('pt', f'''"id", "name", "nZDFoam_1", "nZDFoam_2", "nZDFoam_3",
+                                                                    "nZDFoam_4", "nZDFoam_5", "nZDFoam_6", "nZDFoam_7", "nZDFoam_8",
+                                                                    "nZDWater_1", "nZDWater_2", "nZDWater_3", "nZDWater_4",
+                                                                    "nZDWater_5", "nZDWater_6", "nZDWater_7", "nZDWater_8",
+                                                                    "pLmin_1", "pLmin_2", "pLmin_3", "pLmin_4", "pLmin_5",
+                                                                    "pLmin_6", "pLmin_7", "pLmin_8", "number_UPTS_call_oper",
+                                                                    "max_number_launch_fire_algoritm", "max_number_launch_watercooling_algoritm"''')
+            # Проверяем файл на наличие в папке, если есть удаляем и создаем новый
+            write_file = self.file_check('сfg_PT')
+
+            for value in data_value:
+                id_pt = value[0]
+                name = value[1]
+                number_UPTS_call = value[26]
+                max_fire_alg = value[27]
+                max_water_alg = value[28]
+
+                cfg_txt = f'(* {name} *)\n'
+
+                for i in range(1, 9): 
+                    cfg_txt = self.one_line(cfg_txt, 'cfgPT', id_pt, f'nZDFoam[{i}]', value[1 + i])
+                for i in range(1, 9): 
+                    cfg_txt = self.one_line(cfg_txt, 'cfgPT', id_pt, f'nZDWater[{i}]', value[9 + i])
+                for i in range(1, 9): 
+                    cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPT', id_pt, f'pLmin[{i}]', value[17 + i], '2#0000_0100', '2#0000_0000')
+                for i in range(1, 9): 
+                    cfg_txt = self.one_line(cfg_txt, 'cfgPT', id_pt, f'wZDFoam[{i}].cfg.CloseDuringFire ', 'FALSE')
+                    cfg_txt = self.one_line(cfg_txt, 'cfgPT', id_pt, f'wZDFoam[{i}].cfg.NotReturnAfterFire', 'FALSE')
+                for i in range(1, 9): 
+                    cfg_txt = self.one_line(cfg_txt, 'cfgPT', id_pt, f'wZDWater[{i}].cfg.CloseDuringFire ', 'FALSE')
+                    cfg_txt = self.one_line(cfg_txt, 'cfgPT', id_pt, f'wZDWater[{i}].cfg.NotReturnAfterFire', 'FALSE')
+
+                cfg_txt = self.one_line(cfg_txt, 'cfgPT', id_pt, 'nBeeper', number_UPTS_call)
+                cfg_txt = self.one_line(cfg_txt, 'cfgPT', id_pt, 'maxFoamZoneExtinguishing', max_fire_alg)
+                cfg_txt = self.one_line(cfg_txt, 'cfgPT', id_pt, 'maxWaterZoneExtinguishing', max_water_alg)
+
+                write_file.write(cfg_txt)
+            write_file.close()
+            msg[f'{today} - Файл СУ: cfg_pt заполнен'] = 1
+            return msg
+        except Exception:
+            msg[f'{today} - Файл СУ: ошибка при заполнении cfg_pt: {traceback.format_exc()}'] = 2
+            return msg  
+
+    def cfg_pz(self):
+        msg = {}
+        try:
+            data_value = self.dop_function.connect_by_sql('pz', f'''"id", "name", "type_zone", "max_number_foam_attacks", 
+                                                                    "flag_stop_extinguishing_end_foam_attacks",
+                                                                    "foam_pump_group_number", "cooling_pump_group_number",
+                                                                    "nPI_1", "nPI_2", "nPI_3", "nPI_4", "nPI_5", "nPI_6",
+                                                                    "nPI_7", "nPI_8", "nPI_9", "nPI_10", "nPI_11", "nPI_12",
+                                                                    "nPI_13", "nPI_14", "nPI_15", "nPI_16", "nPI_17", "nPI_18",
+                                                                    "nPI_19", "nPI_20", "nPI_21", "nPI_22", "nPI_23", "nPI_24",
+                                                                    "nPI_25", "nPI_26", "nPI_27", "nPI_28", "nPI_29", "nPI_30",
+                                                                    "nPI_31", "nPI_32", "nUTSFire_1", "nUTSFire_2", "nUTSFire_3",
+                                                                    "nUTSFire_4", "nUTSFire_5", "nUTSFire_6", "nUTSFire_7",
+                                                                    "nUTSFire_8", "nUTSFire_9", "nUTSFire_10", "nUTSFire_11",
+                                                                    "nUTSFire_12", "nUTSFire_13", "nUTSFire_14", "nUTSFire_15",
+                                                                    "nUTSFire_16", "nUTSFire_17", "nUTSFire_18", "nUTSFire_19",
+                                                                    "nUTSFire_20", "nUTSPTOff_1", "nUTSPTOff_2", "nUTSPTOff_3",
+                                                                    "nUTSPTOff_4", "nZD_1", "nZD_2", "nZD_3", "nZD_4", "nZD_5",
+                                                                    "nZD_6", "nZD_7", "nZD_8", "nZD_SM_1", "nZD_SM_2", "nZD_SM_3",
+                                                                    "nZD_SM_4", "nZD_SM_5", "nZD_SM_6", "nZD_SM_7", "nZD_SM_8",
+                                                                    "nZD_SM_9", "nZD_SM_10", "nZD_SM_11", "nZD_SM_12", "auxsystem_enable",
+                                                                    "bd_open", "number_group_bd", "censor", "auxsystem", "bd",
+                                                                    "g_1", "g_2", "g_3", g_4", "g_5", "g_6", "g_7", g_8",
+                                                                    "g_9", "g_10", "g_11", "g_12", "g_13", "g_14", "g_15",
+                                                                    "start_pumps_opening_all_valves_direction", "pDoorClosed_1",
+                                                                    "pDoorClosed_2", "pDoorClosed_3", "pDoorClosed_4",
+                                                                    "automatic_fire_extinguishing_mode_enabled_AGT",
+                                                                    "cancellation_launch_OTV_AGT", "OTV_output_control_AGP",
+                                                                    "start_OTV_AGT", "shutdown_ventilation_and_air_conditioning_by_fire_AGT",
+                                                                    "serviceability_connecting_lines_signal_Start_OTV_AGT",
+                                                                    "the_presence_pressure_cylinders_OTV_AGT"''')
+            # Проверяем файл на наличие в папке, если есть удаляем и создаем новый
+            write_file = self.file_check('сfg_PT')
+
+            for value in data_value:
+                id_pz = value[0]
+                name = value[1]
+                type_zone = value[2]
+                max_number_attacks = value[3]
+                flag_stop_attacks = value[4]
+                foam_pump_group_number = value[5]
+                cooling_pump_group_number = value[6]
+                auxsystem_enable = value[73]
+                bd_open = value[74]
+                number_group_bd = value[75]
+                censor = value[76]
+                auxsystem = value[77]
+                bd = value[78]
+                start_pumps_open_valves = value[94]
+
+                cfg_txt = f'(* {name} *)\n'
+                cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, 'TypePZ', type_zone)
+
+                for i in range(1, 33): 
+                    cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, f'nPI[{i}]', value[6 + i])
+                for i in range(1, 21): 
+                    cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, f'nUTSFire[{i}]', value[38 + i])
+                for i in range(1, 5): 
+                    cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, f'nUTSPTOff[{i}]', value[58 + i])
+                for i in range(1, 9): 
+                    cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, f'nUTSPTOff[{i}]', value[62 + i])
+                for i in range(1, 13): 
+                    cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, f'nZD_SM[{i}]', value[70 + i])
+                for i in range(1, 16): 
+                    cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, f'GPZdisabled[{i}]', str.upper(self.check_condition(value[78 + i])))
+
+                cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, 'nVSCount', auxsystem_enable)
+                cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, 'nBDCount', bd_open)
+                cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, 'nBDGrp', number_group_bd)
+                cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, 'nPINeeded', censor)
+                cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, 'nPumpsNeeded', auxsystem)
+                cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, 'nBDNeeded', bd)
+                cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, 'nVSGRPFoam', foam_pump_group_number)
+                cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, 'nVSGRPWater', cooling_pump_group_number)
+                cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, 'MaxFires', max_number_attacks)
+                cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, 'cfg.StopAfterMaxFires', flag_stop_attacks)
+                cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, 'cfg.startVSafterValvesOpen', start_pumps_open_valves)
+
+                write_file.write(cfg_txt)
+            write_file.close()
+            msg[f'{today} - Файл СУ: cfg_pt заполнен'] = 1
+            return msg
+        except Exception:
+            msg[f'{today} - Файл СУ: ошибка при заполнении cfg_pt: {traceback.format_exc()}'] = 2
+            return msg  
+        
 
 class Filling_HardWare():
     def __init__(self):

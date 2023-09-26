@@ -1371,6 +1371,22 @@ class Widget(QWidget):
         self.q_check_cfg_dosim = QCheckBox('cfg_DO_sim', tab_7)
         self.q_check_cfg_dosim.move(330, 50) 
         self.q_check_cfg_dosim.stateChanged.connect(self.check_cfg_DO_sim)
+
+        self.q_check_cfg_bd = QCheckBox('cfg_BD', tab_7)
+        self.q_check_cfg_bd.move(410, 20) 
+        self.q_check_cfg_bd.stateChanged.connect(self.check_cfg_BD)
+        self.q_check_cfg_ktprp = QCheckBox('cfg_KTPRP', tab_7)
+        self.q_check_cfg_ktprp.move(410, 35) 
+        self.q_check_cfg_ktprp.stateChanged.connect(self.check_cfg_KTPRP)
+        self.q_check_cfg_pi = QCheckBox('cfg_PI', tab_7)
+        self.q_check_cfg_pi.move(410, 50) 
+        self.q_check_cfg_pi.stateChanged.connect(self.check_cfg_PI)
+        self.q_check_cfg_pt = QCheckBox('cfg_PT', tab_7)
+        self.q_check_cfg_pt.move(410, 65) 
+        self.q_check_cfg_pt.stateChanged.connect(self.check_cfg_PT)
+        self.q_check_cfg_pz = QCheckBox('cfg_PZ', tab_7)
+        self.q_check_cfg_pz.move(410, 80) 
+        self.q_check_cfg_pz.stateChanged.connect(self.check_cfg_PZ)
         # Установить все
         check_all_su = QCheckBox('Установить/Снять', tab_7)
         check_all_su.setToolTip('Установить или снять все флаги для заполнения')
@@ -2517,6 +2533,25 @@ class Widget(QWidget):
         if checked: self.list_gen_su.append('cfg_DO_sim')
         else      : self.list_gen_su.remove('cfg_DO_sim')
     
+    def check_cfg_BD(self, checked):
+        if checked: self.list_gen_su.append('cfg_BD')
+        else: self.list_gen_su.remove('cfg_BD')
+
+    def check_cfg_KTPRP(self, checked):
+        if checked: self.list_gen_su.append('cfg_KTPRP')
+        else      : self.list_gen_su.remove('cfg_KTPRP')
+
+    def check_cfg_PI(self, checked):
+        if checked: self.list_gen_su.append('cfg_PI')
+        else: self.list_gen_su.remove('cfg_PI')
+
+    def check_cfg_PT(self, checked):
+        if checked: self.list_gen_su.append('cfg_PT')
+        else: self.list_gen_su.remove('cfg_PT')
+
+    def check_cfg_PZ(self, checked):
+        if checked: self.list_gen_su.append('cfg_PZ')
+        else: self.list_gen_su.remove('cfg_PZ')
     # Clear messages operation log 
     def clear_textmsg(self):
         self.logTextBox.clear()
