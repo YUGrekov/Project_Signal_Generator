@@ -4251,6 +4251,9 @@ class Filling_CodeSys():
             if tabl == 'cfg_PZ': 
                 msg.update(self.cfg_pz())
                 continue
+            if tabl == 'cfg_UPTS': 
+                msg.update(self.cfg_upts())
+                continue
         return msg
     def file_check(self, name_file):
         path_request = f'{connect.path_su}\\{name_file}.txt'
@@ -6650,7 +6653,7 @@ class Filling_CodeSys():
             msg[f'{today} - Файл СУ: ошибка при заполнении cfg_ai_sim: {traceback.format_exc()}'] = 2
             return msg  
     
-
+    # ПТ
     def check_condition(self, param):
         '''Проверка ячейки чтобы она была не пустой или None'''
         return True if (param is not None) and (param != '') else False
@@ -6777,24 +6780,45 @@ class Filling_CodeSys():
             return msg  
 
     def cfg_pi(self):
-        # def split_value(value):
-        #     try:
-        #         if 
-        #         print(f'{re.split("]=|].", value)[0]}]')
-        #         return f'{re.split("]=|].", value)[0]}]'
-        #     except:
-        #         return value
-
-        def bit_mask(value):
+        def check_value(value: str) -> str:
+            '''Проверяем значение на наличие цифры после '.' или '='.
+            Если присутствует убираем цифру'''
+            value_split = re.split('\.|=', value)
+            len_value = len(value_split)
             try:
-                number = int(re.split("]=|].", value)[1])
+                check = int(value_split[len_value - 1])
+                value_split.pop()
+                return '.'.join(value_split)
             except:
                 return value
-            
-            bin_str = f'2#{number:08b}'
-            bin_str = f'{bin_str[:6]}_{bin_str[6:]}'
 
-            return bin_str
+        def bit_mask(number: int) -> str:
+            '''Перевод значения из 10 в 2 сс'''
+            bin_str = f'2#{number:08b}'
+            return f'{bin_str[:6]}_{bin_str[6:]}'
+        
+        def find_number(value: str, fl_num: bool = True) -> str:
+            '''Поиск значения после . или =, и перевод системы счисления'''
+            sep_sign = ('=', '.')
+            cfg = {'.':'2#0000_0000',
+                   '=':'2#0000_0010'}
+            for sign in sep_sign:
+                try:
+                    value_split = value.split(sign)
+                    len_value = len(value_split)
+                    number = int(value_split[len_value - 1])
+                    cfg_reg = cfg[sign]
+                except ValueError:
+                    continue
+                else:
+                    break
+            try:
+                if fl_num:
+                    return bit_mask(number)
+                else:
+                    return cfg_reg
+            except:
+                return '2#0000_0000'
 
         msg = {}
         try:
@@ -6824,27 +6848,27 @@ class Filling_CodeSys():
 
                 cfg_txt = f'(* {tag} - {name} *)\n'
                 cfg_txt = self.one_line(cfg_txt, 'cfgPI', id_pi, 'TypePI', type_pi)
-                cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, 'pFire', fire, bit_mask(fire), '2#0000_0000')
 
-            #     cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, 'pFault1', fault_1, '2#0000_1011', '2#0000_0000')
-            #     cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, 'pFault2', fault_2, '2#0000_1110', '2#0000_0000')
+                cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, 'pFire', check_value(fire), find_number(fire), find_number(fire, False))
+                cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, 'pFault1', check_value(fault_1), find_number(fault_1), find_number(fault_1, False))
+                cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, 'pFault2', check_value(fault_2), find_number(fault_2), find_number(fault_2, False))
                 
-            #     if type_pi == '1':
-            #         cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, 'pNorm', normal, 3, '2#0000_0000')
-            #         cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, 'pLinkOk', yes_conn, '2#0000_0000', '2#0000_0000')
-            #         for i in range(1, 11): 
-            #             cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, f'pParams[{i}]', value[8 + i], '2#0000_1101', '2#0000_0000')
-            #         cfg_txt = self.one_line(cfg_txt, 'cfgPI', id_pi, 'pResRS', reset_link)
+                if type_pi == '1':
+                    cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, 'pNorm', check_value(normal), find_number(normal), find_number(normal, False))
+                    cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, 'pLinkOk', check_value(yes_conn), find_number(yes_conn), find_number(yes_conn, False))
+                    for i in range(1, 11): 
+                        cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, f'pParams[{i}]', check_value(value[8 + i]), find_number(value[8 + i]), find_number(value[8 + i], False))
+                    cfg_txt = self.one_line(cfg_txt, 'cfgPI', id_pi, 'pResRS', reset_link)
 
-            #     if type_pi == '3':
-            #         cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, 'pAttention', attention, '2#0000_1110', '2#0000_0000')
-            #         cfg_txt = self.one_line_ref(cfg_txt, 'cfgPI', id_pi, 'pRes', reset_link)
+                if type_pi == '3':
+                    cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPI', id_pi, 'pAttention', check_value(attention), find_number(attention), find_number(attention, False))
+                    cfg_txt = self.one_line_ref(cfg_txt, 'cfgPI', id_pi, 'pRes', reset_link)
                     
-            #     cfg_txt = self.one_line(cfg_txt, 'cfgPI', id_pi, 'nRSreq', reset_request)
-            #     cfg_txt = self.one_line(cfg_txt, 'cfgPI', id_pi, 'nBus', number_for_interface)
+                cfg_txt = self.one_line(cfg_txt, 'cfgPI', id_pi, 'nRSreq', reset_request)
+                cfg_txt = self.one_line(cfg_txt, 'cfgPI', id_pi, 'nBus', number_for_interface)
 
-            #     write_file.write(cfg_txt)
-            # write_file.close()
+                write_file.write(cfg_txt)
+            write_file.close()
             msg[f'{today} - Файл СУ: cfg_pi заполнен'] = 1
             return msg
         except Exception:
@@ -6920,17 +6944,17 @@ class Filling_CodeSys():
                                                                     "nZD_SM_4", "nZD_SM_5", "nZD_SM_6", "nZD_SM_7", "nZD_SM_8",
                                                                     "nZD_SM_9", "nZD_SM_10", "nZD_SM_11", "nZD_SM_12", "auxsystem_enable",
                                                                     "bd_open", "number_group_bd", "censor", "auxsystem", "bd",
-                                                                    "g_1", "g_2", "g_3", g_4", "g_5", "g_6", "g_7", g_8",
+                                                                    "g_1", "g_2", "g_3", "g_4", "g_5", "g_6", "g_7", "g_8",
                                                                     "g_9", "g_10", "g_11", "g_12", "g_13", "g_14", "g_15",
                                                                     "start_pumps_opening_all_valves_direction", "pDoorClosed_1",
                                                                     "pDoorClosed_2", "pDoorClosed_3", "pDoorClosed_4",
-                                                                    "automatic_fire_extinguishing_mode_enabled_AGT",
-                                                                    "cancellation_launch_OTV_AGT", "OTV_output_control_AGP",
-                                                                    "start_OTV_AGT", "shutdown_ventilation_and_air_conditioning_by_fire_AGT",
+                                                                    "automatic_fire_extinguishing_mode_enabled_AGT","cancellation_launch_OTV_AGT", 
+                                                                    "OTV_output_control_AGP", "start_OTV_AGT", 
+                                                                    "shutdown_ventilation_and_air_conditioning_by_fire_AGT",
                                                                     "serviceability_connecting_lines_signal_Start_OTV_AGT",
                                                                     "the_presence_pressure_cylinders_OTV_AGT"''')
             # Проверяем файл на наличие в папке, если есть удаляем и создаем новый
-            write_file = self.file_check('сfg_PT')
+            write_file = self.file_check('сfg_PZ')
 
             for value in data_value:
                 id_pz = value[0]
@@ -6940,13 +6964,20 @@ class Filling_CodeSys():
                 flag_stop_attacks = value[4]
                 foam_pump_group_number = value[5]
                 cooling_pump_group_number = value[6]
-                auxsystem_enable = value[73]
-                bd_open = value[74]
-                number_group_bd = value[75]
-                censor = value[76]
-                auxsystem = value[77]
-                bd = value[78]
-                start_pumps_open_valves = value[94]
+                auxsystem_enable = value[83]
+                bd_open = value[84]
+                number_group_bd = value[85]
+                censor = value[86]
+                auxsystem = value[87]
+                bd = value[88]
+                start_pumps_open_valves = value[104]
+                auto_fire_mode_AGT = value[109]
+                cancel_launch_OTV_AGT = value[110]
+                OTV_output_control_AGP = value[111]
+                start_OTV_AGT = value[112]
+                shutdown_vent_air_condit_fire_AGT = value[113]
+                servic_con_lines_Start_OTV_AGT = value[114]
+                presence_press_cylind_OTV_AGT = value[115]
 
                 cfg_txt = f'(* {name} *)\n'
                 cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, 'TypePZ', type_zone)
@@ -6958,11 +6989,19 @@ class Filling_CodeSys():
                 for i in range(1, 5): 
                     cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, f'nUTSPTOff[{i}]', value[58 + i])
                 for i in range(1, 9): 
-                    cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, f'nUTSPTOff[{i}]', value[62 + i])
+                    cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, f'nZD_{i}', value[62 + i])
                 for i in range(1, 13): 
                     cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, f'nZD_SM[{i}]', value[70 + i])
                 for i in range(1, 16): 
-                    cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, f'GPZdisabled[{i}]', str.upper(self.check_condition(value[78 + i])))
+                    cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, f'GPZdisabled[{i}]', str(not self.check_condition(value[88 + i])).upper())
+                for i in range(1, 5): 
+                    cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPZ', id_pz, f'pDoorClosed[{i}]', value[104 + i], '2#0000_0000', '2#0000_0000')
+
+                cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPZ', id_pz, f'pModeAutoOn', auto_fire_mode_AGT, '2#0000_0000', '2#0000_0000')
+                cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPZ', id_pz, f'pOffOTV', cancel_launch_OTV_AGT, '2#0000_0000', '2#0000_0000')
+                cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPZ', id_pz, f'pOutOTV', OTV_output_control_AGP, '2#0000_0000', '2#0000_0000')
+                cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPZ', id_pz, f'pErrStartOTV', servic_con_lines_Start_OTV_AGT, '2#0000_0000', '2#0000_0000')
+                cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgPZ', id_pz, f'pPgasOTV', presence_press_cylind_OTV_AGT, '2#0000_0000', '2#0000_0000')
 
                 cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, 'nVSCount', auxsystem_enable)
                 cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, 'nBDCount', bd_open)
@@ -6975,15 +7014,51 @@ class Filling_CodeSys():
                 cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, 'MaxFires', max_number_attacks)
                 cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, 'cfg.StopAfterMaxFires', flag_stop_attacks)
                 cfg_txt = self.one_line(cfg_txt, 'cfgPZ', id_pz, 'cfg.startVSafterValvesOpen', start_pumps_open_valves)
+                cfg_txt = self.one_line_ref(cfg_txt, 'cfgPZ', id_pz, 'pStartOTV', start_OTV_AGT)
+                cfg_txt = self.one_line_ref(cfg_txt, 'cfgPZ', id_pz, 'pOffVent', shutdown_vent_air_condit_fire_AGT)
 
                 write_file.write(cfg_txt)
             write_file.close()
-            msg[f'{today} - Файл СУ: cfg_pt заполнен'] = 1
+            msg[f'{today} - Файл СУ: cfg_pz заполнен'] = 1
             return msg
         except Exception:
-            msg[f'{today} - Файл СУ: ошибка при заполнении cfg_pt: {traceback.format_exc()}'] = 2
+            msg[f'{today} - Файл СУ: ошибка при заполнении cfg_pz: {traceback.format_exc()}'] = 2
             return msg  
         
+    def cfg_upts(self):
+        msg = {}
+        try:
+            data_value = self.dop_function.connect_by_sql('upts', f'''"id", "tag", "name", "VKL",
+                                                                      "Serviceability_of_circuits_of_inclusion", 
+                                                                      "siren", "Does_not_require_autoshutdown"''')
+            # Проверяем файл на наличие в папке, если есть удаляем и создаем новый
+            write_file = self.file_check('сfg_UPTS')
+
+            for value in data_value:
+                id_upts = value[0]
+                tag = value[1]
+                name = value[2]
+                vkl = value[3]
+                serv_circuits_incl = value[4]
+                siren = int(value[5])
+                does_not_req_autoshutdown = value[6]
+
+                cfg_txt = f'(* {tag} - {name} *)\n'
+                cfg_txt = self.one_line_ref(cfg_txt, 'cfgUPTS', id_upts, 'pVkl', vkl)
+                cfg_txt = self.one_line(cfg_txt, 'cfgUPTS', id_upts, 'CFG.isSiren', siren)
+                cfg_txt = self.one_line(cfg_txt, 'cfgUPTS', id_upts, 'CFG.blockAutoOff', does_not_req_autoshutdown)
+                cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgUPTS', id_upts, f'pCorrCV', serv_circuits_incl, '2#0000_0111', '2#0000_0000')
+                cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgUPTS', id_upts, f'pLTMinCV', serv_circuits_incl, '2#0000_0010', '2#0000_0000')
+                cfg_txt = self.pIn_num_reg(cfg_txt, 'cfgUPTS', id_upts, f'pMTMaxCV', serv_circuits_incl, '2#0000_0011', '2#0000_0000')
+
+                write_file.write(cfg_txt)
+            write_file.close()
+            msg[f'{today} - Файл СУ: cfg_upts заполнен'] = 1
+            return msg
+        except Exception:
+            msg[f'{today} - Файл СУ: ошибка при заполнении cfg_upts: {traceback.format_exc()}'] = 2
+            return msg 
+
 
 class Filling_HardWare():
     def __init__(self):

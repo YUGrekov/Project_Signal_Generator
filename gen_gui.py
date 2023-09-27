@@ -1387,6 +1387,9 @@ class Widget(QWidget):
         self.q_check_cfg_pz = QCheckBox('cfg_PZ', tab_7)
         self.q_check_cfg_pz.move(410, 80) 
         self.q_check_cfg_pz.stateChanged.connect(self.check_cfg_PZ)
+        self.q_check_cfg_upts = QCheckBox('cfg_UPTS', tab_7)
+        self.q_check_cfg_upts.move(410, 95) 
+        self.q_check_cfg_upts.stateChanged.connect(self.check_cfg_UPTS)
         # Установить все
         check_all_su = QCheckBox('Установить/Снять', tab_7)
         check_all_su.setToolTip('Установить или снять все флаги для заполнения')
@@ -2552,6 +2555,10 @@ class Widget(QWidget):
     def check_cfg_PZ(self, checked):
         if checked: self.list_gen_su.append('cfg_PZ')
         else: self.list_gen_su.remove('cfg_PZ')
+
+    def check_cfg_UPTS(self, checked):
+        if checked: self.list_gen_su.append('cfg_UPTS')
+        else: self.list_gen_su.remove('cfg_UPTS')
     # Clear messages operation log 
     def clear_textmsg(self):
         self.logTextBox.clear()
