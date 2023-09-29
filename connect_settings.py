@@ -13,6 +13,7 @@ class Connect():
             self.config.read(path_prj, encoding="utf-8")
 
         self.prefix_system = self.exist_check('Common', 'prefix_system')
+        self.type_system = self.exist_check('Common', 'type_system')
         self.name_project = self.exist_check('Common', 'name_project')
         self.path_to_exel = self.exist_check('Common', 'path_to_kzfkp')
         self.path_rus_text = self.exist_check('Common', 'path_rus_text_column')

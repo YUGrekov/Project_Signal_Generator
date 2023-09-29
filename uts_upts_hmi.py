@@ -49,6 +49,12 @@ class DesignedParamsTwo(NamedTuple):
     ver: str
 
 
+class DesignedParamsOne(NamedTuple):
+    target: str
+    ver: str
+    ref: str
+
+
 class BaseAlarmMap():
     '''Базовый класс создания карты табло и сирен.'''
     attrib_uts_row_design = {'1': DesignedParamsThree(target='X', value='0', ver='5'),

@@ -14,6 +14,7 @@ from defence_hmi import gen_station_defence
 from uts_upts_hmi import Alarm_map
 from windows_base_editing import MainWindow as WinEditing
 from import_exel_back import Import_in_SQL as KD_import
+from new_db_station import NewDB
 from main_base import *
 
 # ГРАФИЧЕСКИЙ ИНТЕРФЕЙС ДЛЯ ЗАПУСКА ГЕНЕРАТОРА
@@ -175,6 +176,22 @@ class Widget(QWidget):
         l_sql_msg_port_path.move(260, 95)
         l_sql_msg_port_path.setText(connect.port_msg)
         self.port_msg = connect.port_msg
+
+        # Новая база DB
+        l_text_help = QLabel('Название новой БД задано в init_conf.cfg: [SQL] -> database: ...', tab_1)
+        l_text_help.move(400, 5)
+        b_newDB = QPushButton('Создать БД', tab_1)
+        b_newDB.setStyleSheet("border-radius: 4px; border: 1px solid")
+        b_newDB.setToolTip('''Создается новая БД под определенную систему, с полным набором таблиц!''')
+        b_newDB.resize(150, 20)
+        b_newDB.move(520, 22) 
+        b_newDB.clicked.connect(self.create_new_DB)
+        self.q_new_DB_mns = QCheckBox('МНС', tab_1)
+        self.q_new_DB_mns.setToolTip('''Создание новой БД SQL для системы МНС''')
+        self.q_new_DB_mns.move(400, 22) 
+        self.q_new_DB_pt = QCheckBox('ПТ', tab_1)
+        self.q_new_DB_pt.setToolTip('''Создание новой БД SQL для системы ПТ''')
+        self.q_new_DB_pt.move(450, 22) 
 
         # ------------------Импорт КЗФКП------------------
         readtablbutt = QPushButton('Прочитать шапку таблицы', tab_2)
@@ -2559,6 +2576,15 @@ class Widget(QWidget):
     def check_cfg_UPTS(self, checked):
         if checked: self.list_gen_su.append('cfg_UPTS')
         else: self.list_gen_su.remove('cfg_UPTS')
+    
+    # Создание новой БД
+    def create_new_DB(self):
+        obj_new_db = NewDB()
+        if self.q_new_DB_mns.isChecked():
+            obj_new_db.new_base('MNS')
+        if self.q_new_DB_pt.isChecked():
+            obj_new_db.new_base('PT')
+
     # Clear messages operation log 
     def clear_textmsg(self):
         self.logTextBox.clear()

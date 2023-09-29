@@ -298,6 +298,7 @@ class RS(BaseModel):
 
 class USO(BaseModel):
     variable = CharField(null=True)
+    tag = CharField(null=True)
     name = CharField(null=True)
     temperature = CharField(null=True)
     door = CharField(null=True)
@@ -1074,3 +1075,450 @@ class RSData(BaseModel):
 
     class Meta:
         table_name = 'rsdata'
+
+
+class ZDType(BaseModel):
+    type_bur = CharField(null=True)
+    manufacturer = CharField(null=True)
+    heating_on = CharField(null=True)
+    operating_mode_stop = CharField(null=True)
+    ready_for_technological_operations = CharField(null=True)
+    operation_time_current_protect = CharField(null=True)
+    protect_kz = CharField(null=True)
+    engine_overheating = CharField(null=True)
+    undervoltage_input_network = CharField(null=True)
+    interruption_phase_connection_ed = CharField(null=True)
+    loss_phases_input_mains = CharField(null=True)
+    lack_of_movement = CharField(null=True)
+    power_input_overvoltage = CharField(null=True)
+    critical_supply_voltage_drop = CharField(null=True)
+    wrong_phase_sequence_network_power_input_unit = CharField(null=True)
+    wrong_direction_travel = CharField(null=True)
+    position_sensor_setting_defect = CharField(null=True)
+    device_defect = CharField(null=True)
+    battery_discharge = CharField(null=True)
+    overheating_power_converter_module = CharField(null=True)
+    hypothermia = CharField(null=True)
+    current_load_moment = CharField(null=True)
+    service_phase_defect = CharField(null=True)
+    digital_input_overvoltage = CharField(null=True)
+    insulation_resistance_05_om = CharField(null=True)
+    insulation_resistance_1_om = CharField(null=True)
+    no_connection_motor = CharField(null=True)
+    dc_bus_undervoltage = CharField(null=True)
+    defect_parameters_groups_b_d = CharField(null=True)
+    defect_parameters_groups_g = CharField(null=True)
+
+    class Meta:
+        table_name = 'zd_type'
+
+
+class TrendsGrp(BaseModel):
+    parent_id = IntegerField(null=True)
+    name_grp = CharField(null=True)
+
+    class Meta:
+        table_name = 'trends_grp'
+
+
+class SSData(BaseModel):
+    variable = CharField(null=True)
+    tag = CharField(null=True)
+    name = CharField(null=True)
+    addr_in_kc = CharField(null=True)
+    ss_address_channel_1 = CharField(null=True)
+    ss_address_channel_2 = CharField(null=True)
+
+    class Meta:
+        table_name = 'ss_data'
+
+
+class SS(BaseModel):
+    variable = CharField(null=True)
+    tag = CharField(null=True)
+    name = CharField(null=True)
+    counter_1 = CharField(null=True)
+    number_array_stateRSreq_1 = IntegerField(null=True)
+    number_NOM_1 = IntegerField(null=True)
+    channel_NOM_1 = IntegerField(null=True)
+    counter_2 = CharField(null=True)
+    number_array_stateRSreq_2 = IntegerField(null=True)
+    number_NOM_2 = IntegerField(null=True)
+    channel_NOM_2 = IntegerField(null=True)
+    Pic = CharField(null=True)
+    link_timeout = CharField(null=True)
+
+    class Meta:
+        table_name = 'ss'
+
+
+class SPRules(BaseModel):
+    rule_name = IntegerField(null=True)
+    name_rules = CharField(null=True)
+
+    class Meta:
+        table_name = 'sp_rules'
+
+
+class SPGrp(BaseModel):
+    type_grp = IntegerField(null=True)
+    name_group = CharField(null=True)
+
+    class Meta:
+        table_name = 'sp_grp'
+
+
+class PZ(BaseModel):
+    variable = CharField(null=True)
+    tag = CharField(null=True)
+    name = CharField(null=True)
+    type_zone = IntegerField(null=True)
+    max_number_foam_attacks = IntegerField(null=True)
+    flag_stop_extinguishing_end_foam_attacks = IntegerField(null=True)
+    foam_pump_group_number = IntegerField(null=True)
+    cooling_pump_group_number = IntegerField(null=True)
+    nPI_1 = IntegerField(null=True)
+    nPI_2 = IntegerField(null=True)
+    nPI_3 = IntegerField(null=True)
+    nPI_4 = IntegerField(null=True)
+    nPI_5 = IntegerField(null=True)
+    nPI_6 = IntegerField(null=True)
+    nPI_7 = IntegerField(null=True)
+    nPI_8 = IntegerField(null=True)
+    nPI_9 = IntegerField(null=True)
+    nPI_10 = IntegerField(null=True)
+    nPI_11 = IntegerField(null=True)
+    nPI_12 = IntegerField(null=True)
+    nPI_13 = IntegerField(null=True)
+    nPI_14 = IntegerField(null=True)
+    nPI_15 = IntegerField(null=True)
+    nPI_16 = IntegerField(null=True)
+    nPI_17 = IntegerField(null=True)
+    nPI_18 = IntegerField(null=True)
+    nPI_19 = IntegerField(null=True)
+    nPI_20 = IntegerField(null=True)
+    nPI_21 = IntegerField(null=True)
+    nPI_22 = IntegerField(null=True)
+    nPI_23 = IntegerField(null=True)
+    nPI_24 = IntegerField(null=True)
+    nPI_25 = IntegerField(null=True)
+    nPI_26 = IntegerField(null=True)
+    nPI_27 = IntegerField(null=True)
+    nPI_28 = IntegerField(null=True)
+    nPI_29 = IntegerField(null=True)
+    nPI_30 = IntegerField(null=True)
+    nPI_31 = IntegerField(null=True)
+    nPI_32 = IntegerField(null=True)
+    nUTSFire_1 = IntegerField(null=True)
+    nUTSFire_2 = IntegerField(null=True)
+    nUTSFire_3 = IntegerField(null=True)
+    nUTSFire_4 = IntegerField(null=True)
+    nUTSFire_5 = IntegerField(null=True)
+    nUTSFire_6 = IntegerField(null=True)
+    nUTSFire_7 = IntegerField(null=True)
+    nUTSFire_8 = IntegerField(null=True)
+    nUTSFire_9 = IntegerField(null=True)
+    nUTSFire_10 = IntegerField(null=True)
+    nUTSFire_11 = IntegerField(null=True)
+    nUTSFire_12 = IntegerField(null=True)
+    nUTSFire_13 = IntegerField(null=True)
+    nUTSFire_14 = IntegerField(null=True)
+    nUTSFire_15 = IntegerField(null=True)
+    nUTSFire_16 = IntegerField(null=True)
+    nUTSFire_17 = IntegerField(null=True)
+    nUTSFire_18 = IntegerField(null=True)
+    nUTSFire_19 = IntegerField(null=True)
+    nUTSFire_20 = IntegerField(null=True)
+    nUTSPTOff_1 = IntegerField(null=True)
+    nUTSPTOff_2 = IntegerField(null=True)
+    nUTSPTOff_3 = IntegerField(null=True)
+    nUTSPTOff_4 = IntegerField(null=True)
+    nZD_1 = IntegerField(null=True)
+    nZD_2 = IntegerField(null=True)
+    nZD_3 = IntegerField(null=True)
+    nZD_4 = IntegerField(null=True)
+    nZD_5 = IntegerField(null=True)
+    nZD_6 = IntegerField(null=True)
+    nZD_7 = IntegerField(null=True)
+    nZD_8 = IntegerField(null=True)
+    nZD_SM_1 = IntegerField(null=True)
+    nZD_SM_2 = IntegerField(null=True)
+    nZD_SM_3 = IntegerField(null=True)
+    nZD_SM_4 = IntegerField(null=True)
+    nZD_SM_5 = IntegerField(null=True)
+    nZD_SM_6 = IntegerField(null=True)
+    nZD_SM_7 = IntegerField(null=True)
+    nZD_SM_8 = IntegerField(null=True)
+    nZD_SM_9 = IntegerField(null=True)
+    nZD_SM_10 = IntegerField(null=True)
+    nZD_SM_11 = IntegerField(null=True)
+    nZD_SM_12 = IntegerField(null=True)
+    auxsystem_enable = IntegerField(null=True)
+    bd_open = IntegerField(null=True)
+    number_group_bd = IntegerField(null=True)
+    censor = IntegerField(null=True)
+    auxsystem = IntegerField(null=True)
+    bd = IntegerField(null=True)
+    g_1 = CharField(null=True)
+    g_2 = CharField(null=True)
+    g_3 = CharField(null=True)
+    g_4 = CharField(null=True)
+    g_5 = CharField(null=True)
+    g_6 = CharField(null=True)
+    g_7 = CharField(null=True)
+    g_8 = CharField(null=True)
+    g_9 = CharField(null=True)
+    g_10 = CharField(null=True)
+    g_11 = CharField(null=True)
+    g_12 = CharField(null=True)
+    g_13 = CharField(null=True)
+    g_14 = CharField(null=True)
+    g_15 = CharField(null=True)
+    start_pumps_opening_all_valves_direction = IntegerField(null=True)
+    pDoorClosed_1 = CharField(null=True)
+    pDoorClosed_2 = CharField(null=True)
+    pDoorClosed_3 = CharField(null=True)
+    pDoorClosed_4 = CharField(null=True)
+    automatic_fire_extinguishing_mode_enabled_AGT = CharField(null=True)
+    cancellation_launch_OTV_AGT = CharField(null=True)
+    OTV_output_control_AGP = CharField(null=True)
+    start_OTV_AGT = CharField(null=True)
+    shutdown_ventilation_and_air_conditioning_by_fire_AGT = CharField(null=True)
+    serviceability_connecting_lines_signal_Start_OTV_AGT = CharField(null=True)
+    the_presence_pressure_cylinders_OTV_AGT = CharField(null=True)
+    short_name = CharField(null=True)
+
+    class Meta:
+        table_name = 'pz'
+
+
+class PrjTM(BaseModel):
+    variable = CharField(null=True)
+    tag = CharField(null=True)
+    name = CharField(null=True)
+    unit = CharField(null=True)
+    used = BooleanField(null=True)
+    value_ust = IntegerField(null=True)
+    minimum = IntegerField(null=True)
+    maximum = IntegerField(null=True)
+    group_ust = CharField(null=True)
+    rule_map_ust = CharField(null=True)
+
+    class Meta:
+        table_name = 'prj_tm'
+
+
+class PIC(BaseModel):
+    variable = CharField(null=True)
+    tag = CharField(null=True)
+    name = CharField(null=True)
+    frame = CharField(null=True)
+    Pic = CharField(null=True)
+    add_set = CharField(null=True)
+
+    class Meta:
+        table_name = 'pic'
+
+
+class Net(BaseModel):
+    name = CharField(null=True)
+    out_basket = CharField(null=True)
+    in_basket = CharField(null=True)
+    Pic = CharField(null=True)
+
+    class Meta:
+        table_name = 'net'
+
+
+class MsgOthers(BaseModel):
+    text = CharField(null=True)
+    priority = IntegerField(null=True)
+    isAck = BooleanField(null=True)
+    IsAlert = BooleanField(null=True)
+    IsCycle = BooleanField(null=True)
+    IsSound = BooleanField(null=True)
+    SoundFile = CharField(null=True)
+    IsHide = BooleanField(null=True)
+
+    class Meta:
+        table_name = 'msg_others'
+
+
+class MsgCat(BaseModel):
+    category = CharField(null=True)
+    list_code_category = CharField(null=True)
+    display_list_signals_tree = CharField(null=True)
+
+    class Meta:
+        table_name = 'msg_cat'
+
+
+class Msg(BaseModel):
+    variable = CharField(null=True)
+    tag = CharField(null=True)
+    name = CharField(null=True)
+    name_tabl_BD_VU = CharField(null=True)
+    index = IntegerField(null=True)
+    count = IntegerField(null=True)
+
+    class Meta:
+        table_name = 'msg'
+
+
+class HMIZD(BaseModel):
+    variable = CharField(null=True)
+    tag = CharField(null=True)
+    name = CharField(null=True)
+    link = CharField(null=True)
+
+    class Meta:
+        table_name = 'hmi_zd'
+
+
+class HMIWORD(BaseModel):
+    variable = CharField(null=True)
+    tag = CharField(null=True)
+    name = CharField(null=True)
+    link = CharField(null=True)
+    
+    class Meta:
+        table_name = 'hmi_word'
+
+
+class HMIVS(BaseModel):
+    variable = CharField(null=True)
+    tag = CharField(null=True)
+    name = CharField(null=True)
+    link = CharField(null=True)
+    
+    class Meta:
+        table_name = 'hmi_vs'
+
+
+class HMINA(BaseModel):
+    variable = CharField(null=True)
+    tag = CharField(null=True)
+    name = CharField(null=True)
+    link = CharField(null=True)
+    
+    class Meta:
+        table_name = 'hmi_na'
+
+
+class HMIUDINT(BaseModel):
+    variable = CharField(null=True)
+    tag = CharField(null=True)
+    name = CharField(null=True)
+    link = CharField(null=True)
+
+    class Meta:
+        table_name = 'hmi_udint'
+
+
+class HMIREAL(BaseModel):
+    variable = CharField(null=True)
+    tag = CharField(null=True)
+    name = CharField(null=True)
+    link = CharField(null=True)
+
+    class Meta:
+        table_name = 'hmi_real'
+
+
+class BufR(BaseModel):
+    tag = CharField(null=True)
+    variable = CharField(null=True)
+    name = CharField(null=True)
+
+    class Meta:
+        table_name = 'bufr'
+
+
+class Buf(BaseModel):
+    variable = CharField(null=True)
+    tag = CharField(null=True)
+    name = CharField(null=True)
+    bit_15 = CharField(null=True)
+    bit_14 = CharField(null=True)
+    bit_13 = CharField(null=True)
+    bit_12 = CharField(null=True)
+    bit_11 = CharField(null=True)
+    bit_10 = CharField(null=True)
+    bit_9 = CharField(null=True)
+    bit_8 = CharField(null=True)
+    bit_7 = CharField(null=True)
+    bit_6 = CharField(null=True)
+    bit_5 = CharField(null=True)
+    bit_4 = CharField(null=True)
+    bit_3 = CharField(null=True)
+    bit_2 = CharField(null=True)
+    bit_1 = CharField(null=True)
+    bit_0 = CharField(null=True)
+
+    class Meta:
+        table_name = 'buf'
+
+
+class BDGRP(BaseModel):
+    variable = CharField(null=True)
+    tag = CharField(null=True)
+    name = CharField(null=True)
+
+    class Meta:
+        table_name = 'bdgrp'
+
+
+class BD(BaseModel):
+    variable = CharField(null=True)
+    tag = CharField(null=True)
+    name = CharField(null=True)
+    tank_empty = CharField(null=True)
+    tank_full = CharField(null=True)
+    lower_level = CharField(null=True)
+    number_group = IntegerField(null=True)
+    number_in_zd = IntegerField(null=True)
+    number_out_zd = IntegerField(null=True)
+    Pic = CharField(null=True)
+
+    class Meta:
+        table_name = 'bd'
+
+
+class AIgrp(BaseModel):
+    name = CharField(null=True)
+    min6 = CharField(null=True)
+    min5 = CharField(null=True)
+    min4 = CharField(null=True)
+    min3 = CharField(null=True)
+    min2 = CharField(null=True)
+    min1 = CharField(null=True)
+    max1 = CharField(null=True)
+    max2 = CharField(null=True)
+    max3 = CharField(null=True)
+    max4 = CharField(null=True)
+    max5 = CharField(null=True)
+    max6 = CharField(null=True)
+    tabl_msg = CharField(null=True)
+
+    class Meta:
+        table_name = 'ai_grp'
+
+
+class AIFuse(BaseModel):
+    tag = CharField(null=True)
+    name_group_fuse = CharField(null=True)
+    control_result = CharField(null=True)
+    reliability_control = CharField(null=True)
+
+    class Meta:
+        table_name = 'ai_fuse'
+
+
+class NPS(BaseModel):
+    variable = CharField(null=True)
+    tag = CharField(null=True)
+    name = CharField(null=True)
+    value = CharField(null=True)
+
+    class Meta:
+        table_name = 'nps'

@@ -6654,10 +6654,6 @@ class Filling_CodeSys():
             return msg  
     
     # ПТ
-    def check_condition(self, param):
-        '''Проверка ячейки чтобы она была не пустой или None'''
-        return True if (param is not None) and (param != '') else False
-
     def pIn_num_reg(self, original_str: str, cfg_tabl: str, id_: int,
                     param: str, pInVar: str, num: int, reg: str) -> str:
         """Дополнительный метод для сборки значений: pInputVar-num-cfg.reg
@@ -6718,6 +6714,10 @@ class Filling_CodeSys():
         original_str = original_str + f'{cfg_tabl}[{id_}].{param}\t\t:= {value};\n'
 
         return original_str
+
+    def check_condition(self, param):
+        '''Проверка ячейки чтобы она была не пустой или None'''
+        return True if (param is not None) and (param != '') else False
 
     def cfg_bd(self):
         msg = {}
@@ -7300,7 +7300,7 @@ class Filling_USO():
         return(msg)
     # Заполняем таблицу USO
     def column_check(self):
-        list_default = ['variable', 'name', 'temperature', 'door',
+        list_default = ['variable', 'tag', 'name', 'temperature', 'door',
                         'signal_1', 'signal_2', 'signal_3', 'signal_4', 'signal_5', 'signal_6', 'signal_7', 'signal_8', 
                         'signal_9', 'signal_10', 'signal_11', 'signal_12', 'signal_13', 'signal_14', 'signal_15', 'signal_16',
                         'signal_17', 'signal_18', 'signal_19', 'signal_20', 'signal_21', 'signal_22', 'signal_23', 'signal_24',
