@@ -1322,6 +1322,9 @@ class PIC(BaseModel):
 
 class Net(BaseModel):
     name = CharField(null=True)
+    basket = CharField(null=True)
+    flag_CPU = BooleanField(null=True)
+    number_basket = IntegerField(null=True)
     out_basket = CharField(null=True)
     in_basket = CharField(null=True)
     Pic = CharField(null=True)

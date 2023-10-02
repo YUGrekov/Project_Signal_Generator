@@ -7265,7 +7265,7 @@ class Filling_USO():
                     try:
                         if len(current_door) == 0: raise
                         for door in current_door:
-                            list_diag['door']  = f'{door[0]}.Value'
+                            list_diag['door']  = f'{door[0]}'
                             break
                     except:
                         list_diag['temperature']  = ''
@@ -7280,7 +7280,7 @@ class Filling_USO():
                     try:
                         for di in current_di:
                             count_DI += 1
-                            list_diag[f'signal_{count_DI}']  = f'{di[0]}.Value'
+                            list_diag[f'signal_{count_DI}']  = f'{di[0]}'
                     except:
                         list_diag[f'signal_{count_DI}']  = ''
 
