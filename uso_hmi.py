@@ -36,6 +36,55 @@ class InitParamsAttr(NamedTuple):
     ref: str
 
 
+class AIs(Enum):
+    NAME = 'AIs'
+    TYPE = 'type_MK_516_008(AI8)'
+    B_T = 'type_MK_516_008(AI8)'
+    B_T_ID = '454fa324-27ee-4c5b-852b-10e43769c2fa'
+
+
+class AOs(Enum):
+    NAME = 'AOs'
+    TYPE = 'type_MK_514_008(AO)'
+    B_T = 'type_MK_514_008(AO)'
+    B_T_ID = 'e76165af-10c9-4743-b092-8f5dcb3e6e12'
+
+
+class DIs(Enum):
+    NAME = 'DIs'
+    TYPE = 'type_MK_521_032(DI)'
+    B_T = 'type_MK_521_032(DI)'
+    B_T_ID = '54337da0-d138-41b0-aefe-20366697201e'
+
+
+class DOs(Enum):
+    NAME = 'DOs'
+    TYPE = 'type_MK_531_032(DO)'
+    B_T = 'type_MK_531_032(DO)'
+    B_T_ID = '20cd1522-2d06-49e6-a55d-e0801aeeb4e9'
+
+
+class CNs(Enum):
+    NAME = 'CNs'
+    TYPE = 'type_MK_545_010(CN)'
+    B_T = 'type_MK_545_010(CN)'
+    B_T_ID = 'c70fe2c3-a605-4c9d-b471-23e410350ddf'
+
+
+class PSUs(Enum):
+    NAME = 'PSUs'
+    TYPE = 'type_MK_550_024(PSU)'
+    B_T = 'type_MK_550_024(PSU)'
+    B_T_ID = '6d539303-1528-4442-bc2e-1f08a49f1567'
+
+
+class RSs(Enum):
+    NAME = 'RSs'
+    TYPE = 'type_MK_541_002(RS)'
+    B_T = 'type_MK_541_002(RS)'
+    B_T_ID = 'dc2b3d53-089e-4f3f-9ecd-4098cdfa823c'
+
+
 class NumName(Enum):
     '''Перечисление статических названий.'''
     TYPE_ROOT = 'type'
@@ -61,7 +110,13 @@ class NumName(Enum):
     LINK_OUT_Y = 'link_out_Y'
     IN_PATH = 'in_path'
     OUT_PATH = 'out_path'
+    VAL_ATTR_1 = '_init_path'
+    VAL_ATTR_2 = '_link_init_ApSource'
+    VAL_ATTR_3 = 'unit.Global.global_ApSource'
+    VAL_ATTR_4 = '5'
     COOR_Y = (88, 177)
+    SS_COOR_Y = (5, 27)
+    B_COOR_Y = (-110, 180)
 
 
 class PT(Enum):
@@ -89,138 +144,115 @@ class MNS(Enum):
 class DesignedParamsThree(NamedTuple):
     target: str
     value: str
-    ver: str
-
-
-class DesignedParamsTwo(NamedTuple):
-    target: str
-    ver: str
-
-
-class DesignedParamsOne(NamedTuple):
-    target: str
-    ver: str
-    ref: str
-
-
-class USOParams(NamedTuple):
-    name_modul: str
-    type_modul: str
-    uuid_modul: str
 
 
 class BaseUSO():
     '''Базовый класс шкафа УСО.'''
-    params_module = {'MK-516-008A': USOParams(name_modul='AIs',
-                                              type_modul='type_MK_516_008(AI8)',
-                                              uuid_modul='454fa324-27ee-4c5b-852b-10e43769c2fa'),
-                     'MK-514-008': USOParams(name_modul='AOs',
-                                             type_modul='type_MK_514_008(AO)',
-                                             uuid_modul='e76165af-10c9-4743-b092-8f5dcb3e6e12'),
-                     'MK-521-032': USOParams(name_modul='DIs',
-                                             type_modul='type_MK_521_032(DI)',
-                                             uuid_modul='54337da0-d138-41b0-aefe-20366697201e'),
-                     'MK-531-032': USOParams(name_modul='DOs',
-                                             type_modul='type_MK_531_032(DO)',
-                                             uuid_modul='20cd1522-2d06-49e6-a55d-e0801aeeb4e9'),
-                     'MK-545-010': USOParams(name_modul='CNs',
-                                             type_modul='type_MK_545_010(CN)',
-                                             uuid_modul='c70fe2c3-a605-4c9d-b471-23e410350ddf'),
-                     'MK-550-024': USOParams(name_modul='PSUs',
-                                             type_modul='type_MK_550_024(PSU)',
-                                             uuid_modul='6d539303-1528-4442-bc2e-1f08a49f1567'),
-                     'MK-541-002': USOParams(name_modul='RSs',
-                                             type_modul='type_MK_541_002(RS)',
-                                             uuid_modul='dc2b3d53-089e-4f3f-9ecd-4098cdfa823c')}
+    params_module = {'MK-516-008A': AIs,
+                     'MK-514-008': AOs,
+                     'MK-521-032': DIs,
+                     'MK-531-032': DOs,
+                     'MK-545-010': CNs,
+                     'MK-550-024': PSUs,
+                     'MK-541-002': RSs}
 
-    attr_ss = {'1': DesignedParamsThree(target='X', value='5', ver='5'),
-               '2': DesignedParamsThree(target='Y', value='5', ver='34'),
-               '3': DesignedParamsThree(target='Rotation', value='5', ver='0'),
-               '4': DesignedParamsThree(target='Height', value='5', ver='23')}
+    attr_ss = {'1': DesignedParamsThree(target='X', value='5'),
+               '2': DesignedParamsThree(target='Y', value=''),
+               '3': DesignedParamsThree(target='Rotation', value='0'),
+               '4': DesignedParamsThree(target='Height', value='23')}
 
-    attrib_basket = {'1': DesignedParamsThree(target='X', value='70', ver='5'),
-                     '2': DesignedParamsThree(target='Y', value='', ver='5'),
-                     '3': DesignedParamsThree(target='ZValue', value='0', ver='5'),
-                     '4': DesignedParamsThree(target='Rotation', value='0', ver='5'),
-                     '5': DesignedParamsThree(target='Scale', value='1', ver='5'),
-                     '6': DesignedParamsThree(target='Visible', value='true', ver='5'),
-                     '7': DesignedParamsThree(target='Opacity', value='1', ver='5'),
-                     '8': DesignedParamsThree(target='Enabled', value='true', ver='5'),
-                     '9': DesignedParamsThree(target='Tooltip', value='', ver='5'),
-                     '10': DesignedParamsThree(target='Width', value='730', ver='5'),
-                     '11': DesignedParamsThree(target='Height', value='160', ver='5'),
-                     '12': DesignedParamsThree(target='RoundingRadius', value='0', ver='5'),
-                     '13': DesignedParamsThree(target='PenColor', value='4278190080', ver='5'),
-                     '14': DesignedParamsThree(target='PenStyle', value='0', ver='5'),
-                     '15': DesignedParamsThree(target='PenWidth', value='1', ver='5'),
-                     '16': DesignedParamsThree(target='BrushColor', value='4278190080', ver='5'),
-                     '17': DesignedParamsThree(target='BrushStyle', value='0', ver='5')}
+    attr_basket = {'1': DesignedParamsThree(target='X', value='70'),
+                   '2': DesignedParamsThree(target='Y', value=''),
+                   '3': DesignedParamsThree(target='ZValue', value='0'),
+                   '4': DesignedParamsThree(target='Rotation', value='0'),
+                   '5': DesignedParamsThree(target='Scale', value='1'),
+                   '6': DesignedParamsThree(target='Visible', value='true'),
+                   '7': DesignedParamsThree(target='Opacity', value='1'),
+                   '8': DesignedParamsThree(target='Enabled', value='true'),
+                   '9': DesignedParamsThree(target='Tooltip', value=''),
+                   '10': DesignedParamsThree(target='Width', value='730'),
+                   '11': DesignedParamsThree(target='Height', value='160'),
+                   '12': DesignedParamsThree(target='RoundingRadius', value='0'),
+                   '13': DesignedParamsThree(target='PenColor', value='4278190080'),
+                   '14': DesignedParamsThree(target='PenStyle', value='0'),
+                   '15': DesignedParamsThree(target='PenWidth', value='1'),
+                   '16': DesignedParamsThree(target='BrushColor', value='4278190080'),
+                   '17': DesignedParamsThree(target='BrushStyle', value='0')}
 
-    attrib_modul = {'1': DesignedParamsThree(target='X', value='', ver='5'),
-                    '2': DesignedParamsThree(target='Y', value='0', ver='5'),
-                    '3': DesignedParamsThree(target='Rotation', value='0', ver='5'),
-                    '4': DesignedParamsThree(target='Width', value='40', ver='5'),
-                    '5': DesignedParamsThree(target='Height', value='160', ver='5')}
+    attrib_modul = {'1': DesignedParamsThree(target='X', value=''),
+                    '2': DesignedParamsThree(target='Y', value='0'),
+                    '3': DesignedParamsThree(target='Rotation', value='0'),
+                    '4': DesignedParamsThree(target='Width', value='40'),
+                    '5': DesignedParamsThree(target='Height', value='160')}
 
-    attrib_AIs_AOs = {'1': DesignedParamsThree(target='RightPopUp', value='true', ver='5'),
-                      '2': DesignedParamsThree(target='DownPopUp_faceplate', value='', ver='5'),
-                      '3': DesignedParamsThree(target='UpPopUp_faceplate', value='', ver='5'),
-                      '4': DesignedParamsThree(target='_init_path', value='', ver='5')}
+    attrib_AIs_AOs = {'1': DesignedParamsThree(target='RightPopUp', value='true'),
+                      '2': DesignedParamsThree(target='DownPopUp_faceplate', value=''),
+                      '3': DesignedParamsThree(target='UpPopUp_faceplate', value=''),
+                      '4': DesignedParamsThree(target='_init_path', value='')}
 
-    attrib_DIs_DOs = {'1': DesignedParamsThree(target='RightPopUp', value='true', ver='5'),
-                      '2': DesignedParamsThree(target='DownPopUp_faceplate', value='true', ver='5'),
-                      '3': DesignedParamsThree(target='UpPopUp_faceplate', value='', ver='5'),
-                      '4': DesignedParamsThree(target='_init_path', value='', ver='5')}
+    attrib_DIs_DOs = {'1': DesignedParamsThree(target='RightPopUp', value='true'),
+                      '2': DesignedParamsThree(target='DownPopUp_faceplate', value='true'),
+                      '3': DesignedParamsThree(target='UpPopUp_faceplate', value=''),
+                      '4': DesignedParamsThree(target='_init_path', value='')}
 
-    attrib_PSUs = {'1': DesignedParamsThree(target='RightPopUp', value='true', ver='5'),
-                   '2': DesignedParamsThree(target='DownPopUp_faceplate', value='true', ver='5'),
-                   '3': DesignedParamsThree(target='UpPopUp_faceplate', value='', ver='5'),
-                   '4': DesignedParamsThree(target='_init_path', value='', ver='5')}
+    attrib_PSUs = {'1': DesignedParamsThree(target='RightPopUp', value='true'),
+                   '2': DesignedParamsThree(target='DownPopUp_faceplate', value='true'),
+                   '3': DesignedParamsThree(target='UpPopUp_faceplate', value=''),
+                   '4': DesignedParamsThree(target='_init_path', value='')}
 
-    attrib_RSs = {'1': DesignedParamsThree(target='RightPopUp', value='true', ver='5'),
-                  '2': DesignedParamsThree(target= 'DownPopUp_faceplate', value='true', ver='5'),
-                  '3': DesignedParamsThree(target='UpPopUp_faceplate', value='', ver='5'),
-                  '4': DesignedParamsThree(target= '_init_path', value='', ver='5')}
+    attrib_RSs = {'1': DesignedParamsThree(target='RightPopUp', value='true'),
+                  '2': DesignedParamsThree(target= 'DownPopUp_faceplate', value='true'),
+                  '3': DesignedParamsThree(target='UpPopUp_faceplate', value=''),
+                  '4': DesignedParamsThree(target= '_init_path', value='')}
 
-    attrib_CNs = {'1': DesignedParamsThree(target='_init_path', value='', ver='5'),
-                  '2': DesignedParamsThree(target='eth1_animation', value='true', ver='5'),
-                  '3': DesignedParamsThree(target='eth2_animation', value='true', ver='5'),
-                  '4': DesignedParamsThree(target='RightPopUp', value='true', ver='5'),
-                  '5': DesignedParamsThree(target='port1_device', value='', ver='5'),
-                  '6': DesignedParamsThree(target='port2_device', value='', ver='5'),
-                  '7': DesignedParamsThree(target='DownPopUp_faceplate', value='true', ver='5'),
-                  '8': DesignedParamsThree(target='UpPopUp_faceplate', value='', ver='5')}
+    attrib_CNs = {'1': DesignedParamsThree(target='_init_path', value=''),
+                  '2': DesignedParamsThree(target='eth1_animation', value='true'),
+                  '3': DesignedParamsThree(target='eth2_animation', value='true'),
+                  '4': DesignedParamsThree(target='RightPopUp', value='true'),
+                  '5': DesignedParamsThree(target='port1_device', value=''),
+                  '6': DesignedParamsThree(target='port2_device', value=''),
+                  '7': DesignedParamsThree(target='DownPopUp_faceplate', value='true'),
+                  '8': DesignedParamsThree(target='UpPopUp_faceplate', value='')}
 
-    attrib_link_input_output = {'1': DesignedParamsThree(target='link_1_is_on', value='true', ver='5'),
-                                '2': DesignedParamsThree(target='link_2_is_on', value='true', ver='5'),
-                                '3': DesignedParamsThree(target='_init_path_link_1', value='', ver='5'),
-                                '4': DesignedParamsThree(target='_init_path_link_2', value='', ver='5'),
-                                '5': DesignedParamsThree(target='link_1_inv', value='true', ver='5'),
-                                '6': DesignedParamsThree(target='link_2_inv', value='true', ver='5')}
+    attrib_link_input_output = {'1': DesignedParamsThree(target='link_1_is_on', value='true'),
+                                '2': DesignedParamsThree(target='link_2_is_on', value='true'),
+                                '3': DesignedParamsThree(target='_init_path_link_1', value=''),
+                                '4': DesignedParamsThree(target='_init_path_link_2', value=''),
+                                '5': DesignedParamsThree(target='link_1_inv', value='true'),
+                                '6': DesignedParamsThree(target='link_2_inv', value='true')}
 
-    attrib_link_input_output_d = {'1': DesignedParamsThree(target='X', value='50', ver='5'),
-                                  '2': DesignedParamsThree(target='Y', value='60', ver='5'),
-                                  '3': DesignedParamsThree(target='Rotation', value='0', ver='5'),
-                                  '4': DesignedParamsThree(target='Width', value='70.5', ver='5'),
-                                  '5': DesignedParamsThree(target='Height', value='120', ver='5')}
+    attrib_link_input_output_d = {'1': DesignedParamsThree(target='X', value='50'),
+                                  '2': DesignedParamsThree(target='Y', value='60'),
+                                  '3': DesignedParamsThree(target='Rotation', value='0'),
+                                  '4': DesignedParamsThree(target='Width', value='70.5'),
+                                  '5': DesignedParamsThree(target='Height', value='120')}
 
-    attrib_point = {'1': DesignedParamsThree(target='X', value='0', ver='5'),
-                    '2': DesignedParamsThree(target='Y', value='0', ver='5')}
+    attrib_point = {'1': DesignedParamsThree(target='X', value='0'),
+                    '2': DesignedParamsThree(target='Y', value='0')}
 
 
 class AIss(Enum):
     NAME_SS = 'type_analog_srv'
+    B_T = 'type_analog_srv'
     B_T_ID = 'c5d10192-c8ea-4db8-a5ab-15b09b9b2266'
     SIGN = 'Analogs'
 
 
 class DIss(Enum):
     NAME_SS = 'type_srv_signal'
+    B_T = 'type_srv_signal'
     B_T_ID = '72176618-ccac-488c-b1d6-d570e5505e1c'
     SIGN = 'Diskrets'
 
 
-class ParserFile():
+class BASKET(Enum):
+    NAME_SS = 'r_basket'
+    B_T = 'Rectangle'
+    B_T_ID = '15726dc3-881e-4d8d-b0fa-a8f8237f08ca'
+    SIGN = ''
+
+
+class ParserFile(BaseUSO):
     '''Парсер файла картинки'''
     def __init__(self, new_pic_path: str) -> None:
         parser = etree.XMLParser(remove_blank_text=True, strip_cdata=False)
@@ -260,8 +292,34 @@ class ParserFile():
         dop.attrib['target'] = params.target
         dop.attrib['ver'] = params.ver
         dop.attrib['ref'] = params.ref
-
         object.append(dop)
+
+    def new_row_obj(self, level, name: str, attr):
+        object = self.new_rows_obj(NewRowsParams(
+            object=NumName.OBJECT.value,
+            access_modifier=NumName.PRIVATE.value,
+            name=name,
+            display_name=name,
+            uuid=str(uuid.uuid1()),
+            base_type=attr.B_T.value,
+            base_type_id=attr.B_T_ID.value,
+            ver=NumName.VAL_ATTR_4.value))
+        level.append(object)
+        return object
+
+    def new_row_designed(self, object, designed, target, value):
+        self.dop_substr(object, (DesignedParamsAttr(
+            designed=designed,
+            target=target,
+            value=value,
+            ver=NumName.VAL_ATTR_4.value)))
+
+    def new_row_init(self, object, init, target, ref):
+        self.dop_init_substr(object, (InitParamsAttr(
+            init=init,
+            target=target,
+            ver=NumName.VAL_ATTR_4.value,
+            ref=ref,)))
 
     def update_string(self, object: dict, key: str, value: str, new_value: str):
         '''Поиск и обновление строки'''
@@ -345,49 +403,102 @@ class ParserFile():
                     for lvl_2 in lvl_1.iter(NumName.INIT.value):
                         self.update_string(lvl_2.attrib, NumName.VALUE_ATR.value, NumName.OUT_PATH.value, sign_path)
 
-    def service_signals(self, root, attr_ss, signals):
+    def service_signals(self, root, signals):
         '''Добавляем служебные сигналы.'''
         for lvl in root.iter(NumName.TYPE_ROOT.value):
-
             for lvl_1 in lvl.iter(NumName.OBJECT.value):
                 if self.search_string(lvl_1.attrib, NumName.NAME_ATR.value, 'r_ss'):
-
+                    counter = 1
                     for type_ss in (DIss, AIss):
                         data = signals[0] if type_ss is DIss else signals[1]
 
-                        for i in range(1, len(data)):
-                            object = self.new_rows_obj(NewRowsParams(
-                                object=NumName.OBJECT.value,
-                                access_modifier=NumName.PRIVATE.value,
-                                name=f'{type_ss.NAME_SS.value}_{i}',
-                                display_name=f'{type_ss.NAME_SS.value}_{i}',
-                                uuid=str(uuid.uuid1()),
-                                base_type=type_ss.NAME_SS.value,
-                                base_type_id=type_ss.B_T_ID.value,
-                                ver='5'))
-                            lvl_1.append(object)
+                        for i in range(1, len(data) + 1):
+                            if len(data) > 1:
+                                name = f'{type_ss.NAME_SS.value}_{i}'
+                            else:
+                                name = type_ss.NAME_SS.value
+                            coord_Y = str(NumName.SS_COOR_Y.value[0] + (NumName.SS_COOR_Y.value[1] * counter))
+                            counter += 1
 
-                            for key, value in attr_ss.items():
-                                self.dop_substr(object, (DesignedParamsAttr(
-                                    designed=NumName.DESIGNED.value,
-                                    target=value[0],
-                                    value=value[2],
-                                    ver=value[1])))
+                            object = self.new_row_obj(lvl_1, name, type_ss)
 
-                            self.dop_substr(object, (DesignedParamsAttr(
-                                designed=NumName.INIT.value,
-                                target='_init_path',
-                                value='word',
-                                ver='5')))
+                            for key, value in self.attr_ss.items():
+                                self.new_row_designed(object,
+                                                      NumName.DESIGNED.value,
+                                                      value[0],
+                                                      coord_Y if key == '2' else value[1])
 
-                            self.dop_init_substr(object, (InitParamsAttr(
-                                init=NumName.INIT.value,
-                                target='_init_path',
-                                ver='5',
-                                ref='unit.Global.global_ApSource')))
+                            self.new_row_designed(object,
+                                                  NumName.INIT.value,
+                                                  NumName.VAL_ATTR_1.value,
+                                                  f'{type_ss.SIGN.value}.{data[i - 1]}')
+
+                            self.new_row_init(object,
+                                              NumName.INIT.value,
+                                              NumName.VAL_ATTR_2.value,
+                                              NumName.VAL_ATTR_3.value)
+
+    def edit_basket(self, root, data_basket: dict):
+        '''Добавляем корзины на форму.'''
+        for lvl in root.iter(NumName.TYPE_ROOT.value):
+
+            for basket in data_basket:
+                number = basket['basket']
+                object = self.new_row_obj(lvl,
+                                          f'r_basket_{number}',
+                                          BASKET)
+
+                coord_Y = str(NumName.B_COOR_Y.value[0] + (NumName.B_COOR_Y.value[1] * number))
+                for key, value in self.attr_basket.items():
+                    self.new_row_designed(object,
+                                          NumName.DESIGNED.value,
+                                          value[0],
+                                          coord_Y if key == '2' else value[1])
+
+    def edit_modul(self, root, data_basket: dict):
+        '''Заполняем модулями корзину.'''
+        counter_AIs = 0
+        counter_AOs = 0
+        counter_DIs = 0
+        counter_DOs = 0
+        counter_PSUs = 0
+        counter_RSs = 0
+
+        for lvl in root.iter(NumName.TYPE_ROOT.value):
+            for lvl_1 in lvl.iter(NumName.OBJECT.value):
+
+                for basket in data_basket:
+                    number = basket['basket']
+                    if self.search_string(lvl_1.attrib, NumName.NAME_ATR.value, f'r_basket_{number}'):
+
+                        for modul in basket['data']:
+                            try:
+                                name = self.params_module[modul]
+                                new_name = name.TYPE.value
+                                if name == AIs:
+                                    counter_AIs += 1
+                                    new_name = f'{name.TYPE.value}_{counter_AIs}'
+                                elif name == AOs:
+                                    counter_AOs += 1
+                                    new_name = f'{name.TYPE.value}_{counter_AOs}'
+                                elif name == DIs:
+                                    counter_DIs += 1
+                                    new_name = f'{name.TYPE.value}_{counter_DIs}'
+                                elif name == DOs:
+                                    counter_DOs += 1
+                                    new_name = f'{name.TYPE.value}_{counter_DOs}'
+                                elif name == PSUs:
+                                    counter_PSUs += 1
+                                    new_name = f'{name.TYPE.value}_{counter_PSUs}'
+                                elif name == RSs:
+                                    counter_RSs += 1
+                                    new_name = f'{name.TYPE.value}_{counter_RSs}'
+                                object = self.new_row_obj(lvl_1, new_name, name)
+                            except Exception:
+                                continue
 
 
-class DaignoPicture(BaseUSO):
+class DaignoPicture():
     def __init__(self):
         self.dop_function = General_functions()
 
@@ -422,42 +533,42 @@ class DaignoPicture(BaseUSO):
             if len(value) == 0:
                 continue
             data_DI.append(value[0][0])
-        return data_DI, data_AI
+        return data_DI, data_AI[0]
+
+    def request_basket(self, uso_rus: str):
+        '''Собираем данные по каждому шкафу.'''
+        data = []
+        for column in HardWare.select().dicts():
+            uso = column['uso']
+            if uso_rus == uso:
+                tag = column['tag']
+                basket = column['basket']
+
+                data_b = [column[f'type_{modul_column}'] for modul_column in range(0, 33, 1) if column[f'type_{modul_column}'] != '' and column[f'type_{modul_column}'] is not None]
+                data.append(dict(tag=tag,
+                                 basket=basket,
+                                 data=data_b))
+        return data
 
     def filling_pic_uso(self):
         system = MNS if connect.type_system == 'MNS' else PT
         name_uso = self.cabinet_names()
         for eng, rus in name_uso.items():
-
+            # Проверка шаблона и создание новой картинки
             path_picture = self.check_template(eng)
-
+            # Парсинг
             parser = ParserFile(path_picture)
             root, tree = parser()
-
+            # Правка шаблона
             parser.edit_template(system, root, eng, rus)
-
-            parser.service_signals(root, self.attr_ss, self.request_ss(rus))
-
+            # Добавление служебных сигналов
+            parser.service_signals(root, self.request_ss(rus))
+            # Собираем корзины
+            data = self.request_basket(rus)
+            parser.edit_basket(root, data)
+            parser.edit_modul(root, data)
             # parser.input_output_name(root, 3)
             tree.write(path_picture, pretty_print=True, encoding='utf-8')
-
-
-
-
-
-
-            # for column in HardWare.select().dicts():
-            #     uso = column['uso']
-
-                # if name_uso == uso:
-                #     id_basket = column['id']
-                #     tag = column['tag']
-                #     basket = column['basket']
-                #     print(uso)
-
-                #     for modul_column in range(0, 33, 1):
-                #         if column[f'type_{modul_column}'] != '' and column[f'type_{modul_column}'] is not None:
-                #             print(column[f'type_{modul_column}'])
 
 
 a = DaignoPicture()
