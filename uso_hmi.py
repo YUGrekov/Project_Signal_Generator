@@ -1,6 +1,7 @@
 import uuid
 import shutil
 import os
+import traceback
 from models import HardWare
 from models import connect
 from main_base import General_functions
@@ -117,6 +118,7 @@ class NumName(Enum):
     COOR_Y = (88, 177)
     SS_COOR_Y = (5, 27)
     B_COOR_Y = (-110, 180)
+    M_COOR_X = 40
 
 
 class PT(Enum):
@@ -179,42 +181,25 @@ class BaseUSO():
                    '16': DesignedParamsThree(target='BrushColor', value='4278190080'),
                    '17': DesignedParamsThree(target='BrushStyle', value='0')}
 
-    attrib_modul = {'1': DesignedParamsThree(target='X', value=''),
-                    '2': DesignedParamsThree(target='Y', value='0'),
-                    '3': DesignedParamsThree(target='Rotation', value='0'),
-                    '4': DesignedParamsThree(target='Width', value='40'),
-                    '5': DesignedParamsThree(target='Height', value='160')}
+    attr_modul = {'1': DesignedParamsThree(target='X', value=''),
+                  '2': DesignedParamsThree(target='Y', value='0'),
+                  '3': DesignedParamsThree(target='Rotation', value='0'),
+                  '4': DesignedParamsThree(target='Width', value='40'),
+                  '5': DesignedParamsThree(target='Height', value='160')}
 
-    attrib_AIs_AOs = {'1': DesignedParamsThree(target='RightPopUp', value='true'),
-                      '2': DesignedParamsThree(target='DownPopUp_faceplate', value=''),
-                      '3': DesignedParamsThree(target='UpPopUp_faceplate', value=''),
-                      '4': DesignedParamsThree(target='_init_path', value='')}
+    attr_set_mod = {'1': DesignedParamsThree(target='RightPopUp', value='true'),
+                    '2': DesignedParamsThree(target='UpPopUp_faceplate', value=''),
+                    '3': DesignedParamsThree(target='DownPopUp_faceplate', value='')}
 
-    attrib_DIs_DOs = {'1': DesignedParamsThree(target='RightPopUp', value='true'),
-                      '2': DesignedParamsThree(target='DownPopUp_faceplate', value='true'),
-                      '3': DesignedParamsThree(target='UpPopUp_faceplate', value=''),
-                      '4': DesignedParamsThree(target='_init_path', value='')}
+    attr_CNs = {'1': DesignedParamsThree(target='RightPopUp', value='true'),
+                '2': DesignedParamsThree(target='UpPopUp_faceplate', value=''),
+                '3': DesignedParamsThree(target='DownPopUp_faceplate', value=''),
+                '4': DesignedParamsThree(target='eth1_animation', value='true'),
+                '5': DesignedParamsThree(target='eth2_animation', value='true'),
+                '6': DesignedParamsThree(target='port1_device', value=''),
+                '7': DesignedParamsThree(target='port2_device', value='')}
 
-    attrib_PSUs = {'1': DesignedParamsThree(target='RightPopUp', value='true'),
-                   '2': DesignedParamsThree(target='DownPopUp_faceplate', value='true'),
-                   '3': DesignedParamsThree(target='UpPopUp_faceplate', value=''),
-                   '4': DesignedParamsThree(target='_init_path', value='')}
-
-    attrib_RSs = {'1': DesignedParamsThree(target='RightPopUp', value='true'),
-                  '2': DesignedParamsThree(target= 'DownPopUp_faceplate', value='true'),
-                  '3': DesignedParamsThree(target='UpPopUp_faceplate', value=''),
-                  '4': DesignedParamsThree(target= '_init_path', value='')}
-
-    attrib_CNs = {'1': DesignedParamsThree(target='_init_path', value=''),
-                  '2': DesignedParamsThree(target='eth1_animation', value='true'),
-                  '3': DesignedParamsThree(target='eth2_animation', value='true'),
-                  '4': DesignedParamsThree(target='RightPopUp', value='true'),
-                  '5': DesignedParamsThree(target='port1_device', value=''),
-                  '6': DesignedParamsThree(target='port2_device', value=''),
-                  '7': DesignedParamsThree(target='DownPopUp_faceplate', value='true'),
-                  '8': DesignedParamsThree(target='UpPopUp_faceplate', value='')}
-
-    attrib_link_input_output = {'1': DesignedParamsThree(target='link_1_is_on', value='true'),
+    attr_link_input_output = {'1': DesignedParamsThree(target='link_1_is_on', value='true'),
                                 '2': DesignedParamsThree(target='link_2_is_on', value='true'),
                                 '3': DesignedParamsThree(target='_init_path_link_1', value=''),
                                 '4': DesignedParamsThree(target='_init_path_link_2', value=''),
@@ -374,16 +359,15 @@ class ParserFile(BaseUSO):
                     for lvl_2 in lvl_1.iter(NumName.BODY.value):
                         lvl_2.text = CDATA(f'_link_D_{connect.type_system}_{uso_eng}_for_enable.Enabled=true;')
 
-    def input_output_name(self, root, max_basket: int,
-                          fl_CPU: bool, uso_eng: str, basket: int):
+    def in_out_name(self, root, uso: str, data_value: dict):
         '''Корректировка названий на входе и выходе корзин'''
-
-        def sign_path(fl_CPU: bool, uso_eng, basket):
+        def sign_path(fl_CPU: bool, uso: str):
             if fl_CPU:
-                return f'Diag.MNs.{uso_eng}_A{basket}_01'
+                return f'Diag.MNs.{uso}_01'
             else:
-                return f'Diag.CNs.{uso_eng}_A{basket}_01'
+                return f'Diag.CNs.{uso}_01'
 
+        len_data = len(data_value)
         for lvl in root.iter(NumName.TYPE_ROOT.value):
 
             for lvl_1 in lvl.iter(NumName.OBJECT.value):
@@ -391,7 +375,8 @@ class ParserFile(BaseUSO):
 
                     for lvl_2 in lvl_1.iter(NumName.INIT.value):
                         self.update_string(lvl_2.attrib, NumName.VALUE_ATR.value, NumName.IN_PATH.value,
-                                           sign_path(fl_CPU, uso_eng, basket))
+                                           sign_path(data_value[0]['net'][0][2],
+                                                     data_value[0]['net'][0][5].split(';')[0]))
 
                 if self.search_string(lvl_1.attrib, NumName.NAME_ATR.value, 't_output_link'):
 
@@ -399,9 +384,13 @@ class ParserFile(BaseUSO):
                         self.update_string(lvl_2.attrib,
                                            NumName.VALUE_ATR.value,
                                            NumName.LINK_OUT_Y.value,
-                                           NumName.COOR_Y.value[0] + (NumName.COOR_Y.value[1] * max_basket))
+                                           NumName.COOR_Y.value[0] + (NumName.COOR_Y.value[1] * len_data))
                     for lvl_2 in lvl_1.iter(NumName.INIT.value):
-                        self.update_string(lvl_2.attrib, NumName.VALUE_ATR.value, NumName.OUT_PATH.value, sign_path)
+                        self.update_string(lvl_2.attrib,
+                                           NumName.VALUE_ATR.value,
+                                           NumName.OUT_PATH.value,
+                                           sign_path(data_value[len_data - 1]['net'][len_data - 1][2],
+                                                     data_value[len_data - 1]['net'][len_data - 1][6].split(';')[0]))
 
     def service_signals(self, root, signals):
         '''Добавляем служебные сигналы.'''
@@ -455,47 +444,111 @@ class ParserFile(BaseUSO):
                                           value[0],
                                           coord_Y if key == '2' else value[1])
 
-    def edit_modul(self, root, data_basket: dict):
+    def edit_modul(self, root, data_basket: dict, uso_eng: str, uso_rus: str):
         '''Заполняем модулями корзину.'''
-        counter_AIs = 0
-        counter_AOs = 0
-        counter_DIs = 0
-        counter_DOs = 0
-        counter_PSUs = 0
-        counter_RSs = 0
-
         for lvl in root.iter(NumName.TYPE_ROOT.value):
             for lvl_1 in lvl.iter(NumName.OBJECT.value):
 
                 for basket in data_basket:
-                    number = basket['basket']
-                    if self.search_string(lvl_1.attrib, NumName.NAME_ATR.value, f'r_basket_{number}'):
+                    count_AIs = 0
+                    count_AOs = 0
+                    count_DIs = 0
+                    count_DOs = 0
+                    count_PSUs = 0
+                    count_RSs = 0
+                    m_number = 0
+
+                    b_number = basket['basket']
+                    if self.search_string(lvl_1.attrib, NumName.NAME_ATR.value, f'r_basket_{b_number}'):
 
                         for modul in basket['data']:
+                            if modul == '' and modul is None:
+                                continue
+
                             try:
                                 name = self.params_module[modul]
                                 new_name = name.TYPE.value
                                 if name == AIs:
-                                    counter_AIs += 1
-                                    new_name = f'{name.TYPE.value}_{counter_AIs}'
+                                    count_AIs += 1
+                                    new_name = f'{name.TYPE.value}_{count_AIs}'
                                 elif name == AOs:
-                                    counter_AOs += 1
-                                    new_name = f'{name.TYPE.value}_{counter_AOs}'
+                                    count_AOs += 1
+                                    new_name = f'{name.TYPE.value}_{count_AOs}'
                                 elif name == DIs:
-                                    counter_DIs += 1
-                                    new_name = f'{name.TYPE.value}_{counter_DIs}'
+                                    count_DIs += 1
+                                    new_name = f'{name.TYPE.value}_{count_DIs}'
                                 elif name == DOs:
-                                    counter_DOs += 1
-                                    new_name = f'{name.TYPE.value}_{counter_DOs}'
+                                    count_DOs += 1
+                                    new_name = f'{name.TYPE.value}_{count_DOs}'
                                 elif name == PSUs:
-                                    counter_PSUs += 1
-                                    new_name = f'{name.TYPE.value}_{counter_PSUs}'
+                                    count_PSUs += 1
+                                    new_name = f'{name.TYPE.value}_{count_PSUs}'
                                 elif name == RSs:
-                                    counter_RSs += 1
-                                    new_name = f'{name.TYPE.value}_{counter_RSs}'
+                                    count_RSs += 1
+                                    new_name = f'{name.TYPE.value}_{count_RSs}'
+
                                 object = self.new_row_obj(lvl_1, new_name, name)
+
+                                coord_X = str(NumName.M_COOR_X.value * m_number)
+                                for key, value in self.attr_modul.items():
+                                    self.new_row_designed(object,
+                                                          NumName.DESIGNED.value,
+                                                          value[0],
+                                                          coord_X if key == '1' else value[1])
+
+                                self.settings_modul(object,
+                                                    name,
+                                                    uso_eng, uso_rus,
+                                                    b_number, m_number,
+                                                    basket['net'])
+                                m_number += 1
                             except Exception:
                                 continue
+
+    def settings_modul(self, object, t_modul, uso_eng: str, uso_rus: str,
+                       b_number: int, m_number: int, net_data: dict):
+        '''Дополнительные настройки модуля.'''
+        try:
+            m_number = f'0{m_number}' if m_number < 10 else m_number
+            attribut = self.attr_CNs if t_modul.NAME.value == 'CNs' else self.attr_set_mod
+            faceplate = ('true', 'false') if b_number >= 2 else ('false', 'true')
+
+            for net in net_data:
+                if net[4] == b_number:
+                    net_link_in = str(net[5]).split(';')
+                    net_link_out = str(net[6]).split(';')
+
+            for key, value in attribut.items():
+                if key == '2':
+                    attr_value = faceplate[0]
+                elif key == '3':
+                    attr_value = faceplate[1]
+                elif key == '6':
+                    attr_value = f'{net_link_in[2]} корзина {net_link_in[1]}'
+                elif key == '7':
+                    attr_value = f'{net_link_out[2]} корзина {net_link_out[1]}'
+                else:
+                    attr_value = value[1]
+
+                self.new_row_designed(object,
+                                    NumName.INIT.value,
+                                    value[0],
+                                    attr_value)
+
+            self.new_row_designed(object,
+                                NumName.INIT.value,
+                                NumName.VAL_ATTR_1.value,
+                                f'Diag.{t_modul.NAME.value}.{uso_eng}_A{b_number}_{m_number}')
+
+            self.new_row_init(object,
+                            NumName.INIT.value,
+                            NumName.VAL_ATTR_2.value,
+                            NumName.VAL_ATTR_3.value)
+        except Exception:
+            print({traceback.format_exc()})
+
+    def line_in_out(self, root):
+        pass
 
 
 class DaignoPicture():
@@ -538,16 +591,19 @@ class DaignoPicture():
     def request_basket(self, uso_rus: str):
         '''Собираем данные по каждому шкафу.'''
         data = []
-        for column in HardWare.select().dicts():
+
+        net_value = self.dop_function.connect_by_sql_condition('net', '*', f'''"name"='{uso_rus}' ''')
+        for column in HardWare.select().order_by(HardWare.id).dicts():
             uso = column['uso']
             if uso_rus == uso:
                 tag = column['tag']
                 basket = column['basket']
 
-                data_b = [column[f'type_{modul_column}'] for modul_column in range(0, 33, 1) if column[f'type_{modul_column}'] != '' and column[f'type_{modul_column}'] is not None]
+                data_b = [column[f'type_{modul_column}'] for modul_column in range(0, 33, 1)]
                 data.append(dict(tag=tag,
                                  basket=basket,
-                                 data=data_b))
+                                 data=data_b,
+                                 net=net_value))
         return data
 
     def filling_pic_uso(self):
@@ -556,7 +612,7 @@ class DaignoPicture():
         for eng, rus in name_uso.items():
             # Проверка шаблона и создание новой картинки
             path_picture = self.check_template(eng)
-            # Парсинг
+            # Парсинг новой картинки
             parser = ParserFile(path_picture)
             root, tree = parser()
             # Правка шаблона
@@ -565,9 +621,13 @@ class DaignoPicture():
             parser.service_signals(root, self.request_ss(rus))
             # Собираем корзины
             data = self.request_basket(rus)
+            # Заполняем форму
             parser.edit_basket(root, data)
-            parser.edit_modul(root, data)
-            # parser.input_output_name(root, 3)
+            parser.edit_modul(root, data, eng, rus)
+            # Добавляем подписи к линиям
+            parser.in_out_name(root, eng, data)
+            # Добавляем линии корзины
+            parser.line_in_out(root, data)
             tree.write(path_picture, pretty_print=True, encoding='utf-8')
 
 
