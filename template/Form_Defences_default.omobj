@@ -1,0 +1,54 @@
+<type access-modifier="private" name="name" display-name="name" uuid="uuid" base-type="" base-type-id="ffaf5544-6200-45f4-87ec-9dd24558a9d5" ver="5">
+	<designed target="X" value="0" ver="5"/>
+	<designed target="Y" value="0" ver="5"/>
+	<designed target="Rotation" value="0" ver="5"/>
+	<designed target="Width" value="coordinate_W" ver="5"/>
+	<designed target="Height" value="coordinate_H" ver="5"/>
+	<designed target="ZValue" value="0" ver="5"/>
+	<designed target="Scale" value="1" ver="5"/>
+	<designed target="Visible" value="true" ver="5"/>
+	<designed target="Opacity" value="1" ver="5"/>
+	<designed target="Enabled" value="true" ver="5"/>
+	<designed target="Tooltip" value="" ver="5"/>
+	<designed target="PenColor" value="4278190080" ver="5"/>
+	<designed target="PenStyle" value="0" ver="5"/>
+	<designed target="PenWidth" value="1" ver="5"/>
+	<designed target="BrushColor" value="0xffc4c4c4" ver="5"/>
+	<designed target="BrushStyle" value="1" ver="5"/>
+	<designed target="WindowX" value="0" ver="5"/>
+	<designed target="WindowY" value="0" ver="5"/>
+	<designed target="WindowWidth" value="coordinate_W" ver="5"/>
+	<designed target="WindowHeight" value="coordinate_H" ver="5"/>
+	<designed target="WindowCaption" value="name_list" ver="5"/>
+	<designed target="ShowWindowCaption" value="true" ver="5"/>
+	<designed target="ShowWindowMinimize" value="false" ver="5"/>
+	<designed target="ShowWindowMaximize" value="false" ver="5"/>
+	<designed target="ShowWindowClose" value="true" ver="5"/>
+	<designed target="AlwaysOnTop" value="true" ver="5"/>
+	<designed target="WindowSizeMode" value="0" ver="5"/>
+	<designed target="WindowBorderStyle" value="2" ver="5"/>
+	<designed target="WindowState" value="0" ver="5"/>
+	<designed target="WindowScalingMode" value="0" ver="5"/>
+	<designed target="MonitorNumber" value="0" ver="5"/>
+	<designed target="WindowPosition" value="2" ver="5"/>
+	<designed target="WindowCloseMode" value="0" ver="5"/>
+	<object access-modifier="private" name="defences" display-name="defences" uuid="ea39b4b8-d4c9-4c33-84d8-78d742815125" base-type="ApSource" base-type-id="966603da-f05e-4b4d-8ef0-919efbf8ab2c" ver="5">
+		<designed target="Path" value="designed_path" ver="5"/>
+		<designed target="Active" value="true" ver="5"/>
+		<designed target="ReAdvise" value="0" ver="5"/>
+		<init target="ParentSource" ver="5" ref="unit.Global.global_ApSource"/>
+	</object>
+	<object access-modifier="private" name="empty_link" display-name="empty_link" uuid="29b864a8-2dd8-4865-a913-59f8d4b1f783" base-type="type_defence_top" base-type-id="6b175e7c-6060-4e11-a416-88a851f6b4a5" ver="5">
+		<designed target="X" value="1" ver="5"/>
+		<designed target="Y" value="1" ver="5"/>
+		<designed target="Rotation" value="0" ver="5"/>
+		<designed target="Width" value="800" ver="5"/>
+		<designed target="Height" value="26" ver="5"/>
+		<designed target="Visible" value="false" ver="5"/>
+	</object>
+	<designed target="WindowIconPath" value="tn_logo.jpg" ver="5"/>
+	<object access-modifier="private" name="name" display-name="name" uuid="32d80c0a-1695-425e-8bfd-edcb1141713d" base-type="Window" base-type-id="04615219-28bb-4a9a-bba4-50ac66972eb0" ver="5" description="" cardinal="1">
+		<do-on access-modifier="private" name="Handler_1" display-name="Handler_1" ver="5" event="MessageReceived" form-action="close"/>
+		<init target="Group" ver="5" ref="_Control"/>
+	</object>
+</type>

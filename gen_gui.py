@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QTextEdit
 from defence_hmi import gen_station_defence
 from uts_upts_hmi import Alarm_map
+from uso_hmi import DaignoPicture as DiagForm
 from windows_base_editing import MainWindow as WinEditing
 from import_exel_back import Import_in_SQL as KD_import
 from new_db_station import NewDB
@@ -1260,6 +1261,9 @@ class Widget(QWidget):
         self.q_check_hmi_upts = QCheckBox('HMI_UPTS', tab_6)
         self.q_check_hmi_upts.move(410, 95) 
         self.q_check_hmi_upts.stateChanged.connect(self.check_hmi_upts)
+        self.q_check_hmi_uso = QCheckBox('HMI_USO', tab_6)
+        self.q_check_hmi_uso.move(410, 110)
+        self.q_check_hmi_uso.stateChanged.connect(self.check_hmi_uso)
         # Установить все
         check_all_omx = QCheckBox('Установить/Снять', tab_6)
         check_all_omx.setToolTip('Установить или снять все флаги для заполнения атрибутов omx')
@@ -2369,6 +2373,9 @@ class Widget(QWidget):
     def check_hmi_upts(self, checked):
         if checked: self.list_gen_hmi.append('HMI_UPTS')
         else      : self.list_gen_hmi.remove('HMI_UPTS')
+    def check_hmi_uso(self, checked):
+        if checked: self.list_gen_hmi.append('HMI_USO')
+        else      : self.list_gen_hmi.remove('HMI_USO')
     # Button confirm
     def omx_list(self):
         msg = self.filing_attrib.write_in_omx(self.list_gen_vu)
@@ -2388,6 +2395,7 @@ class Widget(QWidget):
             msg[f'{today} - HMI Pictures: не выбраны атрибуты'] = 2
             return msg
         alarm_map = Alarm_map()
+        uso_form = DiagForm()
         for tabl in self.list_gen_hmi: 
             if tabl == 'HMI_KTPR': 
                 msg.update(gen_station_defence('ktpr', False))
@@ -2406,6 +2414,10 @@ class Widget(QWidget):
                 continue
             if tabl == 'HMI_UPTS': 
                 msg.update(alarm_map.filling_template('upts'))
+                continue
+            if tabl == 'HMI_USO': 
+                uso_form.filling_pic_uso()
+                msg[f'{today} - HMI USO: генерация завершена!'] = 1
                 continue
         self.logs_msg('default', 1, msg, True)
     # ------------------------СУ-------------------------

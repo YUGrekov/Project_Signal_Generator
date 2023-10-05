@@ -37,6 +37,11 @@ class InitParamsAttr(NamedTuple):
     ref: str
 
 
+class DesignedParamsThree(NamedTuple):
+    target: str
+    value: str
+
+
 class AIs(Enum):
     NAME = 'AIs'
     TYPE = 'type_MK_516_008(AI8)'
@@ -84,6 +89,46 @@ class RSs(Enum):
     TYPE = 'type_MK_541_002(RS)'
     B_T = 'type_MK_541_002(RS)'
     B_T_ID = 'dc2b3d53-089e-4f3f-9ecd-4098cdfa823c'
+
+
+class InputLine(Enum):
+    NAME = 'l_input_to_A'
+    TYPE = 'l_input_to_A'
+    B_T = 'type_line_for_connect'
+    B_T_ID = '9ce8edc0-9c10-4a3b-9263-da44abb267e1'
+    COOR_X = (50, 120.5, 120.5, 120.5)
+    COOR_Y = (60, 207, 387, 567)
+    COOR_WIDTH = (70.5, 70.5, 70.5, 70.5)
+    COOR_HEIGHT = (120, 103, 103, 103)
+
+
+class OutputLine(Enum):
+    NAME = 'l_output_to_A'
+    TYPE = 'l_output_to_A'
+    B_T = 'type_line_for_connect'
+    B_T_ID = '9ce8edc0-9c10-4a3b-9263-da44abb267e1'
+    COOR_X = (120.75, 120.75, 120.5, 120.5)
+    COOR_Y = (207.5, 387.5, 567, 747)
+    COOR_WIDTH = (70.5, 70.5, 70.5, 70.5)
+    COOR_HEIGHT = (50, 50, 50, 50)
+
+
+class InputPoint(Enum):
+    NAME = 'Point_'
+    TYPE = 'Point'
+    B_T = 'Point'
+    B_T_ID = '467f1af0-7bb4-4a61-b6fb-06e7bfd530d6'
+    COOR_X = (-70.5, -70.5, 0)
+    COOR_Y = (50, 153, 153)
+
+
+class OutputPoint(Enum):
+    NAME = 'Point_'
+    TYPE = 'Point'
+    B_T = 'Point'
+    B_T_ID = '467f1af0-7bb4-4a61-b6fb-06e7bfd530d6'
+    COOR_X = (0, -70.5, -70.5)
+    COOR_Y = (0, 0, 50)
 
 
 class NumName(Enum):
@@ -143,13 +188,9 @@ class MNS(Enum):
     SS_X = '780'
 
 
-class DesignedParamsThree(NamedTuple):
-    target: str
-    value: str
-
-
 class BaseUSO():
-    '''Базовый класс шкафа УСО.'''
+    '''Базовый класс для формирования шкафа УСО.
+    Описания атрибутов и их значения'''
     params_module = {'MK-516-008A': AIs,
                      'MK-514-008': AOs,
                      'MK-521-032': DIs,
@@ -199,21 +240,21 @@ class BaseUSO():
                 '6': DesignedParamsThree(target='port1_device', value=''),
                 '7': DesignedParamsThree(target='port2_device', value='')}
 
-    attr_link_input_output = {'1': DesignedParamsThree(target='link_1_is_on', value='true'),
-                                '2': DesignedParamsThree(target='link_2_is_on', value='true'),
-                                '3': DesignedParamsThree(target='_init_path_link_1', value=''),
-                                '4': DesignedParamsThree(target='_init_path_link_2', value=''),
-                                '5': DesignedParamsThree(target='link_1_inv', value='true'),
-                                '6': DesignedParamsThree(target='link_2_inv', value='true')}
+    attr_init_in_out = {'1': DesignedParamsThree(target='link_1_is_on', value='true'),
+                        '2': DesignedParamsThree(target='link_2_is_on', value='true'),
+                        '3': DesignedParamsThree(target='link_1_inv', value='true'),
+                        '4': DesignedParamsThree(target='link_2_inv', value='true'),
+                        '5': DesignedParamsThree(target='_init_path_link_1', value=''),
+                        '6': DesignedParamsThree(target='_init_path_link_2', value='')}
 
-    attrib_link_input_output_d = {'1': DesignedParamsThree(target='X', value='50'),
-                                  '2': DesignedParamsThree(target='Y', value='60'),
-                                  '3': DesignedParamsThree(target='Rotation', value='0'),
-                                  '4': DesignedParamsThree(target='Width', value='70.5'),
-                                  '5': DesignedParamsThree(target='Height', value='120')}
+    attr_obj_in_out = {'1': DesignedParamsThree(target='X', value='50'),
+                       '2': DesignedParamsThree(target='Y', value='60'),
+                       '3': DesignedParamsThree(target='Width', value='70.5'),
+                       '4': DesignedParamsThree(target='Height', value='120'),
+                       '5': DesignedParamsThree(target='Rotation', value='0')}
 
-    attrib_point = {'1': DesignedParamsThree(target='X', value='0'),
-                    '2': DesignedParamsThree(target='Y', value='0')}
+    attr_point = {'1': DesignedParamsThree(target='X', value=''),
+                  '2': DesignedParamsThree(target='Y', value='')}
 
 
 class AIss(Enum):
@@ -359,7 +400,7 @@ class ParserFile(BaseUSO):
                     for lvl_2 in lvl_1.iter(NumName.BODY.value):
                         lvl_2.text = CDATA(f'_link_D_{connect.type_system}_{uso_eng}_for_enable.Enabled=true;')
 
-    def in_out_name(self, root, uso: str, data_value: dict):
+    def in_out_name(self, root, data_value: dict):
         '''Корректировка названий на входе и выходе корзин'''
         def sign_path(fl_CPU: bool, uso: str):
             if fl_CPU:
@@ -531,24 +572,135 @@ class ParserFile(BaseUSO):
                     attr_value = value[1]
 
                 self.new_row_designed(object,
-                                    NumName.INIT.value,
-                                    value[0],
-                                    attr_value)
+                                      NumName.INIT.value,
+                                      value[0],
+                                      attr_value)
 
             self.new_row_designed(object,
-                                NumName.INIT.value,
-                                NumName.VAL_ATTR_1.value,
-                                f'Diag.{t_modul.NAME.value}.{uso_eng}_A{b_number}_{m_number}')
+                                  NumName.INIT.value,
+                                  NumName.VAL_ATTR_1.value,
+                                  f'Diag.{t_modul.NAME.value}.{uso_eng}_A{b_number}_{m_number}')
 
             self.new_row_init(object,
-                            NumName.INIT.value,
-                            NumName.VAL_ATTR_2.value,
-                            NumName.VAL_ATTR_3.value)
+                              NumName.INIT.value,
+                              NumName.VAL_ATTR_2.value,
+                              NumName.VAL_ATTR_3.value)
         except Exception:
             print({traceback.format_exc()})
 
-    def line_in_out(self, root):
-        pass
+    def line_in_out(self, root, data_basket: dict, uso_eng: str,
+                    input_line: bool = True):
+        """Добавление на форму линий связи корзины.
+
+        Args:
+            root (_type_): объект иттерирования
+            data_basket (dict): данные корзины
+            uso_eng (str): название шкафа на ENG
+            input_line (bool, optional): Входная линия. Defaults to True.
+        """
+        def attr_value(attr_number: int, def_value: str, b_number: int):
+            '''Координаты подсчитать невозможно,
+            поэтому используем статические.'''
+            if attr_number == 1:
+                value_attr = attr_line.COOR_X.value[b_number - 1]
+            elif attr_number == 2:
+                value_attr = attr_line.COOR_Y.value[b_number - 1]
+            elif attr_number == 3:
+                value_attr = attr_line.COOR_WIDTH.value[b_number - 1]
+            elif attr_number == 4:
+                value_attr = attr_line.COOR_HEIGHT.value[b_number - 1]
+            else:
+                value_attr = def_value
+            return str(value_attr)
+
+        def init_value(attr_number: int, def_value: str, uso_eng: str,
+                       net_uso, b_number: int, flag_in: bool):
+            '''Формируем значения входной и выходной линии.'''
+            for net in net_uso:
+                if net[4] == b_number:
+                    basket = net[3]
+                    in_basket = net[5].split(';')
+                    out_basket = net[6].split(';')
+                    line = in_basket if flag_in else out_basket
+                    sign_in_out = 'MNs' if line[0].find('KC') > -1 else 'CNs'
+                    sign_current = 'MNs' if uso_eng.find('KC') > -1 else 'CNs'
+                    if flag_in:
+                        if attr_number == 5:
+                            value_attr = f'Diag.{sign_in_out}.{line[0]}_01.ch_CN_02.ePNotLink'
+                        elif attr_number == 6:
+                            value_attr = f'Diag.{sign_current}.{uso_eng}_{basket}_01.ch_CN_01.ePNotLink'
+                        else:
+                            value_attr = def_value
+                    else:
+                        if attr_number == 5:
+                            value_attr = f'Diag.{sign_current}.{uso_eng}_{basket}_01.ch_CN_02.ePNotLink'
+                        elif attr_number == 6:
+                            value_attr = f'Diag.{sign_in_out}.{line[0]}_01.ch_CN_01.ePNotLink'
+                        else:
+                            value_attr = def_value
+                    return value_attr
+
+        attr_line = InputLine if input_line else OutputLine
+        for lvl in root.iter(NumName.TYPE_ROOT.value):
+            for basket in data_basket:
+                number = basket['basket']
+                net = basket['net']
+
+                object = self.new_row_obj(lvl,
+                                          f'{attr_line.NAME.value}{number}',
+                                          attr_line)
+
+                for key, value in self.attr_obj_in_out.items():
+                    self.new_row_designed(object,
+                                          NumName.DESIGNED.value,
+                                          value[0],
+                                          attr_value(int(key),
+                                                     value[1], number))
+                for key, value in self.attr_init_in_out.items():
+                    self.new_row_designed(object,
+                                          NumName.INIT.value,
+                                          value[0],
+                                          init_value(int(key), value[1],
+                                                     uso_eng, net, number,
+                                                     input_line))
+                self.new_row_init(object,
+                                  NumName.INIT.value,
+                                  NumName.VAL_ATTR_2.value,
+                                  NumName.VAL_ATTR_3.value)
+
+    def edit_point(self, root, data_basket: dict, input_line: bool = True):
+        '''Добавление на форму точек для отобряжения линии.'''
+        def attr_value(attr_number: int, b_number: int):
+            '''Координаты подсчитать невозможно,
+            поэтому используем статические.'''
+            if attr_number == 1:
+                value_attr = attr_line.COOR_X.value[b_number - 1]
+            elif attr_number == 2:
+                value_attr = attr_line.COOR_Y.value[b_number - 1]
+            return str(value_attr)
+
+        attr_line = InputPoint if input_line else OutputLine
+        sign = InputLine if input_line else OutputLine
+
+        for lvl in root.iter(NumName.TYPE_ROOT.value):
+            for lvl_1 in lvl.iter(NumName.OBJECT.value):
+
+                for basket in data_basket:
+                    b_number = basket['basket']
+                    if self.search_string(lvl_1.attrib,
+                                          NumName.NAME_ATR.value,
+                                          f'{sign.NAME.value}{b_number}'):
+
+                        for i in range(1, 4):
+                            object = self.new_row_obj(lvl_1,
+                                                      f'{attr_line.NAME.value}{i}',
+                                                      attr_line)
+
+                            for key, value in self.attr_point.items():
+                                self.new_row_designed(object,
+                                                      NumName.DESIGNED.value,
+                                                      value[0],
+                                                      attr_value(int(key), i))
 
 
 class DaignoPicture():
@@ -611,7 +763,7 @@ class DaignoPicture():
         name_uso = self.cabinet_names()
         for eng, rus in name_uso.items():
             # Проверка шаблона и создание новой картинки
-            path_picture = self.check_template(eng)
+            path_picture = self.check_template(eng) 
             # Парсинг новой картинки
             parser = ParserFile(path_picture)
             root, tree = parser()
@@ -625,11 +777,12 @@ class DaignoPicture():
             parser.edit_basket(root, data)
             parser.edit_modul(root, data, eng, rus)
             # Добавляем подписи к линиям
-            parser.in_out_name(root, eng, data)
+            parser.in_out_name(root, data)
             # Добавляем линии корзины
-            parser.line_in_out(root, data)
+            parser.line_in_out(root, data, eng)
+            parser.line_in_out(root, data, eng, False)
+            # Добавляем точки к линиям
+            parser.edit_point(root, data)
+            parser.edit_point(root, data, False)
+
             tree.write(path_picture, pretty_print=True, encoding='utf-8')
-
-
-a = DaignoPicture()
-a.filling_pic_uso()
