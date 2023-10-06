@@ -96,8 +96,8 @@ class InputLine(Enum):
     TYPE = 'l_input_to_A'
     B_T = 'type_line_for_connect'
     B_T_ID = '9ce8edc0-9c10-4a3b-9263-da44abb267e1'
-    COOR_X = (50, 120.5, 120.5, 120.5)
-    COOR_Y = (60, 207, 387, 567)
+    COOR_X = 50
+    COOR_Y = (60, 180)
     COOR_WIDTH = (70.5, 70.5, 70.5, 70.5)
     COOR_HEIGHT = (120, 103, 103, 103)
 
@@ -107,8 +107,8 @@ class OutputLine(Enum):
     TYPE = 'l_output_to_A'
     B_T = 'type_line_for_connect'
     B_T_ID = '9ce8edc0-9c10-4a3b-9263-da44abb267e1'
-    COOR_X = (120.75, 120.75, 120.5, 120.5)
-    COOR_Y = (207.5, 387.5, 567, 747)
+    COOR_X = 120.5
+    COOR_Y = (207, 180)
     COOR_WIDTH = (70.5, 70.5, 70.5, 70.5)
     COOR_HEIGHT = (50, 50, 50, 50)
 
@@ -118,8 +118,8 @@ class InputPoint(Enum):
     TYPE = 'Point'
     B_T = 'Point'
     B_T_ID = '467f1af0-7bb4-4a61-b6fb-06e7bfd530d6'
-    COOR_X = (-70.5, -70.5, 0)
-    COOR_Y = (50, 153, 153)
+    COOR_X = (0, 0, 70.5)
+    COOR_Y = (0, 120, 120)
 
 
 class OutputPoint(Enum):
@@ -602,9 +602,9 @@ class ParserFile(BaseUSO):
             '''Координаты подсчитать невозможно,
             поэтому используем статические.'''
             if attr_number == 1:
-                value_attr = attr_line.COOR_X.value[b_number - 1]
+                value_attr = attr_line.COOR_X.value
             elif attr_number == 2:
-                value_attr = attr_line.COOR_Y.value[b_number - 1]
+                value_attr = attr_line.COOR_Y.value[0] + attr_line.COOR_Y.value[1] * (b_number - 1)
             elif attr_number == 3:
                 value_attr = attr_line.COOR_WIDTH.value[b_number - 1]
             elif attr_number == 4:
@@ -669,17 +669,17 @@ class ParserFile(BaseUSO):
                                   NumName.VAL_ATTR_3.value)
 
     def edit_point(self, root, data_basket: dict, input_line: bool = True):
-        '''Добавление на форму точек для отобряжения линии.'''
-        def attr_value(attr_number: int, b_number: int):
+        '''Добавление на форму точек для отображения линии.'''
+        def attr_value(attr_number: int, count_point: int):
             '''Координаты подсчитать невозможно,
             поэтому используем статические.'''
             if attr_number == 1:
-                value_attr = attr_line.COOR_X.value[b_number - 1]
+                value_attr = attr_line.COOR_X.value[count_point - 1]
             elif attr_number == 2:
-                value_attr = attr_line.COOR_Y.value[b_number - 1]
+                value_attr = attr_line.COOR_Y.value[count_point - 1]
             return str(value_attr)
 
-        attr_line = InputPoint if input_line else OutputLine
+        attr_line = InputPoint if input_line else OutputPoint
         sign = InputLine if input_line else OutputLine
 
         for lvl in root.iter(NumName.TYPE_ROOT.value):
