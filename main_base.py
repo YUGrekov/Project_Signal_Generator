@@ -7171,16 +7171,18 @@ class Filling_HardWare():
                                             type_mod = key
                                         type_kod = value
 
-                            if   kk_is_True and (count_basket == 1 or count_basket == 2): list_hw[f'id'] = count_basket + 2
-                            else: list_hw[f'id'] = count_basket + 4
+                            if   kk_is_True and (count_basket == 1 or count_basket == 2):
+                                list_hw['id'] = count_basket + 2
+                            else:
+                                list_hw['id'] = count_basket + 4
                             
-                            list_hw[f'variable']        = f'countsErrDiag[]'
-                            list_hw[f'tag']             = ''
-                            list_hw[f'powerLink_ID']    = count_basket
-                            list_hw[f'type_0']          = 'MK-550-024'
-                            list_hw[f'variable_0']      = 'PSU'
-                            list_hw[f'type_1']          = 'MK-545-010'
-                            list_hw[f'variable_1']      = 'CN;3'
+                            list_hw['variable']        = f'countsErrDiag[]'
+                            list_hw['tag']             = ''
+                            list_hw['powerLink_ID']    = count_basket
+                            list_hw['type_0']          = 'MK-550-024'
+                            list_hw['variable_0']      = 'PSU'
+                            list_hw['type_1']          = 'MK-545-010'
+                            list_hw['variable_1']      = 'CN;3'
                             list_hw[f'type_{i[0]}']     = type_kod
                             list_hw[f'variable_{i[0]}'] = type_mod
                         test_s.append(list_hw)
@@ -9628,8 +9630,6 @@ class Filling_PI():
                         'Reset_Link', 'Reset_Request', 'Through_loop_number_for_interface', 'location', 'Pic']
         msg = self.dop_function.column_check(PI, 'pi', list_default)
         return msg 
-    
-
 class Filling_PT():
     def __init__(self):
         self.cursor   = db.cursor()

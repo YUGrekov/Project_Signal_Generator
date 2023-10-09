@@ -45,7 +45,7 @@ class NewDB():
             cursor.execute(sql)
         except (Exception, Error) as error:
             print(error)
-            return
+
         cursor.close()
         self.link.close()
 

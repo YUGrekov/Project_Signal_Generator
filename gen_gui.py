@@ -2593,9 +2593,9 @@ class Widget(QWidget):
     def create_new_DB(self):
         obj_new_db = NewDB()
         if self.q_new_DB_mns.isChecked():
-            obj_new_db.new_base('MNS')
+            obj_new_db.create_new_base('MNS')
         if self.q_new_DB_pt.isChecked():
-            obj_new_db.new_base('PT')
+            obj_new_db.create_new_base('PT')
 
     # Clear messages operation log 
     def clear_textmsg(self):
