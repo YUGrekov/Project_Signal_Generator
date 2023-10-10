@@ -1,4 +1,6 @@
 import sys
+import traceback
+from psycopg2 import Error
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QMainWindow
@@ -11,16 +13,21 @@ from PyQt5.QtWidgets import QSplitter
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWidgets import QComboBox
+from PyQt5.QtWidgets import QCheckBox
 sys.path.append('../Project_Signal_Generator')
 from logging_text import LogsTextEdit
 from windows_base_editing import MainWindow as WinEditing
-from main_base import General_functions as DopFunction
-from models import connect
+from general_functions import General_functions as DopFunction
+from graphic_arts.new_db_station import NewDB
+from model_new import connect
+from model_new import db
+from model_new import db_prj
+
 
 IMG_TABLE = 'graphic_arts/fon_table.jpg'
 SIZE_WORK_BACK = (1200, 500)
 SIZE_SPLIT_V = [500, 150]
-SIZE_SPLIT_H = [602, 50]
+SIZE_SPLIT_H = [602, 40]
 
 
 class EditTabWidget(QTabWidget):
@@ -61,6 +68,17 @@ class TabWidget(QTabWidget):
                            """)
 
 
+class CheckBox(QCheckBox):
+    '''Конструктор класса чекбокса.'''
+    def __init__(self, *args, **kwargs):
+        super(CheckBox, self).__init__(*args, **kwargs)
+        self.setStyleSheet("""*{
+                           font:15px consolas;
+                           padding: 3px;
+                           border-radius: 4
+                           }""")
+
+
 class PushButton(QPushButton):
     '''Конструктор класса кнопки.'''
     def __init__(self, *args, **kwargs):
@@ -85,6 +103,22 @@ class Label(QLabel):
     '''Конструктор класса кнопки.'''
     def __init__(self, *args, **kwargs):
         super(Label, self).__init__(*args, **kwargs)
+        self.setStyleSheet('''
+                           background-color: #d95050;
+                           border: 2px solid #C4C4C3;
+                           border-radius: 4;
+                           padding: 4px;
+                           font:12px consolas;''')
+
+    def connect_true(self):
+        self.setStyleSheet('''
+                           background-color: #7ce063;
+                           border: 2px solid #C4C4C3;
+                           border-radius: 4;
+                           padding: 8px;
+                           font:12px consolas;''')
+
+    def connect_false(self):
         self.setStyleSheet('''
                            background-color: #d95050;
                            border: 2px solid #C4C4C3;
@@ -166,8 +200,16 @@ class EditWindows(QWidget):
         '''Функция обновляет список таблиц по команде.'''
         dop_function = DopFunction()
         list_tabl = dop_function.all_tables()
+        list_tabl.sort()
+
+        if list_tabl[0] == 'Нет подключения к БД':
+            self.logsTextEdit.logs_msg('''Невозможно обновить список.
+                                       Нет подключения к БД разработки''', 2)
+            return
+
+        self.combo_choise_tabl.clear()
         for tabl in list_tabl:
-            self.combo_choise_tabl.addItem(str(tabl))
+            self.combo_choise_tabl.addItem(str(tabl[0]))
         self.logsTextEdit.logs_msg('Список таблиц обновлен', 1)
 
 
@@ -177,23 +219,47 @@ class TabConnect(QWidget):
         super(TabConnect, self).__init__(parent)
 
         self.logsTextEdit = logtext
+        self.parent = parent
+        self.dop_function = DopFunction()
+
         layout_v1 = QVBoxLayout()
         layout_v2 = QVBoxLayout()
-        layout_h = QHBoxLayout(self)
-
-        label_dev_sign = ElementSignature('База данных разработки\t\t')
+        layout_v3 = QVBoxLayout()
+        layout_h1 = QHBoxLayout()
+        layout_h2 = QHBoxLayout(self)
+        # Подписи
+        label_dev_sign = ElementSignature('База данных разработки\t')
         label_dev_database = ElementSignature(f'database:  {connect.database}')
         label_dev_user = ElementSignature(f'user:      {connect.user}')
         label_dev_pwd = ElementSignature(f'password:  {connect.password}')
         label_dev_host = ElementSignature(f'host:      {connect.host}')
         label_dev_port = ElementSignature(f'port:      {connect.port}')
 
-        label_prj_sign = ElementSignature('База данных проекта')
+        label_prj_sign = ElementSignature('База данных проекта\t')
         label_prj_database = ElementSignature(f'database:  {connect.database_msg}')
         label_prj_user = ElementSignature(f'user:      {connect.user_msg}')
         label_prj_pwd = ElementSignature(f'password:  {connect.password_msg}')
         label_prj_host = ElementSignature(f'host:      {connect.host_msg}')
         label_prj_port = ElementSignature(f'port:      {connect.port_msg}')
+        # Кнопки
+        self.button_connect_devSQL = GenFormButton('Подключиться к БД')
+        self.button_connect_devSQL.setToolTip('Подключение к БД разработки')
+        self.button_connect_prjSQL = GenFormButton('Подключиться к БД')
+        self.button_connect_prjSQL.setToolTip('Подключение к БД проекта')
+        self.button_disconnect_devSQL = GenFormButton('Отключиться от БД')
+        self.button_disconnect_prjSQL = GenFormButton('Отключиться от БД')
+        self.button_connect_devSQL.clicked.connect(self.connect_devSQL)
+        self.button_connect_prjSQL.clicked.connect(self.connect_prjSQL)
+        self.button_disconnect_devSQL.clicked.connect(self.disconnect_devSQL)
+        self.button_disconnect_prjSQL.clicked.connect(self.disconnect_prjSQL)
+        # Новая БД
+        label_newBD_1 = ElementSignature('\tСоздание новой SQL БД разработки\t')
+        label_newBD_2 = ElementSignature('Название: init_conf.cfg: [SQL] -> database: NEW_NAME')
+        self.button_newDB = GenFormButton('Создать SQL БД разработки')
+        self.button_newDB.setToolTip('''Создается новая БД вместе с пустыми таблицами под определенную систему(МНС, ПТ и тд.).\nНазвание БД берется из файла init_conf.cfg в разделе [SQL] - database''')
+        self.button_newDB.clicked.connect(self.clicked_newDB)
+        self.checkbox_sys_mns = CheckBox('МНС')
+        self.checkbox_sys_pt = CheckBox('ПТ')
 
         layout_v1.addWidget(label_dev_sign)
         layout_v1.addWidget(label_dev_database)
@@ -201,6 +267,8 @@ class TabConnect(QWidget):
         layout_v1.addWidget(label_dev_pwd)
         layout_v1.addWidget(label_dev_host)
         layout_v1.addWidget(label_dev_port)
+        layout_v1.addWidget(self.button_connect_devSQL)
+        layout_v1.addWidget(self.button_disconnect_devSQL)
         layout_v1.addStretch()
 
         layout_v2.addWidget(label_prj_sign)
@@ -209,11 +277,97 @@ class TabConnect(QWidget):
         layout_v2.addWidget(label_prj_pwd)
         layout_v2.addWidget(label_prj_host)
         layout_v2.addWidget(label_prj_port)
+        layout_v2.addWidget(self.button_connect_prjSQL)
+        layout_v2.addWidget(self.button_disconnect_prjSQL)
         layout_v2.addStretch()
 
-        layout_h.addLayout(layout_v1)
-        layout_h.addLayout(layout_v2)
-        layout_h.addStretch()
+        layout_h1.addStretch()
+        layout_h1.addWidget(self.checkbox_sys_mns)
+        layout_h1.addWidget(self.checkbox_sys_pt)
+        layout_h1.addStretch()
+
+        layout_v3.addWidget(label_newBD_1)
+        layout_v3.addWidget(label_newBD_2)
+        layout_v3.addLayout(layout_h1)
+        layout_v3.addWidget(self.button_newDB)
+        layout_v3.addStretch()
+
+        layout_h2.addLayout(layout_v1)
+        layout_h2.addLayout(layout_v2)
+        layout_h2.addLayout(layout_v3)
+        layout_h2.addStretch()
+
+    def connect_devSQL(self):
+        '''Обработка клика по подключению к БД разработки.'''
+        try:
+            db.init(connect.database,
+                    user=connect.user,
+                    password=connect.password,
+                    host=connect.host,
+                    port=connect.port)
+
+            if not self.dop_function.check_db_connect(connect.database,
+                                                      connect.user,
+                                                      connect.password,
+                                                      connect.host,
+                                                      connect.port):
+                raise Exception('Проверь даннные для подключения к БД')
+
+            self.logsTextEdit.logs_msg('БД разработки: подключение установлено', 0)
+            self.parent.connect_SQL_edit.setText('Соединение с БД разработки установлено')
+            self.parent.connect_SQL_edit.connect_true()
+        except (Exception, Error) as error:
+            self.logsTextEdit.logs_msg(f'Ошибка поключения к БД разработки: {error}', 2)
+
+    def disconnect_devSQL(self):
+        '''Обработка клика по отключению БД разработки.'''
+        try:
+            db.init(None)
+            self.logsTextEdit.logs_msg('БД разработки: подключение разорвано', 2)
+            self.parent.connect_SQL_edit.setText('Соединение с БД разработки разорвано')
+            self.parent.connect_SQL_edit.connect_false()
+        except (Exception, Error) as error:
+            self.logsTextEdit.logs_msg(f'Ошибка: {error}', 2)
+
+    def connect_prjSQL(self):
+        '''Обработка клика по подключению к БД проекта.'''
+        try:
+            db_prj.init(connect.database_msg,
+                        user=connect.user_msg,
+                        password=connect.password_msg,
+                        host=connect.host_msg,
+                        port=connect.port_msg)
+
+            if not self.dop_function.check_db_connect(connect.database_msg,
+                                                      connect.user_msg,
+                                                      connect.password_msg,
+                                                      connect.host_msg,
+                                                      connect.port_msg):
+                raise Exception('Проверь даннные для подключения к БД')
+
+            self.logsTextEdit.logs_msg('БД проекта: подключение установлено', 0)
+            self.parent.connect_SQL_prj.setText('Соединение с БД проекта установлено')
+            self.parent.connect_SQL_prj.connect_true()
+        except (Exception, Error) as error:
+            self.logsTextEdit.logs_msg(f'Ошибка поключения к БД проекта: {error}', 2)
+
+    def disconnect_prjSQL(self):
+        '''Обработка клика по отключению БД проекта.'''
+        try:
+            db_prj.init(None)
+            self.logsTextEdit.logs_msg('БД проекта: подключение разорвано', 2)
+            self.parent.connect_SQL_prj.setText('Соединение с БД проекта разорвано')
+            self.parent.connect_SQL_prj.connect_false()
+        except (Exception, Error) as error:
+            self.logsTextEdit.logs_msg(f'Ошибка: {error}', 2)
+
+    def clicked_newDB(self):
+        '''Выбор системы и создание БД.'''
+        obj_new_db = NewDB()
+        if self.checkbox_sys_mns.isChecked():
+            obj_new_db.create_new_base('MNS', self.logsTextEdit)
+        if self.checkbox_sys_pt.isChecked():
+            obj_new_db.create_new_base('PT', self.logsTextEdit)
 
 
 class MainWindow(QMainWindow):
@@ -246,7 +400,7 @@ class MainWindow(QMainWindow):
         splitter_h = QSplitter(Qt.Horizontal)
         splitter_h.addWidget(self.tabwidget)
         splitter_h.addWidget(self.edit_window)
-        splitter_h.setSizes(SIZE_SPLIT_H)
+        splitter_h.setSizes([100, 236])
 
         splitter_v = QSplitter(Qt.Vertical)
         splitter_v.addWidget(splitter_h)
@@ -271,7 +425,7 @@ class MainWindow(QMainWindow):
         self.edit_window.addTab(tab_1, 'Окно редактирования БД SQL')
 
     def set_tabs(self):
-        tab_1 = TabConnect(self.logsTextEdit)
+        tab_1 = TabConnect(self.logsTextEdit, self)
         tab_2 = TabConnect(self.logsTextEdit)
         tab_3 = TabConnect(self.logsTextEdit)
         tab_4 = TabConnect(self.logsTextEdit)
@@ -290,11 +444,11 @@ class MainWindow(QMainWindow):
         self.connect_exel = Label()
         self.connect_exel.setText('Соединение с Exel не установлено')
         self.connect_SQL_edit = Label()
-        self.connect_SQL_edit.setText('Соединение с БД разработки не установлена')
+        self.connect_SQL_edit.setText('Соединение с БД разработки не установлено')
         self.connect_SQL_prj = Label()
-        self.connect_SQL_prj.setText('Соединение с БД проекта не установлена')
-        self.clear_log = PushButton()
-        self.clear_log.setText('Очистить журнал')
+        self.connect_SQL_prj.setText('Соединение с БД проекта не установлено')
+        self.clear_log = PushButton('Очистить журнал')
+        self.clear_log.clicked.connect(self.clear_jornal)
         self.clear_log.setStyleSheet("""*{
                                      font:15px consolas;
                                      background-color: #d5d90b;
@@ -305,6 +459,10 @@ class MainWindow(QMainWindow):
                                      *:hover{background:#f1f520;
                                              color:'black'}
                                      *:pressed{background: '#d5d90b'}""")
+
+    def clear_jornal(self):
+        '''Чистка журнала при нажатии кнопки.'''
+        self.logsTextEdit.clear()
 
 
 if __name__ == '__main__':

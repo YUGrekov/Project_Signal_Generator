@@ -1,4 +1,4 @@
-import models as m
+import model_new as m
 import psycopg2 as postgres
 from psycopg2 import Error
 from peewee import PostgresqlDatabase
@@ -30,7 +30,7 @@ class NewDB():
                                      password=m.connect.password,
                                      host=m.connect.host)
 
-    def create_new_base(self, type_system: str):
+    def create_new_base(self, type_system: str, logsTextEdit):
         """Создание подключения с PostgresSQL.
         Создание новой БД. Название БД из файла init_conf.cfg
 
@@ -43,8 +43,9 @@ class NewDB():
         sql = f'CREATE DATABASE {m.connect.database}'
         try:
             cursor.execute(sql)
+            logsTextEdit.logs_msg(f'Добавлена новая БД: {m.connect.database}', 0)
         except (Exception, Error) as error:
-            print(error)
+            logsTextEdit.logs_msg(error, 3)
 
         cursor.close()
         self.link.close()
