@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import QComboBox
 from PyQt5.QtWidgets import QCheckBox
 sys.path.append('../Project_Signal_Generator')
 from logging_text import LogsTextEdit
-from windows_base_editing import MainWindow as WinEditing
+from window_editing import MainWindow as WinEditing
 from general_functions import General_functions as DopFunction
 from graphic_arts.new_db_station import NewDB
 from model_new import connect
@@ -24,7 +24,6 @@ from model_new import db
 from model_new import db_prj
 
 
-IMG_TABLE = 'graphic_arts/fon_table.jpg'
 SIZE_WORK_BACK = (1200, 500)
 SIZE_SPLIT_V = [500, 150]
 SIZE_SPLIT_H = [602, 40]
@@ -184,17 +183,29 @@ class EditWindows(QWidget):
         '''Выполнение по клику кнопки.
         Открытие окна редактирования БД 1.'''
         name_table = self.combo_choise_tabl.currentText()
+
+        if name_table == '':
+            self.logsTextEdit.logs_msg('Не выбрана таблица для открытия окна для редактирования!', 2)
+            return
+
         self.open_w1 = WinEditing(name_table)
         self.open_w1.show()
-        self.logsTextEdit.logs_msg('Открыто окно для редактирования №1', 1)
+        self.logsTextEdit.logs_msg(f'''Открыто окно для редактирования №1.\n
+                                    Таблица: {name_table}''', 1)
 
     def open_window2(self):
         '''Выполнение по клику кнопки.
         Открытие окна редактирования БД 2.'''
         name_table = self.combo_choise_tabl.currentText()
+
+        if name_table == '':
+            self.logsTextEdit.logs_msg('Не выбрана таблица для открытия окна для редактирования!', 2)
+            return
+
         self.open_w2 = WinEditing(name_table)
         self.open_w2.show()
-        self.logsTextEdit.logs_msg('Открыто окно для редактирования №2', 1)
+        self.logsTextEdit.logs_msg(f'''Открыто окно для редактирования №2.\n
+                                    Таблица: {name_table}''', 1)
 
     def update_list(self):
         '''Функция обновляет список таблиц по команде.'''
@@ -306,11 +317,11 @@ class TabConnect(QWidget):
                     host=connect.host,
                     port=connect.port)
 
-            if not self.dop_function.check_db_connect(connect.database,
-                                                      connect.user,
-                                                      connect.password,
-                                                      connect.host,
-                                                      connect.port):
+            if not self.dop_function.exist_check_db(connect.database,
+                                                    connect.user,
+                                                    connect.password,
+                                                    connect.host,
+                                                    connect.port):
                 raise Exception('Проверь даннные для подключения к БД')
 
             self.logsTextEdit.logs_msg('БД разработки: подключение установлено', 0)
@@ -338,11 +349,11 @@ class TabConnect(QWidget):
                         host=connect.host_msg,
                         port=connect.port_msg)
 
-            if not self.dop_function.check_db_connect(connect.database_msg,
-                                                      connect.user_msg,
-                                                      connect.password_msg,
-                                                      connect.host_msg,
-                                                      connect.port_msg):
+            if not self.dop_function.exist_check_db(connect.database_msg,
+                                                    connect.user_msg,
+                                                    connect.password_msg,
+                                                    connect.host_msg,
+                                                    connect.port_msg):
                 raise Exception('Проверь даннные для подключения к БД')
 
             self.logsTextEdit.logs_msg('БД проекта: подключение установлено', 0)
@@ -364,6 +375,8 @@ class TabConnect(QWidget):
     def clicked_newDB(self):
         '''Выбор системы и создание БД.'''
         obj_new_db = NewDB()
+        if not self.checkbox_sys_mns.isChecked() and not self.checkbox_sys_pt.isChecked():
+            self.logsTextEdit.logs_msg('Выбери систему для новой БД!', 3)
         if self.checkbox_sys_mns.isChecked():
             obj_new_db.create_new_base('MNS', self.logsTextEdit)
         if self.checkbox_sys_pt.isChecked():

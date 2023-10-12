@@ -6,6 +6,12 @@ import traceback
 class General_functions():
     '''Общие функции оспользованные при разработке.'''
 
+    def str_find(self, line, array):
+        '''Поиск в строке.'''
+        for word in array:
+            if str(line).find(word) > -1:
+                return True
+
     def all_tables(self):
         '''Получаем список всех таблиц БД.'''
         try:
@@ -17,7 +23,7 @@ class General_functions():
         except Exception:
             return ['Нет подключения к БД']
 
-    def check_db_connect(self, dbname, user, password, host, port):
+    def exist_check_db(self, dbname, user, password, host, port):
         '''Проверка на существование БД'''
         try:
             db_connect = psycopg2.connect(f"""dbname={dbname}

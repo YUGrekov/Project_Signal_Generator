@@ -1,4 +1,5 @@
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QTableWidget
@@ -19,7 +20,7 @@ CONST_WIN_SIZE_MAIN_W = 1600
 CONST_WIN_SIZE_MAIN_H = 860
 CONST_WIN_SIZE_TYPETABLE_W = 500
 CONST_WIN_SIZE_TYPETABLE_H = 600
-CONST_WIDTH_BORDER = 11
+CONST_WIDTH_BORDER = 5
 CONST_COUNT_ONE = 1
 CONST_CONTEXT_W = 800
 CONST_CONTEXT_H = 675
@@ -108,6 +109,13 @@ class TableWidget(QTableWidget):
     def __init__(self, edit_SQL, table_used, logging,
                  tw_dub: bool = False, parent=None):
         super(TableWidget, self).__init__(parent)
+        self.setStyleSheet("""
+                           QTableWidget{
+                           font:13px Dihjauti;
+                           border: 2px solid #C4C4C3;
+                           border-bottom-left-radius: 5;
+                           border-bottom-right-radius: 5;
+                           }""")
 
         self.table_us = table_used
         self.tw_dub = tw_dub
@@ -137,9 +145,8 @@ class TableWidget(QTableWidget):
         self.setRowCount(row)
         self.setHorizontalHeaderLabels(hat_name)
         self.verticalHeader().setVisible(False)
-        self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.installEventFilter(self)
-        style = "::section {""background-color: #bbbabf; }"
+        style = "::section {""background-color: #bbbabf;}"
         self.horizontalHeader().setStyleSheet(style)
         self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
 
@@ -183,8 +190,8 @@ class TableWidget(QTableWidget):
         '''Получаем значение ширины 4 колонок'''
         width = 0
         for i in range(4):
-            width += self.columnWidth(i)
-        return width + CONST_WIDTH_BORDER
+            width += self.columnWidth(i) + CONST_WIDTH_BORDER
+        return width
 
     def tw_clear_lines(self, rowcount: int):
         """Очистка таблицы виджета QTableWidget
@@ -248,7 +255,7 @@ class TableWidget(QTableWidget):
             value = None
             value_id = None
 
-        hat_name = self.edit_SQL.column_names(self.table_us)
+        hat_name, fetchall = self.edit_SQL.column_names(self.table_us)
 
         self.edit_SQL.update_row_tabl(column, value, value_id,
                                       self.table_us, hat_name, self.logging)
@@ -257,12 +264,24 @@ class TableWidget(QTableWidget):
         '''Отработка события при изменении ячейки'''
         row, column = self.data_cell()
         value_id = self.text_cell(row, 0)
-        hat_name = self.edit_SQL.column_names(self.table_us)
+        hat_name, fetchall = self.edit_SQL.column_names(self.table_us)
 
         self.setItem(row, column, QTableWidgetItem(text))
 
         self.edit_SQL.update_row_tabl(column, text, value_id,
                                       self.table_us, hat_name, self.logging)
+
+    def setColorOldRow(self, row, column):
+        '''Закрашиваем предыдущую строку.'''
+        for i in range(1, column):
+            self.item(row, i).setBackground(QColor(240, 240, 240))
+            self.item(row, i).setForeground(QColor(0, 0, 0))
+
+    def setColorNewRow(self, row, column):
+        '''Закрашиваем выделенную строку.'''
+        for j in range(1, column):
+            self.item(row, j).setBackground(QColor(0, 120, 215))
+            self.item(row, j).setForeground(QColor(255, 255, 255))
 
 
 class TableWidgetLinks(QTableWidget):
@@ -318,10 +337,10 @@ class TableWidgetLinks(QTableWidget):
 class ComboBox(QComboBox):
     def __init__(self, *args, **kwargs):
         super(ComboBox, self).__init__(*args, **kwargs)
-
-        self.setStyleSheet('''border-radius: 4px;
-                              border: 1px solid;
-                              font-size: 15px;''')
+        self.setStyleSheet('''
+                           background: #f0f0f0;
+                           padding: 0px;
+                           font: 15px consolas;''')
 
 
 class PushButton(QPushButton):
@@ -333,11 +352,12 @@ class PushButton(QPushButton):
 
         self.setText(self.text)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.setStyleSheet("*{border: 1px solid;"
+        self.setStyleSheet("*{"
+                           "font:15px consolas;"
+                           "border: 2px solid #666665;"
                            "border-radius: 4px;"
                            f"background: {color};"
-                           "font-size: 12px;"
-                           "padding: 4px 0;}"
+                           "padding: 4px;}"
                            "*:hover{"f"background:'#707370';""color:'white'}"
                            "*:pressed{background: '#4f45ba'}")
 
@@ -346,9 +366,11 @@ class LineEdit(QLineEdit):
     def __init__(self, *args, **kwargs):
         super(LineEdit, self).__init__(*args, **kwargs)
 
-        self.setStyleSheet('''border: 1px solid;
-                              border-radius: 4px;
-                              font-size: 15px;''')
+        self.setStyleSheet('''
+                           font:15px consolas;
+                           border: 2px solid #666665;
+                           border-radius: 4px;
+                           padding: 4px;''')
 
 
 class WindowContexMenuSQL(QMainWindow):
@@ -362,7 +384,7 @@ class WindowContexMenuSQL(QMainWindow):
         self.setWindowFlag(Qt.WindowStaysOnTopHint)
         self.resize(CONST_CONTEXT_W, CONST_CONTEXT_H)
 
-        self.editSQL = Editing_table_SQL()
+        self.editSQL = Editing_SQL()
 
     def initObject(self, parent):
         '''Инициализация объектов макета.'''
@@ -504,14 +526,24 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
 
         self.setWindowTitle('Редактор базы данных')
-        self.setStyleSheet("background-color: #e1e5e5;")
+        self.setStyleSheet("background-color: #f0f0f0;")
         self.setWindowFlags(Qt.WindowCloseButtonHint)
         self.resize(CONST_WIN_SIZE_MAIN_W, CONST_WIN_SIZE_MAIN_H)
 
-        self.editSQL = Editing_table_SQL()
+        self.editSQL = Editing_SQL()
         self.table_us = table_used
+        self.old_row_1 = 0
+        self.old_row_2 = 0
 
         self.logsTextEdit = LogsTextEdit(self)
+        self.logsTextEdit.setStyleSheet('''
+                                font:12px consolas;
+                                background-color: #f0f0f0;
+                                border-top-left-radius: 5;
+                                border-top-right-radius: 5;
+                                border-bottom-left-radius: 5;
+                                border-bottom-right-radius: 5;
+                                border: 2px solid #C4C4C3;''')
         self.tableWidget = TableWidget(self.editSQL,
                                        self.table_us,
                                        self.logsTextEdit)
@@ -581,12 +613,46 @@ class MainWindow(QMainWindow):
         self.logsTextEdit.logs_msg(f'Открыта таблица {self.table_us}', 1)
 
     def on_Change_one(self):
-        '''Активность окна 1.'''
+        '''Активность окна 1 и
+        подкраска строки виджета с левой стороны'''
         self.fl_actives_windows = 1
+        # Подкраска с левой стороны
+        current_row = self.tableWidget.currentRow()
+        count_column = self.tableWidget.column_count_tabl()
+        column = self.editSQL.exist_check_int(self.editSQL.read_json(),
+                                              self.table_us)
+
+        self.tableWidget_dub.setColorOldRow(self.old_row_2, column)
+        self.tableWidget.setColorOldRow(self.old_row_2, count_column)
+        self.tableWidget_dub.setColorOldRow(self.old_row_1, column)
+        self.tableWidget.setColorOldRow(self.old_row_1, count_column)
+
+        self.tableWidget_dub.setColorNewRow(current_row, column)
+        self.tableWidget.setColorNewRow(current_row, count_column)
+
+        self.old_row_2 = self.tableWidget.currentRow()
+        self.tableWidget_dub.blockSignals(True)
 
     def on_Change_two(self):
-        '''Активность окна 2.'''
+        '''Активность окна 2 и
+        подкраска строки виджета с правой стороны.'''
         self.fl_actives_windows = 2
+        # Подкраска с правой стороны
+        current_row = self.tableWidget_dub.currentRow()
+        count_column = self.tableWidget.column_count_tabl()
+        column = self.editSQL.exist_check_int(self.editSQL.read_json(),
+                                              self.table_us)
+
+        self.tableWidget.setColorOldRow(self.old_row_1, count_column)
+        self.tableWidget_dub.setColorOldRow(self.old_row_1, column)
+        self.tableWidget.setColorOldRow(self.old_row_2, count_column)
+        self.tableWidget_dub.setColorOldRow(self.old_row_2, column)
+
+        self.tableWidget.setColorNewRow(current_row, count_column)
+        self.tableWidget_dub.setColorNewRow(current_row, column)
+
+        self.old_row_1 = self.tableWidget_dub.currentRow()
+        self.tableWidget.blockSignals(True)
 
     def type_tabl(self):
         '''Запуск нового окна для просмотра типа столбцов.'''
