@@ -46,7 +46,6 @@ class RequestSQL():
 
     def new_row(self, table: str, row: int):
         '''Запрос на добавление новой строки.'''
-        print(f'''INSERT INTO "{table}" (id) VALUES ({row});''')
         self.cursor.execute(f'''INSERT INTO "{table}" (id)
                                 VALUES ({row});''')
 

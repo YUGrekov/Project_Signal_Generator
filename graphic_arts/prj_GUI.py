@@ -4,11 +4,12 @@ from psycopg2 import Error
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QMainWindow
-from PyQt5.QtWidgets import QFrame
 from PyQt5.QtWidgets import QTabWidget
+from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtWidgets import QVBoxLayout
+from PyQt5.QtWidgets import QGridLayout
 from PyQt5.QtWidgets import QSplitter
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtWidgets import QLabel
@@ -98,6 +99,19 @@ class GenFormButton(QPushButton):
                                 *:pressed{background: '#7ce063'}""")
 
 
+class LineEdit(QLineEdit):
+    '''Общий конструктор строки заполнения.'''
+    def __init__(self, *args, **kwargs):
+        super(LineEdit, self).__init__(*args, **kwargs)
+        self.setStyleSheet("""*{
+                                background-color: #f0f0f0;
+                                font:15px consolas;
+                                border: 2px solid #C4C4C3;
+                                border-bottom-color: #C2C7CB;
+                                padding: 3px;
+                                border-radius: 4}""")
+
+
 class Label(QLabel):
     '''Конструктор класса кнопки.'''
     def __init__(self, *args, **kwargs):
@@ -143,11 +157,15 @@ class GenProject(QWidget):
 
 
 class ComboBox(QComboBox):
-    def __init__(self, *args, **kwargs):
-        super(ComboBox, self).__init__(*args, **kwargs)
+    def __init__(self, text):
+        super(ComboBox, self).__init__()
+        self.setEditable(True)
+        self.setCurrentIndex(-1)
+        self.setCurrentText(text)
+        self.setMinimumContentsLength(22)
         self.setStyleSheet('''
                            background: #f0f0f0;
-                           padding: 0px;
+                           padding: 4px;
                            font: 15px consolas;''')
 
 
@@ -159,9 +177,7 @@ class EditWindows(QWidget):
         self.logsTextEdit = logtext
         layout_v = QVBoxLayout(self)
 
-        label_choise_tabl = ElementSignature('Выбери таблицу:')
-        label_choise_tabl.setAlignment(Qt.AlignCenter)
-        self.combo_choise_tabl = ComboBox()
+        self.combo_choise_tabl = ComboBox('Выбери таблицу')
         self.button_connect_1 = GenFormButton('Окно редактора №1')
         self.button_connect_2 = GenFormButton('Окно редактора №2')
         self.button_update = GenFormButton('Обновить список')
@@ -172,7 +188,6 @@ class EditWindows(QWidget):
         self.button_connect_2.clicked.connect(self.open_window2)
         self.button_update.clicked.connect(self.update_list)
 
-        layout_v.addWidget(label_choise_tabl)
         layout_v.addWidget(self.combo_choise_tabl)
         layout_v.addWidget(self.button_connect_1)
         layout_v.addWidget(self.button_connect_2)
@@ -383,6 +398,88 @@ class TabConnect(QWidget):
             obj_new_db.create_new_base('PT', self.logsTextEdit)
 
 
+class ImportKD(QWidget):
+    '''Конструктор класса. Проверка и подключение к БД.'''
+    def __init__(self, logtext, parent=None):
+        super(ImportKD, self).__init__(parent)
+
+        self.logsTextEdit = logtext
+        self.parent = parent
+        self.dop_function = DopFunction()
+
+        self.button_connectKD = GenFormButton('Подключиться к КД')
+        self.button_read_table = GenFormButton('Подключиться к таблице')
+        self.button_clear_table = GenFormButton('Очистить таблицу')
+
+        self.button_add_signals = GenFormButton('Добавить сигналы нового УСО')
+        self.button_update_signals = GenFormButton('Обновить сигналы УСО')
+
+        self.combo_choise_tabl = ComboBox('Шкаф')
+        self.combo_type = ComboBox('Тип')
+        self.combo_shema = ComboBox('Схема')
+        self.combo_basket = ComboBox('Корзина')
+
+        self.select_row = LineEdit(placeholderText='Номер строки заголовка',
+                                   clearButtonEnabled=True)
+
+        self.combo_tag = ComboBox('Тэг')
+        self.combo_klk = ComboBox('Клеммник')
+        self.combo_module = ComboBox('Модуль')
+
+        self.combo_name = ComboBox('Наименование')
+        self.combo_kont = ComboBox('Контакт')
+        self.combo_channel = ComboBox('Канал')
+
+        layout_v0 = QVBoxLayout()
+        layout_v1 = QVBoxLayout()
+        layout_v2 = QVBoxLayout()
+        layout_v3 = QVBoxLayout()
+        layout_v4 = QVBoxLayout(self)
+        layout_h1 = QHBoxLayout()
+        layout_h2 = QHBoxLayout()
+
+        layout_v0.addWidget(self.button_connectKD)
+        layout_v0.addWidget(self.button_read_table)
+        layout_v0.addSpacing(40)
+        layout_v0.addWidget(self.button_clear_table)
+        layout_v0.addStretch()
+
+        layout_v1.addWidget(self.combo_choise_tabl)
+        layout_v1.addWidget(self.combo_type)
+        layout_v1.addWidget(self.combo_shema)
+        layout_v1.addWidget(self.combo_basket)
+        layout_v1.addStretch()
+
+        layout_v2.addWidget(self.select_row)
+        layout_v2.addWidget(self.combo_tag)
+        layout_v2.addWidget(self.combo_klk)
+        layout_v2.addWidget(self.combo_module)
+        layout_v2.addStretch()
+
+        layout_v3.addSpacing(36)
+        layout_v3.addWidget(self.combo_name)
+        layout_v3.addWidget(self.combo_kont)
+        layout_v3.addWidget(self.combo_channel)
+        layout_v3.addStretch()
+        layout_v3.addSpacing(15)
+
+        layout_h1.addLayout(layout_v0)
+        layout_h1.addLayout(layout_v1)
+        layout_h1.addLayout(layout_v2)
+        layout_h1.addLayout(layout_v3)
+        layout_h1.addStretch()
+
+        layout_h2.addSpacing(364)
+        layout_h2.addWidget(self.button_update_signals)
+        layout_h2.addSpacing(50)
+        layout_h2.addWidget(self.button_add_signals)
+        layout_h2.addStretch()
+
+        layout_v4.addLayout(layout_h1)
+        layout_v4.addLayout(layout_h2)
+        layout_v4.addStretch()
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -439,7 +536,7 @@ class MainWindow(QMainWindow):
 
     def set_tabs(self):
         tab_1 = TabConnect(self.logsTextEdit, self)
-        tab_2 = TabConnect(self.logsTextEdit)
+        tab_2 = ImportKD(self.logsTextEdit, self)
         tab_3 = TabConnect(self.logsTextEdit)
         tab_4 = TabConnect(self.logsTextEdit)
         tab_5 = TabConnect(self.logsTextEdit)

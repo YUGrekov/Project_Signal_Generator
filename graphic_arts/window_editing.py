@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import QSplitter
 from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtWidgets import QAbstractItemView
 from PyQt5.QtWidgets import QHeaderView
-from editing_tableSQL import Editing_SQL
+from backend_editSQL import Editing_SQL
 from logging_text import LogsTextEdit
 
 CONST_WIN_SIZE_MAIN_W = 1600
@@ -24,6 +24,8 @@ CONST_WIDTH_BORDER = 5
 CONST_COUNT_ONE = 1
 CONST_CONTEXT_W = 800
 CONST_CONTEXT_H = 675
+CONST_SIZE_SPLITTER = [500, 100]
+
 
 USED_TABLE = [('AI', 'ai'), ('AO', 'ao'), ('DI', 'di'), ('DO', 'do'),
               ('ctrlDO', 'do'), ('ctrlAO', 'ao'), ('NA', 'umpna'),
@@ -537,6 +539,7 @@ class MainWindow(QMainWindow):
 
         self.editSQL = Editing_SQL()
         self.table_us = table_used
+        self.table_old = table_used
         self.old_row_1 = 0
         self.old_row_2 = 0
 
@@ -608,7 +611,7 @@ class MainWindow(QMainWindow):
         self.splitter_v = QSplitter(Qt.Vertical)
         self.splitter_v.addWidget(self.splitter_h)
         self.splitter_v.addWidget(self.logsTextEdit)
-        self.splitter_v.setSizes([500, 100])
+        self.splitter_v.setSizes(CONST_SIZE_SPLITTER)
 
         self.layout_v = QVBoxLayout(self.centralwidget)
         self.layout_v.addLayout(self.layout_g)
@@ -741,6 +744,11 @@ class MainWindow(QMainWindow):
         self.editSQL.drop_tabl(self.table_us)
         self.close()
 
+    def size_widget(self):
+        width = self.tableWidget_dub.width_column()
+        self.splitter_h.setSizes([width, CONST_WIN_SIZE_MAIN_W - width])
+        self.splitter_v.setSizes(CONST_SIZE_SPLITTER)
+
     def apply_query(self):
         """Рукописный запрос к базе SQL.
 
@@ -756,6 +764,11 @@ class MainWindow(QMainWindow):
                                                                                          self.logsTextEdit)
         if column == 'error':
             return
+        if self.table_us == table_now:
+            self.logsTextEdit.logs_msg('В запросе таблица повторяется', 2)
+            return
+
+        self.table_us = table_now
 
         self.tableWidget.table_us = table_now
         self.tableWidget.tw_clear_lines(rowcount)
@@ -765,18 +778,22 @@ class MainWindow(QMainWindow):
         self.tableWidget_dub.table_us = table_now
         self.tableWidget_dub.tw_clear_lines(rowcount)
         self.tableWidget_dub.blockSignals(True)
+
         end_dub = 0 if not end else end + 1
         self.tableWidget_dub.init_table(column, row, hat_name, value, end_dub)
-
-        width = self.tableWidget_dub.width_column()
-        self.splitter_h.setSizes([width, CONST_WIN_SIZE_MAIN_W - width])
-        self.splitter_v.setSizes([500, 100])
+        self.size_widget()
 
         self.logsTextEdit.logs_msg(f'Открыта таблица {table_now}', 1)
 
     def reset_query(self):
         '''Сброс запроса и возврат таблицы к состоянию до запроса.'''
         rowcount = self.tableWidget.row_count_tabl()
+
+        if self.table_us == self.table_old:
+            self.logsTextEdit.logs_msg('Открыта первоначальная таблица', 2)
+            return
+
+        self.table_us = self.table_old
 
         self.tableWidget.table_us = self.table_us
         self.tableWidget_dub.table_us = self.table_us
@@ -790,10 +807,8 @@ class MainWindow(QMainWindow):
 
         self.tableWidget.init_table(column, row, hat_name, value, end)
         self.tableWidget_dub.init_table(column, row, hat_name, value, end)
-
-        width = self.tableWidget_dub.width_column()
-        self.splitter_h.setSizes([width, CONST_WIN_SIZE_MAIN_W - width])
-        self.splitter_v.setSizes([500, 100])
+        self.size_widget()
+        self.logsTextEdit.logs_msg(f'Открыта таблица: {self.table_us}', 2)
 
     def update_text(self, text=None):
         '''Обновление текста из окна ссылки.'''
