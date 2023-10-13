@@ -108,7 +108,6 @@ class Editing_SQL():
         """
         active_column = list(hat_name)[column]
         try:
-            print('Update', text_cell_id, text_cell)
             change_value = "NULL" if text_cell is None or text_cell == '' else f'{text_cell}'
             self.query.update_row(table, active_column,
                                   text_cell_id, change_value)

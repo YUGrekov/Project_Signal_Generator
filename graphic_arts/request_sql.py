@@ -35,12 +35,18 @@ class RequestSQL():
 
     def update_row(self, table: str, column, id_cell, change_value):
         '''Запрос на обновление ячейки строки.'''
+        if change_value == 'NULL':
+            string = f'SET "{column}"= NULL'
+        else:
+            string = f'''SET "{column}"= '{change_value}' '''
+
         self.cursor.execute(f"""UPDATE "{table}"
-                                SET "{column}"= '{change_value}'
+                                {string}
                                 WHERE id={id_cell}""")
 
     def new_row(self, table: str, row: int):
         '''Запрос на добавление новой строки.'''
+        print(f'''INSERT INTO "{table}" (id) VALUES ({row});''')
         self.cursor.execute(f'''INSERT INTO "{table}" (id)
                                 VALUES ({row});''')
 

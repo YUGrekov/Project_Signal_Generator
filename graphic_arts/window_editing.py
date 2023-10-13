@@ -243,7 +243,6 @@ class TableWidget(QTableWidget):
     def click_position(self):
         '''Отработка события при изменении ячейки'''
         row, column = self.data_cell()
-
         # При добавлении новой строки она == -1
         if row == -1:
             return
@@ -273,15 +272,21 @@ class TableWidget(QTableWidget):
 
     def setColorOldRow(self, row, column):
         '''Закрашиваем предыдущую строку.'''
-        for i in range(1, column):
-            self.item(row, i).setBackground(QColor(240, 240, 240))
-            self.item(row, i).setForeground(QColor(0, 0, 0))
+        try:
+            for i in range(1, column):
+                self.item(row, i).setBackground(QColor(240, 240, 240))
+                self.item(row, i).setForeground(QColor(0, 0, 0))
+        except Exception:
+            return
 
     def setColorNewRow(self, row, column):
         '''Закрашиваем выделенную строку.'''
-        for j in range(1, column):
-            self.item(row, j).setBackground(QColor(0, 120, 215))
-            self.item(row, j).setForeground(QColor(255, 255, 255))
+        try:
+            for j in range(1, column):
+                self.item(row, j).setBackground(QColor(0, 120, 215))
+                self.item(row, j).setForeground(QColor(255, 255, 255))
+        except Exception:
+            return
 
 
 class TableWidgetLinks(QTableWidget):
@@ -594,20 +599,20 @@ class MainWindow(QMainWindow):
         self.layout_g.addWidget(b_reset_query, 1, 6)
         self.layout_g.addWidget(b_type_data, 1, 7)
 
-        splitter_h = QSplitter(Qt.Horizontal)
-        splitter_h.addWidget(self.tableWidget_dub)
-        splitter_h.addWidget(self.tableWidget)
+        self.splitter_h = QSplitter(Qt.Horizontal)
+        self.splitter_h.addWidget(self.tableWidget_dub)
+        self.splitter_h.addWidget(self.tableWidget)
         width = self.tableWidget_dub.width_column()
-        splitter_h.setSizes([width, CONST_WIN_SIZE_MAIN_W - width])
+        self. splitter_h.setSizes([width, CONST_WIN_SIZE_MAIN_W - width])
 
-        splitter_v = QSplitter(Qt.Vertical)
-        splitter_v.addWidget(splitter_h)
-        splitter_v.addWidget(self.logsTextEdit)
-        splitter_v.setSizes([500, 100])
+        self.splitter_v = QSplitter(Qt.Vertical)
+        self.splitter_v.addWidget(self.splitter_h)
+        self.splitter_v.addWidget(self.logsTextEdit)
+        self.splitter_v.setSizes([500, 100])
 
         self.layout_v = QVBoxLayout(self.centralwidget)
         self.layout_v.addLayout(self.layout_g)
-        self.layout_v.addWidget(splitter_v)
+        self.layout_v.addWidget(self.splitter_v)
 
         self.logsTextEdit.logs_msg('Запуск редактора базы SQL', 1)
         self.logsTextEdit.logs_msg(f'Открыта таблица {self.table_us}', 1)
@@ -617,6 +622,8 @@ class MainWindow(QMainWindow):
         подкраска строки виджета с левой стороны'''
         self.fl_actives_windows = 1
         # Подкраска с левой стороны
+        self.tableWidget_dub.blockSignals(True)
+        self.tableWidget.blockSignals(True)
         current_row = self.tableWidget.currentRow()
         count_column = self.tableWidget.column_count_tabl()
         column = self.editSQL.exist_check_int(self.editSQL.read_json(),
@@ -631,13 +638,16 @@ class MainWindow(QMainWindow):
         self.tableWidget.setColorNewRow(current_row, count_column)
 
         self.old_row_2 = self.tableWidget.currentRow()
-        self.tableWidget_dub.blockSignals(True)
+        self.tableWidget_dub.blockSignals(False)
+        self.tableWidget.blockSignals(False)
 
     def on_Change_two(self):
         '''Активность окна 2 и
         подкраска строки виджета с правой стороны.'''
         self.fl_actives_windows = 2
         # Подкраска с правой стороны
+        self.tableWidget.blockSignals(True)
+        self.tableWidget_dub.blockSignals(True)
         current_row = self.tableWidget_dub.currentRow()
         count_column = self.tableWidget.column_count_tabl()
         column = self.editSQL.exist_check_int(self.editSQL.read_json(),
@@ -652,7 +662,8 @@ class MainWindow(QMainWindow):
         self.tableWidget_dub.setColorNewRow(current_row, column)
 
         self.old_row_1 = self.tableWidget_dub.currentRow()
-        self.tableWidget.blockSignals(True)
+        self.tableWidget_dub.blockSignals(False)
+        self.tableWidget.blockSignals(False)
 
     def type_tabl(self):
         '''Запуск нового окна для просмотра типа столбцов.'''
@@ -754,7 +765,12 @@ class MainWindow(QMainWindow):
         self.tableWidget_dub.table_us = table_now
         self.tableWidget_dub.tw_clear_lines(rowcount)
         self.tableWidget_dub.blockSignals(True)
-        self.tableWidget_dub.init_table(column, row, hat_name, value, end)
+        end_dub = 0 if not end else end + 1
+        self.tableWidget_dub.init_table(column, row, hat_name, value, end_dub)
+
+        width = self.tableWidget_dub.width_column()
+        self.splitter_h.setSizes([width, CONST_WIN_SIZE_MAIN_W - width])
+        self.splitter_v.setSizes([500, 100])
 
         self.logsTextEdit.logs_msg(f'Открыта таблица {table_now}', 1)
 
@@ -774,6 +790,10 @@ class MainWindow(QMainWindow):
 
         self.tableWidget.init_table(column, row, hat_name, value, end)
         self.tableWidget_dub.init_table(column, row, hat_name, value, end)
+
+        width = self.tableWidget_dub.width_column()
+        self.splitter_h.setSizes([width, CONST_WIN_SIZE_MAIN_W - width])
+        self.splitter_v.setSizes([500, 100])
 
     def update_text(self, text=None):
         '''Обновление текста из окна ссылки.'''
