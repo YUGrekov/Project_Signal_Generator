@@ -1,5 +1,4 @@
 import psycopg2
-from model_new import db
 import traceback
 
 
@@ -11,17 +10,6 @@ class General_functions():
         for word in array:
             if str(line).find(word) > -1:
                 return True
-
-    def all_tables(self):
-        '''Получаем список всех таблиц БД.'''
-        try:
-            cursor = db.cursor()
-            cursor.execute("""SELECT table_name
-                            FROM information_schema.tables
-                            WHERE table_schema='public'""")
-            return [name for name in cursor.fetchall()]
-        except Exception:
-            return ['Нет подключения к БД']
 
     def exist_check_db(self, dbname, user, password, host, port):
         '''Проверка на существование БД'''
@@ -36,3 +24,7 @@ class General_functions():
             return True
         except Exception:
             return False
+
+    def check_in_table(self, table: str, array_table: dict):
+        '''Проверка на существование таблицы в БД.'''
+        return True if table in array_table else False

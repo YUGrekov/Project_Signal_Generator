@@ -14,6 +14,16 @@ class RequestSQL():
                                       table_name = '{table}'""")
         return self.cursor.fetchall()
 
+    def list_tables(self):
+        '''Получаем список всех таблиц БД.'''
+        try:
+            self.cursor.execute("""SELECT table_name
+                                   FROM information_schema.tables
+                                   WHERE table_schema='public'""")
+            return [name for name in self.cursor.fetchall()]
+        except Exception:
+            return ['Нет подключения к БД']
+
     def where_id_select(self, table: str, column: str, value_id: int):
         '''Запрос на выборку данных с условием по id.'''
         self.cursor.execute(f"""SELECT "{column}"
@@ -61,3 +71,12 @@ class RequestSQL():
     def clear_table(self, table: str):
         '''Запрос на очистку таблицы.'''
         self.cursor.execute(f'DELETE FROM "{table}"')
+
+    def new_table(self, models):
+        '''Создание новой таблицы по модели.'''
+        with db.atomic():
+            db.create_tables([models])
+
+    def get_tabl(self):
+        '''Сбор таблиц базы'''
+        return db.get_tables()

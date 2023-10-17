@@ -132,10 +132,6 @@ class Editing_SQL():
         '''Удаление таблицы.'''
         self.query.delete_table(table)
 
-    def get_tabl(self):
-        '''Сбор таблиц базы.'''
-        return db.get_tables()
-
     def type_column(self, table: str, logging):
         '''Собираем тип столбцов, и названия на рус и англ.'''
         type_list = []
