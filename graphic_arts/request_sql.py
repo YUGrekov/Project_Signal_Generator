@@ -14,16 +14,6 @@ class RequestSQL():
                                       table_name = '{table}'""")
         return self.cursor.fetchall()
 
-    def list_tables(self):
-        '''Получаем список всех таблиц БД.'''
-        try:
-            self.cursor.execute("""SELECT table_name
-                                   FROM information_schema.tables
-                                   WHERE table_schema='public'""")
-            return [name for name in self.cursor.fetchall()]
-        except Exception:
-            return ['Нет подключения к БД']
-
     def where_id_select(self, table: str, column: str, value_id: int):
         '''Запрос на выборку данных с условием по id.'''
         self.cursor.execute(f"""SELECT "{column}"
@@ -80,3 +70,19 @@ class RequestSQL():
     def get_tabl(self):
         '''Сбор таблиц базы'''
         return db.get_tables()
+
+    def max_value_column(self, table: str, column):
+        '''Нахождение максимального знач-ния в столбце.'''
+        self.cursor.execute(f'''SELECT MAX("{column}")
+                                FROM "{table}"''')
+        a = map(int, self.cursor.fetchall())
+        return self.cursor.fetchall()[0][0]
+
+    def max_value_column_cond(self):
+        '''Нахождение максимального знач-ния в столбце с условием.'''
+        cursor = db.cursor()
+            if condition is False: cursor.execute(f'''SELECT MAX("{column}") FROM "{table_used}"''')
+            else                 : cursor.execute(f'''SELECT MAX("{column}") FROM "{table_used}" WHERE "{args[0]}"={args[1]}''')
+        except Exception:
+            return 
+        return cursor.fetchall()[0][0]

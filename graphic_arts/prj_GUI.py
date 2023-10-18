@@ -247,17 +247,11 @@ class EditWindows(QWidget):
             self.combo_choise_tabl.clear()
             self.combo_choise_tabl.addItem('Выбери таблицу')
             return
-        list_tabl = reqsql.list_tables()
-        list_tabl.sort()
 
-        if list_tabl[0] == 'Нет подключения к БД':
-            self.logsTextEdit.logs_msg('''Невозможно обновить список.
-                                       Нет подключения к БД разработки''', 2)
-            return
-
+        list_table = reqsql.get_tabl()
         self.combo_choise_tabl.clear()
-        for tabl in list_tabl:
-            self.combo_choise_tabl.addItem(str(tabl[0]))
+        for table in list_table:
+            self.combo_choise_tabl.addItem(str(table))
         self.logsTextEdit.logs_msg('Список таблиц обновлен', 1)
 
 
