@@ -335,7 +335,7 @@ def gen_station_defence(work_tabl, pump_def):
             else:
                 max_value_1 = dop_function.max_value_column(work_tabl, "number_list_VU", True, "number_pump_VU", pump_plus_one)
                 max_value_2 = dop_function.max_value_column(work_tabl, "number_protect_VU", True, "number_pump_VU", pump_plus_one)
-            
+
             msg[f'{today} - Столбец таблицы {work_tabl} - number_list_VU или number_protect_VU не определены'] = 2
             button_bool = True if max_value_1 > 1 else False
 

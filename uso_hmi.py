@@ -357,10 +357,7 @@ class ParserFile(BaseUSO):
 
     def search_string(self, object: dict, key: str, value: str):
         '''Поиск строки'''
-        if object[key] == value:
-            return True
-        else:
-            return False
+        return True if object[key] == value else False
 
     def edit_template(self, system: MNS | PT, root, uso_eng: str, uso_rus: str):
         '''Редактирование новой формы под общие для

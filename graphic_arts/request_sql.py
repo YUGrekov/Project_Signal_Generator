@@ -71,18 +71,16 @@ class RequestSQL():
         '''Сбор таблиц базы'''
         return db.get_tables()
 
-    def max_value_column(self, table: str, column):
+    def max_value_column(self, table: str, column: str):
         '''Нахождение максимального знач-ния в столбце.'''
         self.cursor.execute(f'''SELECT MAX("{column}")
-                                FROM "{table}"''')
-        a = map(int, self.cursor.fetchall())
+                                FROM "{table.lower()}"''')
         return self.cursor.fetchall()[0][0]
 
-    def max_value_column_cond(self):
+    def max_value_column_cond(self, table: str,
+                              column: str, *condition):
         '''Нахождение максимального знач-ния в столбце с условием.'''
-        cursor = db.cursor()
-            if condition is False: cursor.execute(f'''SELECT MAX("{column}") FROM "{table_used}"''')
-            else                 : cursor.execute(f'''SELECT MAX("{column}") FROM "{table_used}" WHERE "{args[0]}"={args[1]}''')
-        except Exception:
-            return 
-        return cursor.fetchall()[0][0]
+        self.cursor.execute(f'''SELECT MAX("{column}")
+                                FROM "{table.lower()}"
+                                WHERE "{condition[0]}"={condition[1]}''')
+        return self.cursor.fetchall()[0][0]

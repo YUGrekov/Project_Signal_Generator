@@ -1,5 +1,5 @@
 import psycopg2
-import traceback
+from lxml import etree
 
 
 class General_functions():
@@ -28,3 +28,10 @@ class General_functions():
     def check_in_table(self, table: str, array_table: dict):
         '''Проверка на существование таблицы в БД.'''
         return True if table in array_table else False
+
+    def xmlParser(self, path):
+        '''Парсинг файла.'''
+        parser = etree.XMLParser(remove_blank_text=True)
+        tree = etree.parse(path, parser)
+        root = tree.getroot()
+        return root, tree
