@@ -142,6 +142,9 @@ class KTPR(BaseDefenceMap):
     width = '1102'
     height = (26, 55)
     isktpra = 'false'
+    req_1 = '"id", "name", "number_protect_VU"'
+    req_2 = '"number_list_VU" = {}'
+    order = "number_protect_VU"
 
 
 class KTPRP(BaseDefenceMap):
@@ -159,6 +162,9 @@ class KTPRP(BaseDefenceMap):
     width = '1102'
     height = (26, 55)
     isktpra = 'false'
+    req_1 = '"id", "name", "number_protect_VU"'
+    req_2 = '"number_list_VU" = {}'
+    order = "number_protect_VU"
 
 
 class KTPRA(BaseDefenceMap):
@@ -176,6 +182,9 @@ class KTPRA(BaseDefenceMap):
     width = '1102'
     height = (26, 55)
     isktpra = 'true'
+    req_1 = '"id", "name", "number_protect_VU"'
+    req_2 = '"number_pump_VU" = {} and "number_list_VU" = {}'
+    order = "number_protect_VU"
 
 
 class GMPNA(BaseDefenceMap):
@@ -193,6 +202,9 @@ class GMPNA(BaseDefenceMap):
     width = '857'
     height = (26, 55, 2)
     isktpra = 'false'
+    req_1 = '"id", "name", "number_protect_VU"'
+    req_2 = '"number_pump_VU" = {} and "number_list_VU" = {}'
+    order = "number_protect_VU"
 
 
 class Template():
@@ -304,11 +316,13 @@ class Template():
 
 class TopRow():
     '''Собираем на форме защиты по страницам.'''
-    def __init__(self, max_page, max_prot, root, kit):
+    def __init__(self, max_page, root, kit, request, table, num_iter):
         self.max_page = max_page
-        self.max_prot = max_prot
         self.root = root
         self.kit = kit
+        self.request = request
+        self.table = table
+        self.num_iter = num_iter
 
     def new_rows_obj(self, params: NewRowsParams):
         """Создаем новые строки."""
@@ -372,12 +386,27 @@ class TopRow():
         '''Поиск строки'''
         return True if object[key] == value else False
 
+    def req_table(self, page):
+        '''Запрос к таблице с данными по каждой странице с защитами.'''
+        req = f"{self.kit.req_2}".format(self.num_iter, page)
+
+        if self.table == 'KTPR' or self.table == 'KTPRP':
+            req = f"{self.kit.req_2}".format(page)
+
+        data = self.request.where_select(str(self.table).lower(),
+                                         self.kit.req_1, req,
+                                         self.kit.order)
+        return data
+
+    def choice_value(self):
+        '''Подставляем значения при определенных условиях.'''
+        
     def filling_page(self, lvl):
         '''Добавляются на форму страницы.'''
         for page in range(1, self.max_page + 1):
             object = self.new_row_obj(lvl,
-                                        f'{self.kit.attrib_top}_{page}',
-                                        self.kit)
+                                      f'{self.kit.attrib_top}_{page}',
+                                      self.kit)
 
             visible = 'true' if page == 1 else 'false'
             for key, value in self.kit.attr_top.items():
@@ -394,27 +423,35 @@ class TopRow():
 
             if self.search_string(lvl_1.attrib, NumName.NAME_ATR.value, f'{self.kit.attrib_top}_{page}'):
 
-                for i in range(1, 3):
+                data = self.req_table(page)
+                for i in range(0, len(data)):
+                    id_ = data[i][0]
+                    name = data[i][1]
+                    num_prot = data[i][2]
+
                     object = self.new_row_obj(lvl_1,
-                                              f'{self.kit.attrib_row}_{i}',
+                                              f'{self.kit.attrib_row}_{i + 1}',
                                               self.kit)
 
+                    coordY = str(self.kit.height[0] * (i + 1))
                     for key, value in self.kit.attr_row_design.items():
                         self.new_row_designed(object,
                                               NumName.DESIGNED.value,
                                               value[0],
-                                              value[1])
+                                              coordY if key == 2 else value[1])
+
+                    self.new_row_init(object,
+                                      NumName.INIT.value,
+                                      self.kit.target_row,
+                                      f'{self.kit.apsoure_name}{self.num_iter}')
 
                     for key, value in self.kit.attr_row_init.items():
                         self.new_row_designed(object,
                                               NumName.INIT.value,
                                               value[0],
-                                              value[1])
-
-                    self.new_row_init(object,
-                                      NumName.INIT.value,
-                                      self.kit.target_row,
-                                      self.kit.apsoure_name)
+                                              self.choice_value(key, id_,
+                                                                name,
+                                                                num_prot))
 
     def form_assembly(self):
         '''Собираем защиты или готовности для добавления на форму.'''
@@ -505,11 +542,11 @@ class DefenceMap():
                 start_index, end_index = self.size_for(number_pump)
 
                 # Цикл по каждой форме
-                for page in range(start_index, end_index + 1):
-                    new_form = self.check_template(self.kit.map_name, page)
+                for num_iter in range(start_index, end_index + 1):
+                    new_form = self.check_template(self.kit.map_name, num_iter)
 
                     # Max кол-во страниц, защит и кнопка переключения на форме
-                    max_page, max_prot = self.max_condition(page)
+                    max_page, max_prot = self.max_condition(num_iter)
 
                     if max_page is None or max_prot is None:
                         print(f'''HMI. {self.table}. Не определено количество страниц переключений или защит''')
@@ -524,11 +561,12 @@ class DefenceMap():
                     template = Template(self.request, self.kit,
                                         max_prot, root, self.table)
 
-                    update_data = template.select_name(page, self.choise_table(self.table))
+                    update_data = template.select_name(num_iter, self.choise_table(self.table))
                     template.change_template(self.click, update_data)
 
                     # Сборка защит
-                    defenc_read = TopRow(max_page, max_prot, root, self.kit)
+                    defenc_read = TopRow(max_page, root, self.kit,
+                                         self.request, self.table, num_iter)
                     defenc_read.form_assembly()
 
                     tree.write(new_form, pretty_print=True, encoding='utf-8')
@@ -538,4 +576,4 @@ class DefenceMap():
 
 
 a = DefenceMap()
-a.fill_pic_new(['KTPR'])
+a.fill_pic_new(['KTPRA'])
