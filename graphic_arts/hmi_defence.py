@@ -3,6 +3,7 @@ import shutil
 import os
 import sys
 import traceback
+import math
 from enum import Enum
 from datetime import datetime
 from typing import Any
@@ -117,13 +118,28 @@ class BaseDefenceMap():
                        4: DesignedParams(target='Width', value='800'),
                        5: DesignedParams(target='Height', value='25')}
 
-    attr_row_init = {1: DesignedParams(target='_init_group_number', value=''),
+    attr_row_ktpr = {1: DesignedParams(target='_init_group_number', value=''),
                      2: DesignedParams(target='_init_row_number', value=''),
                      3: DesignedParams(target='_def_name', value=''),
                      4: DesignedParams(target='_def_number', value=''),
                      5: DesignedParams(target='_def_number_inarray', value=''),
                      6: DesignedParams(target='IsKTPRA', value=''),
                      7: DesignedParams(target='NotMasked', value='')}
+
+    attr_row_ktpra = {1: DesignedParams(target='_init_group_number', value=''),
+                      2: DesignedParams(target='_init_row_number', value=''),
+                      3: DesignedParams(target='_def_name', value=''),
+                      4: DesignedParams(target='_def_number', value=''),
+                      5: DesignedParams(target='_def_number_inarray', value=''),
+                      6: DesignedParams(target='IsKTPRA', value=''),
+                      7: DesignedParams(target='MAnumber', value='')}
+
+    attr_row_gmpna = {1: DesignedParams(target='_init_group_number', value=''),
+                      2: DesignedParams(target='_init_row_number', value=''),
+                      3: DesignedParams(target='_readiness_name', value=''),
+                      4: DesignedParams(target='_readiness_number', value=''),
+                      5: DesignedParams(target='_readiness_number_inarray', value=''),
+                      6: DesignedParams(target='MAnumber', value='')}
 
 
 class KTPR(BaseDefenceMap):
@@ -142,7 +158,7 @@ class KTPR(BaseDefenceMap):
     width = '1102'
     height = (26, 55)
     isktpra = 'false'
-    req_1 = '"id", "name", "number_protect_VU"'
+    req_1 = '"id", "name"'
     req_2 = '"number_list_VU" = {}'
     order = "number_protect_VU"
 
@@ -162,7 +178,7 @@ class KTPRP(BaseDefenceMap):
     width = '1102'
     height = (26, 55)
     isktpra = 'false'
-    req_1 = '"id", "name", "number_protect_VU"'
+    req_1 = '"id", "name"'
     req_2 = '"number_list_VU" = {}'
     order = "number_protect_VU"
 
@@ -182,7 +198,7 @@ class KTPRA(BaseDefenceMap):
     width = '1102'
     height = (26, 55)
     isktpra = 'true'
-    req_1 = '"id", "name", "number_protect_VU"'
+    req_1 = '"id", "name"'
     req_2 = '"number_pump_VU" = {} and "number_list_VU" = {}'
     order = "number_protect_VU"
 
@@ -202,12 +218,81 @@ class GMPNA(BaseDefenceMap):
     width = '857'
     height = (26, 55, 2)
     isktpra = 'false'
-    req_1 = '"id", "name", "number_protect_VU"'
+    req_1 = '"id", "name"'
     req_2 = '"number_pump_VU" = {} and "number_list_VU" = {}'
     order = "number_protect_VU"
 
 
-class Template():
+class BaseFunction():
+    '''Дополнительные функции, которые часто используются.'''
+    def choice_table(self, table: str) -> bool:
+        '''Проверяем принадлежность к таблице KTPR, KTPRP'''
+        return True if table in ['KTPR', 'KTPRP'] else False
+
+    def search_string(self, object: dict, key: str, value: str):
+        '''Поиск строки'''
+        return True if object[key] == value else False
+
+    def new_rows_obj(self, params: NewRowsParams):
+        """Создаем новые строки."""
+        object = etree.Element(params.object)
+        object.attrib['access-modifier'] = params.access_modifier
+        object.attrib['name'] = params.name
+        object.attrib['display-name'] = params.display_name
+        object.attrib['uuid'] = params.uuid
+        object.attrib['base-type'] = params.base_type
+        object.attrib['base-type-id'] = params.base_type_id
+
+        if params.ver:
+            object.attrib['ver'] = params.ver
+        return object
+
+    def new_row_obj(self, level, name, kit):
+        '''Подготавливаем к созданию новых строк.'''
+        object = self.new_rows_obj(NewRowsParams(
+            object=NumName.OBJECT.value,
+            access_modifier=NumName.PRIVATE.value,
+            name=name,
+            display_name=name,
+            uuid=str(uuid.uuid1()),
+            base_type=kit.attrib_top,
+            base_type_id=kit.bt_id_top,
+            ver=NumName.VER.value))
+        level.append(object)
+        return object
+
+    def dop_substr(self, object, params: DesignedParamsAttr):
+        """Создаем новые строки."""
+        dop = etree.Element(params.designed)
+        dop.attrib['target'] = params.target
+        dop.attrib['value'] = params.value
+        dop.attrib['ver'] = params.ver
+        object.append(dop)
+
+    def dop_init_substr(self, object, params: InitParamsAttr):
+        """Создаем новые строки."""
+        dop = etree.Element(params.init)
+        dop.attrib['target'] = params.target
+        dop.attrib['ver'] = params.ver
+        dop.attrib['ref'] = params.ref
+        object.append(dop)
+
+    def new_row_designed(self, object, designed, target, value):
+        self.dop_substr(object, (DesignedParamsAttr(
+            designed=designed,
+            target=target,
+            value=value,
+            ver=NumName.VER.value)))
+
+    def new_row_init(self, object, init, target, ref):
+        self.dop_init_substr(object, (InitParamsAttr(
+            init=init,
+            target=target,
+            ver=NumName.VER.value,
+            ref=ref)))
+
+
+class Template(BaseFunction):
     '''Редактирование шаблона перед запонением.'''
     def __init__(self, *arg):
         self.request = arg[0]
@@ -224,10 +309,6 @@ class Template():
                 object[key] = str(new_value)
         except Exception:
             return
-
-    def search_string(self, object: dict, key: str, value: str):
-        '''Поиск строки'''
-        return True if object[key] == value else False
 
     def select_name(self, pump: int, fl_one_form: bool):
         '''Подбор названий взамисимости от таблицы.'''
@@ -314,7 +395,7 @@ class Template():
             self.upd_reset_button(lvl, res_coorY)
 
 
-class TopRow():
+class TopRow(BaseFunction):
     '''Собираем на форме защиты по страницам.'''
     def __init__(self, max_page, root, kit, request, table, num_iter):
         self.max_page = max_page
@@ -324,73 +405,11 @@ class TopRow():
         self.table = table
         self.num_iter = num_iter
 
-    def new_rows_obj(self, params: NewRowsParams):
-        """Создаем новые строки."""
-        object = etree.Element(params.object)
-        object.attrib['access-modifier'] = params.access_modifier
-        object.attrib['name'] = params.name
-        object.attrib['display-name'] = params.display_name
-        object.attrib['uuid'] = params.uuid
-        object.attrib['base-type'] = params.base_type
-        object.attrib['base-type-id'] = params.base_type_id
-
-        if params.ver:
-            object.attrib['ver'] = params.ver
-        return object
-
-    def new_row_obj(self, level, name, kit):
-        '''Подготавливаем к созданию новых строк.'''
-        object = self.new_rows_obj(NewRowsParams(
-            object=NumName.OBJECT.value,
-            access_modifier=NumName.PRIVATE.value,
-            name=name,
-            display_name=name,
-            uuid=str(uuid.uuid1()),
-            base_type=kit.attrib_top,
-            base_type_id=kit.bt_id_top,
-            ver=NumName.VER.value))
-        level.append(object)
-        return object
-
-    def dop_substr(self, object, params: DesignedParamsAttr):
-        """Создаем новые строки."""
-        dop = etree.Element(params.designed)
-        dop.attrib['target'] = params.target
-        dop.attrib['value'] = params.value
-        dop.attrib['ver'] = params.ver
-        object.append(dop)
-
-    def dop_init_substr(self, object, params: InitParamsAttr):
-        """Создаем новые строки."""
-        dop = etree.Element(params.init)
-        dop.attrib['target'] = params.target
-        dop.attrib['ver'] = params.ver
-        dop.attrib['ref'] = params.ref
-        object.append(dop)
-
-    def new_row_designed(self, object, designed, target, value):
-        self.dop_substr(object, (DesignedParamsAttr(
-            designed=designed,
-            target=target,
-            value=value,
-            ver=NumName.VER.value)))
-
-    def new_row_init(self, object, init, target, ref):
-        self.dop_init_substr(object, (InitParamsAttr(
-            init=init,
-            target=target,
-            ver=NumName.VER.value,
-            ref=ref,)))
-
-    def search_string(self, object: dict, key: str, value: str):
-        '''Поиск строки'''
-        return True if object[key] == value else False
-
     def req_table(self, page):
         '''Запрос к таблице с данными по каждой странице с защитами.'''
         req = f"{self.kit.req_2}".format(self.num_iter, page)
 
-        if self.table == 'KTPR' or self.table == 'KTPRP':
+        if self.choice_table(self.table):
             req = f"{self.kit.req_2}".format(page)
 
         data = self.request.where_select(str(self.table).lower(),
@@ -398,9 +417,45 @@ class TopRow():
                                          self.kit.order)
         return data
 
-    def choice_value(self):
+    def choice_list(self):
+        '''От таблицы завист набор атрибутов.'''
+        if self.choice_table(self.table):
+            attr_list = self.kit.attr_row_ktpr
+        elif self.table == 'KTPRA':
+            attr_list = self.kit.attr_row_ktpra
+        else:
+            attr_list = self.kit.attr_row_gmpna
+        return attr_list
+
+    def choice_value(self, key, id_, num, name):
         '''Подставляем значения при определенных условиях.'''
-        
+        bit_def = int(id_) % 4
+        num_bit_defence = '4' if bit_def == 0 else str(bit_def)
+        num_registry = math.ceil(int(id_) / 4)
+
+        if self.choice_table(self.table):
+            six_value = str(self.kit.isktpra)
+        elif self.table == 'KTPRA':
+            six_value = ''
+        else:
+            six_value = ''
+
+        if key == 1:
+            value = f'Group_{num_registry}'
+        elif key == 2:
+            value = str(num_bit_defence)
+        elif key == 3:
+            value = str(name)
+        elif key == 4:
+            value = str(num)
+        elif key == 5:
+            value = str(id_)
+        elif key == 6:
+            value = six_value
+        else:
+            value = str(id_)
+        return value
+
     def filling_page(self, lvl):
         '''Добавляются на форму страницы.'''
         for page in range(1, self.max_page + 1):
@@ -427,7 +482,6 @@ class TopRow():
                 for i in range(0, len(data)):
                     id_ = data[i][0]
                     name = data[i][1]
-                    num_prot = data[i][2]
 
                     object = self.new_row_obj(lvl_1,
                                               f'{self.kit.attrib_row}_{i + 1}',
@@ -440,18 +494,22 @@ class TopRow():
                                               value[0],
                                               coordY if key == 2 else value[1])
 
+                    if self.choice_table(self.table):
+                        ref = self.kit.apsoure_name
+                    else:
+                        ref = f'{self.kit.apsoure_name}{self.num_iter}'
                     self.new_row_init(object,
                                       NumName.INIT.value,
                                       self.kit.target_row,
-                                      f'{self.kit.apsoure_name}{self.num_iter}')
+                                      ref)
 
-                    for key, value in self.kit.attr_row_init.items():
+                    attr_used = self.choice_list()
+                    for key, value in attr_used.items():
                         self.new_row_designed(object,
                                               NumName.INIT.value,
                                               value[0],
                                               self.choice_value(key, id_,
-                                                                name,
-                                                                num_prot))
+                                                                (i + 1), name))
 
     def form_assembly(self):
         '''Собираем защиты или готовности для добавления на форму.'''
@@ -460,19 +518,15 @@ class TopRow():
             self.filling_page(lvl)
 
 
-class DefenceMap():
+class DefenceMap(BaseFunction):
     '''Запуск генератора карты защит.'''
     def __init__(self):
         # self.logsTextEdit = logtext
         self.dop_function = General_functions()
 
-    def choise_table(self, table: str) -> bool:
-        '''Проверяем принадлежность к таблице KTPR, KTPRP'''
-        return True if table in ['KTPR', 'KTPRP'] else False
-
     def check_template(self, name: str, number: int) -> str:
         '''Проверка шаблона и создание на его основе новой формы.'''
-        title = name if self.choise_table(self.table) else f'{name}{number}'
+        title = name if self.choice_table(self.table) else f'{name}{number}'
         new_picture = f'{connect.path_hmi}\\{title}.omobj'
 
         if os.path.isfile(new_picture):
@@ -494,7 +548,7 @@ class DefenceMap():
 
     def max_condition(self, pump: int):
         '''Вычисляем из БД максимальное кол-во страниц и защит.'''
-        if self.choise_table(self.table):
+        if self.choice_table(self.table):
             max_page = self.request.max_value_column(self.table,
                                                      self.kit.COLUMN_LIST)
             max_prot = self.request.max_value_column(self.table,
@@ -516,7 +570,7 @@ class DefenceMap():
         Если есть number_pump, то цикл работает только по number_pump'''
         start_index = CONST_INDEX_FOR
         end_index = CONST_INDEX_FOR
-        if not self.choise_table(self.table):
+        if not self.choice_table(self.table):
             end_index = self.request.max_value_column(self.table,
                                                       self.kit.COLUMN_PUMP)
             if pump is not None:
@@ -561,7 +615,7 @@ class DefenceMap():
                     template = Template(self.request, self.kit,
                                         max_prot, root, self.table)
 
-                    update_data = template.select_name(num_iter, self.choise_table(self.table))
+                    update_data = template.select_name(num_iter, self.choice_table(self.table))
                     template.change_template(self.click, update_data)
 
                     # Сборка защит
