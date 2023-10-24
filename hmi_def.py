@@ -1,19 +1,15 @@
 import uuid
 import shutil
 import os
-import sys
 import traceback
 import math
-from enum import Enum
-from datetime import datetime
-from typing import Any
 from lxml import etree
-from general_functions import General_functions
 from enum import Enum
 from typing import NamedTuple
-from request_sql import RequestSQL
-sys.path.append('../Project_Signal_Generator')
-from model_new import connect
+from main_base import General_functions
+from main_base import connect
+from datetime import datetime
+today = datetime.now()
 
 CONST_INDEX_FOR = 1
 OFFSET_RESET = 43
@@ -652,7 +648,6 @@ class Button(BaseFunction):
 class DefenceMap(BaseFunction):
     '''Запуск генератора карты защит.'''
     def __init__(self):
-        # self.logsTextEdit = logtext
         self.dop_function = General_functions()
 
     def check_template(self, name: str, number: int) -> str:
@@ -680,10 +675,10 @@ class DefenceMap(BaseFunction):
     def max_condition(self, pump: int):
         '''Вычисляем из БД максимальное кол-во страниц и защит.'''
         if self.choice_table(self.table):
-            max_page = self.request.max_value_column(self.table,
-                                                     self.kit.COLUMN_LIST)
-            max_prot = self.request.max_value_column(self.table,
-                                                     self.kit.COLUMN_PROT)
+            max_page = self.request.max_value_column_new(self.table,
+                                                         self.kit.COLUMN_LIST)
+            max_prot = self.request.max_value_column_new(self.table,
+                                                         self.kit.COLUMN_PROT)
         else:
             max_page = self.request.max_value_column_cond(self.table,
                                                           self.kit.COLUMN_LIST,
@@ -701,8 +696,8 @@ class DefenceMap(BaseFunction):
         start_index = CONST_INDEX_FOR
         end_index = CONST_INDEX_FOR
         if not self.choice_table(self.table):
-            end_index = self.request.max_value_column(self.table,
-                                                      self.kit.COLUMN_PUMP)
+            end_index = self.request.max_value_column_new(self.table,
+                                                          self.kit.COLUMN_PUMP)
             if pump is not None:
                 start_index = pump
                 end_index = pump
@@ -716,8 +711,9 @@ class DefenceMap(BaseFunction):
             number_pump (int, optional): Номер агрегата, если необходимо.
             Defaults to None.
         """
+        msg = {}
         try:
-            self.request = RequestSQL()
+            self.request = General_functions()
             for self.table in list_table:
                 # Выделяем конструктор под конкретную таблицу
                 self.kit = self.select_kit()
@@ -734,11 +730,7 @@ class DefenceMap(BaseFunction):
 
                     if max_page is None or max_prot is None:
                         print_tab = self.table if self.choice_table(self.table) else f'{self.table}_{num_iter}'
-                        print(f'''HMI. {print_tab}. Не определено количество страниц переключений или защит''')
-                        # self.logsTextEdit.logs_msg(f'''HMI. {print_tab}.
-                        #                            Не определено количество
-                        #                            страниц переключений
-                        #                            или защит''', 2)
+                        msg[f'{today} - HMI. {print_tab}. Не определено количество страниц переключений или защит'] = 2
                         continue
                     self.click = True if max_page > 1 else False
                     # Чтение шаблона
@@ -761,9 +753,8 @@ class DefenceMap(BaseFunction):
                         button.form_assembly()
 
                     tree.write(new_form, pretty_print=True, encoding='utf-8')
+            msg[f'{today} - HMI. {self.table}: генерация завершена!'] = 1
+            return msg
         except Exception:
-            print(traceback.format_exc())
-
-
-a = DefenceMap()
-a.fill_pic_new(['GMPNA'])
+            msg[f'{today} - HMI. {self.table}: {traceback.format_exc()}'] = 2
+            return msg

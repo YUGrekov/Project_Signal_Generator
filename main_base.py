@@ -449,6 +449,48 @@ class General_functions():
                 root.remove(item)
         tree.write(path_map, pretty_print=True)
         return root, tree
+    ##############################
+    
+    def max_value_column_new(self, table: str, column: str):
+        '''Нахождение максимального знач-ния в столбце.'''
+        cursor = db.cursor()
+        cursor.execute(f'''SELECT MAX("{column}")
+                           FROM "{table.lower()}"''')
+        return cursor.fetchall()[0][0]
+
+    def max_value_column_cond(self, table: str,
+                              column: str, *condition):
+        '''Нахождение максимального знач-ния в столбце с условием.'''
+        cursor = db.cursor()
+        cursor.execute(f'''SELECT MAX("{column}")
+                           FROM "{table.lower()}"
+                           WHERE "{condition[0]}"={condition[1]}''')
+        return cursor.fetchall()[0][0]
+
+    def xmlParser(self, path):
+        '''Парсинг файла.'''
+        parser = etree.XMLParser(remove_blank_text=True)
+        tree = etree.parse(path, parser)
+        root = tree.getroot()
+        return root, tree
+
+    def where_select(self,  table: str,
+                     column: str, condit: int, order):
+        '''Запрос на выборку данных с условием и сортировкой.'''
+        cursor = db.cursor()
+        cursor.execute(f"""SELECT {column}
+                           FROM "{table}"
+                           WHERE ({condit})
+                           ORDER BY "{order}" """)
+        return cursor.fetchall()
+
+    def where_id_select(self, table: str, column: str, value_id: int):
+        '''Запрос на выборку данных с условием по id.'''
+        cursor = db.cursor()
+        cursor.execute(f"""SELECT "{column}"
+                           FROM "{table}"
+                           WHERE id = {value_id}""")
+        return cursor.fetchone()
 
 
 class Editing_table_SQL():
@@ -8144,6 +8186,7 @@ class Filling_KTPRP():
                                        tag = '',
                                        name = 'Резерв',
                                        Number_PZ = '',
+                                       disablemasking = 0,
                                        Type = '',
                                        Pic = ''))
 
@@ -8154,7 +8197,7 @@ class Filling_KTPRP():
         return(msg)
     # Заполняем таблицу KTPRP
     def column_check(self):
-        list_default = ['variable', 'tag', 'name', 'Number_PZ', 'Type', 'Pic', 
+        list_default = ['variable', 'tag', 'name', 'Number_PZ', 'disablemasking', 'Type', 'Pic', 
                          'number_list_VU', 'number_protect_VU']
         msg = self.dop_function.column_check(KTPRP, 'ktprp', list_default)
         return msg 
@@ -8172,81 +8215,9 @@ class Filling_KTPR():
                                       tag = '',
                                       name = 'Резерв',
                                       avar_parameter = '',
-                                    #   prohibition_masking = '',
-                                    #   auto_unlock_protection = '',
-                                    #   shutdown_PNS_a_time_delay_up_5s_after_turning = '',
-                                    #   bitmask_protection_group_membership = '',
-                                    #   stop_type_NA = '',
-                                    #   pump_station_stop_type = '',
-                                    #   closing_gate_valves_at_the_inlet_NPS = '',
-                                    #   closing_gate_valves_at_the_outlet_NPS = '',
-                                    #   closing_gate_valves_between_PNS_and_MNS = '',
-                                    #   closing_gate_valves_between_RP_and_PNS = '',
-                                    #   closing_valves_inlet_and_outlet_MNS = '',
-                                    #   closing_valves_inlet_and_outlet_PNS = '',
-                                    #   closing_valves_inlet_and_outlet_MNA = '',
-                                    #   closing_valves_inlet_and_outlet_PNA = '',
-                                    #   closing_valves_inlet_RD = '',
-                                    #   closing_valves_outlet_RD = '',
-                                    #   closing_valves_inlet_SSVD = '',
-                                    #   closing_valves_inlet_FGU = '',
-                                    #   closing_secant_valve_connection_unit__oil_production_oil = '',
-                                    #   closing_valves_inlet_RP = '',
-                                    #   reserve_protect_14 = '',
-                                    #   reserve_protect_15 = '',
-                                    #   shutdown_oil_pumps_after_signal_stopped_NA = '',
-                                    #   shutdown_circulating_water_pumps = '',
-                                    #   shutdown_pumps_pumping_out_from_tanks_collection_of_leaks_MNS = '',
-                                    #   shutdown_pumps_pumping_out_from_tanks_collection_of_leaks_PNS = '',
-                                    #   shutdown_pumps_pumping_out_from_tanks_SSVD = '',
-                                    #   switching_off_the_electric_room_fans = '',
-                                    #   shutdown_of_booster_fans_ED = '',
-                                    #   shutdown_of_retaining_fans_of_the_electrical_room = '',
-                                    #   shutdown_of_ED_air_compressors = '',
-                                    #   shutdown_pumps_providing_oil = '',
-                                    #   disabling_pumps_for_pumping_oil_oil_products_through_BIC = '',
-                                    #   shutdown_domestic_and_drinking_water_pumps = '',
-                                    #   shutdown_of_art_well_pumps = '',
-                                    #   AVO_shutdown = '',
-                                    #   shutdown_of_water_cooling_fans_circulating_water_supply_system = '',
-                                    #   shutdown_exhaust_fans_of_the_pumping_room_of_the_MNS = '',
-                                    #   shutdown_of_exhaust_fans_of_the_pumping_room_PNS = '',
-                                    #   shutdown_of_exhaust_fans_in_the_centralized_oil_system_room = '',
-                                    #   shutdown_of_exhaust_fans_oil_pit_in_the_electrical_room = '',
-                                    #   shutdown_of_exhaust_fans_in_the_RD_room = '',
-                                    #   shutdown_of_exhaust_fans_in_the_SSVD_room = '',
-                                    #   shutdown_of_the_roof_fans_of_the_MNS_pump_room = '',
-                                    #   shutdown_of_the_roof_fans_of_the_PNS_pump_room = '',
-                                    #   switching_off_the_supply_fans_pumping_room_of_the_MNS = '',
-                                    #   switching_off_the_supply_fans_pumping_room_of_the_PNS = '',
-                                    #   switch_off_the_supply_fans_in_the_centralized_oil = '',
-                                    #   switching_off_the_supply_fan_of_the_RD_room = '',
-                                    #   switching_off_the_supply_fan_of_the_SSVD_room = '',
-                                    #   switching_off_the_supply_fans_of_the_ED_air_compressor = '',
-                                    #   switching_off_the_supply_fan_of_the_BIK_room = '',
-                                    #   switching_off_the_supply_fan_of_the_SIKN_room = '',  
-                                    #   closing_the_air_valves_louvered_grilles_of_the_pump_room = '',
-                                    #   closing_of_air_valves_louvered_grilles_of_the_compressor_room = '',
-                                    #   shutdown_of_electric_oil_heaters = '',
-                                    #   shutdown_of_the_electric_heaters_of_the_leakage_collection_MNS = '',
-                                    #   shutdown_of_the_electric_heaters_of_the_leakage_collection_PNS = '',
-                                    #   shutdown_of_electric_heaters_of_the_SIKN_leak_collection_tank = '',
-                                    #   shutdown_of_air_coolers_of_the_locking_system_MNA = '',
-                                    #   shutdown_of_air_coolers_of_the_locking_system_disc_NA = '',
-                                    #   shutdown_of_the_external_cooling_circuit_ChRP_MNA = '',
-                                    #   shutdown_of_the_external_cooling_circuit_ChRP_PNA = '',
-                                    #   shutdown_of_locking_system_pumps = '',
-                                    #   shutdown_of_pumps_for_pumping_oil_oil_products_through = '',
-                                    #   shutdown_of_pumping_pumps_from_leakage_collection_tanks = '',
-                                    #   shutdown_of_anticondensation_electric_heaters_ED = '',
-                                    #   fire_protection = '',
-                                    #   reserve_aux_15 = '',
-                                    #   value_ust = '',
-                                    #   Pic = '',
+                                      disablemasking = 0,
                                       group_ust = 'Временные уставки общестанционных защит',
                                       rule_map_ust = 'Временные уставки',
-                                    #   number_list_VU = '',
-                                    #   number_protect_VU = ''
                                     ))
 
             # Checking for the existence of a database
@@ -8257,7 +8228,7 @@ class Filling_KTPR():
     # Заполняем таблицу KTPR
     def column_check(self):
         list_default = ['variable', 'tag', 'name', 
-                        'avar_parameter', 'DisableMasking', 'auto_unlock_protection', 'shutdown_PNS_a_time_delay_up_5s_after_turning',
+                        'avar_parameter', 'disablemasking', 'auto_unlock_protection', 'shutdown_PNS_a_time_delay_up_5s_after_turning',
                         'bitmask_protection_group_membership', 'stop_type_NA', 'pump_station_stop_type',
                         'closing_gate_valves_at_the_inlet_NPS', 'closing_gate_valves_at_the_outlet_NPS', 'closing_gate_valves_between_PNS_and_MNS',
                         'closing_gate_valves_between_RP_and_PNS', 'closing_valves_inlet_and_outlet_MNS', 'closing_valves_inlet_and_outlet_PNS',
@@ -8307,18 +8278,10 @@ class Filling_KTPRA():
                                                 variable = f'KTPRA[{i}][{k}]',
                                                 tag  = '',
                                                 name = f'Резерв',
-                                                # NA = '',
-                                                # avar_parameter = '',
-                                                # stop_type = '',
-                                                # AVR = '',
-                                                # close_valves = '',
-                                                DisableMasking = False,
-                                                #value_ust = '',
+                                                disablemasking = 0,
                                                 Pic = '',
                                                 group_ust = f'Tm - Агрегатные защиты МНА{i}',
                                                 rule_map_ust = 'Временные уставки',
-                                                #number_list_VU = ,
-                                                #number_protect_VU = '',
                                                 number_pump_VU = i
                                                 ))
                 # Checking for the existence of a database
@@ -8332,7 +8295,7 @@ class Filling_KTPRA():
     def column_check(self):
         list_default = ['variable', 'tag', 'name', 
                         'NA', 'avar_parameter', 'stop_type', 'AVR', 'close_valves',
-                        'DisableMasking', 'value_ust', 'Pic', 
+                        'disablemasking', 'value_ust', 'Pic', 
                         'group_ust', 'rule_map_ust', 'number_list_VU', 'number_protect_VU', 'number_pump_VU']
         msg = self.dop_function.column_check(KTPRA, 'ktpra', list_default)
         return msg 
@@ -8386,12 +8349,9 @@ class Filling_GMPNA():
                                                 name = 'Резерв',
                                                 name_for_Chrp_in_local_mode = '',
                                                 NA = '',
-                                                #used_time_ust = '',
-                                                #value_ust = '',
+                                                disablemasking = 0,
                                                 group_ust = f'Tm - Агрегатные готовности МНА{i}',
                                                 rule_map_ust = 'Временные уставки',
-                                                # number_list_VU = '',
-                                                # number_protect_VU = '',
                                                 number_pump_VU = i))
 
                 # Checking for the existence of a database
@@ -8403,7 +8363,7 @@ class Filling_GMPNA():
         return(msg)
     # Заполняем таблицу GMPNA
     def column_check(self):
-        list_default = ['variable', 'tag', 'name', 'name_for_Chrp_in_local_mode', 'NA', 'used_time_ust', 'value_ust', 'group_ust', 
+        list_default = ['variable', 'tag', 'name', 'name_for_Chrp_in_local_mode', 'NA', 'disablemasking', 'used_time_ust', 'value_ust', 'group_ust', 
                         'rule_map_ust', 'number_list_VU', 'number_protect_VU', 'number_pump_VU']
         msg = self.dop_function.column_check(GMPNA, 'gmpna', list_default)
         return msg 

@@ -453,17 +453,6 @@ def gen_station_defence(work_tabl, pump_def):
                                             elif key == '7': defence_init.attrib['value'] = str(number_defence)
                                             elif key == '8': defence_init.attrib['value'] = attrib_IsKTPRA
 
-
-                                            attrib_row_init_KTPR = {'1' : ['_link_init_ApSource_type_defence_row'    , '4'],
-                                                                    '2' : ['_init_group_number'                      , '4'],
-                                                                    '3' : ['_init_row_number'                        , '4'],
-                                                                    '4' : ['_def_name'                               , '4'],
-                                                                    '5' : ['_def_number'                             , '4'],
-                                                                    #'6' : ['_link_init_ApSource_type_defence_row_cmd', '4'],
-                                                                    '7' : ['_def_number_inarray'                     , '4'],
-                                                                    '8' : ['IsKTPRA'                                 , '4'],
-
-
                                             defence.append(defence_init)
                                 else:
                                     number_pumps = item[4]

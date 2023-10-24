@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QCheckBox
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QTextEdit
-from defence_hmi import gen_station_defence
+from hmi_def import DefenceMap
 from uts_upts_hmi import Alarm_map
 from uso_hmi import DaignoPicture as DiagForm
 from windows_base_editing import MainWindow as WinEditing
@@ -2379,18 +2379,19 @@ class Widget(QWidget):
             return msg
         alarm_map = Alarm_map()
         uso_form = DiagForm()
+        defence = DefenceMap()
         for tabl in self.list_gen_hmi: 
             if tabl == 'HMI_KTPR': 
-                msg.update(gen_station_defence('ktpr', False))
+                msg.update(defence.fill_pic_new(['KTPR']))
                 continue
             if tabl == 'HMI_KTPRA': 
-                msg.update(gen_station_defence('ktpra', True))
+                msg.update(defence.fill_pic_new(['KTPRA']))
                 continue
             if tabl == 'HMI_KTPRP': 
-                msg.update(gen_station_defence('ktprp', False))
+                msg.update(defence.fill_pic_new(['KTPRP']))
                 continue
             if tabl == 'HMI_GMPNA': 
-                msg.update(gen_station_defence('gmpna', True))
+                msg.update(defence.fill_pic_new(['GMPNA']))
                 continue
             if tabl == 'HMI_UTS': 
                 msg.update(alarm_map.filling_template('uts'))
