@@ -724,7 +724,6 @@ class DefenceMap(BaseFunction):
             # Цикл по каждой форме
             for num_iter in range(start_index, end_index + 1):
                 print_tab = self.table if self.choice_table(self.table) else f'{self.table}_{num_iter}'
-                new_form = self.check_template(self.kit.map_name, num_iter)
 
                 # Max кол-во страниц, защит и кнопка переключения на форме
                 max_page, max_prot = self.max_condition(num_iter)
@@ -736,6 +735,9 @@ class DefenceMap(BaseFunction):
                                                или защит''', 2)
                     continue
                 self.click = True if max_page > 1 else False
+
+                # На основе шаблона -> новая форма
+                new_form = self.check_template(self.kit.map_name, num_iter)
                 # Чтение шаблона
                 root, tree = self.dop_function.xmlParser(new_form)
                 # Изменение шаблона
