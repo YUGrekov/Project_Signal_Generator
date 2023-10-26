@@ -31,7 +31,6 @@ class Editing_SQL():
 
     def read_json(self) -> tuple:
         '''Русификация шапки таблицы из файла .json.'''
-
         with open(connect.path_rus_text, "r", encoding='utf-8') as outfile:
             return json.load(outfile)
 
@@ -72,21 +71,29 @@ class Editing_SQL():
         return next(zip(*description)), fetchall
 
     def apply_request_select(self, request, table_used: str, logging):
+        '''Обраблотка запроса от пользователя.'''
+        def column_table(table: str, query_column):
+            if query_column[0] == '*':
+                column_used, fetchall = self.column_names(table)
+            else:
+                column_used = ', '.join(query_column)
+            return column_used
+
         try:
             cursor = db.cursor()
             cursor.execute(f'''{request}''')
+            value = cursor.fetchall()
+
             query_table = Parser(f'''{request}''').tables
+            query_column = Parser(f'''{request}''').columns
             name_column = next(zip(*cursor.description))
+
             table_used = query_table[0]
 
-            eng_name_column, fetchall = self.column_names(table_used)
-
             dict_rus = self.exist_check_array(self.read_json(), table_used)
-            rus_eng_name = self.russian_name_column(dict_rus, eng_name_column)
+            rus_eng_name = self.russian_name_column(dict_rus, column_table(table_used, query_column))
 
             c_col = self.exist_check_int(self.read_json(), table_used)
-
-            value = fetchall
 
             count_column = len(name_column)
             count_row = len(value)

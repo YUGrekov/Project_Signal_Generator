@@ -39,7 +39,9 @@ class RequestSQL():
     def not_all_select_table(self, table: str, column):
         '''Запрос на получение частичных данных о
         таблице сортированные по столбцу id.'''
-        self.cursor.execute(f'SELECT {column} FROM "{table}" ORDER BY id')
+        self.cursor.execute(f'''SELECT {column}
+                                FROM "{table}"
+                                ORDER BY id''')
         return self.cursor.fetchall()
 
     def update_row(self, table: str, column, id_cell, change_value):
@@ -48,7 +50,7 @@ class RequestSQL():
             string = f'SET "{column}"= NULL'
         else:
             string = f'''SET "{column}"= '{change_value}' '''
-
+        print(f"""UPDATE "{table}" {string} WHERE id={id_cell}""")
         self.cursor.execute(f"""UPDATE "{table}"
                                 {string}
                                 WHERE id={id_cell}""")

@@ -248,16 +248,19 @@ class TableWidget(QTableWidget):
         # При добавлении новой строки она == -1
         if row == -1:
             return
-
         try:
             value = self.text_cell(row, column)
             value_id = self.text_cell(row, 0)
         except Exception:
             value = None
             value_id = None
+        # Переход на нижнюю строку
+        if (row + 1) == self.row_count_tabl():
+            self.setCurrentCell(row, column)
+        else:
+            self.setCurrentCell(row + 1, column)
 
         hat_name, fetchall = self.edit_SQL.column_names(self.table_us)
-
         self.edit_SQL.update_row_tabl(column, value, value_id,
                                       self.table_us, hat_name, self.logging)
 
@@ -667,6 +670,7 @@ class MainWindow(QMainWindow):
         self.old_row_1 = self.tableWidget_dub.currentRow()
         self.tableWidget_dub.blockSignals(False)
         self.tableWidget.blockSignals(False)
+        print('two')
 
     def type_tabl(self):
         '''Запуск нового окна для просмотра типа столбцов.'''
@@ -764,9 +768,9 @@ class MainWindow(QMainWindow):
                                                                                          self.logsTextEdit)
         if column == 'error':
             return
-        if self.table_us == table_now:
-            self.logsTextEdit.logs_msg('В запросе таблица повторяется', 2)
-            return
+        # if self.table_us == table_now:
+        #     self.logsTextEdit.logs_msg('В запросе таблица повторяется', 2)
+        #     return
 
         self.table_us = table_now
 
@@ -789,9 +793,9 @@ class MainWindow(QMainWindow):
         '''Сброс запроса и возврат таблицы к состоянию до запроса.'''
         rowcount = self.tableWidget.row_count_tabl()
 
-        if self.table_us == self.table_old:
-            self.logsTextEdit.logs_msg('Открыта первоначальная таблица', 2)
-            return
+        # if self.table_us == self.table_old:
+        #     self.logsTextEdit.logs_msg('Открыта первоначальная таблица', 2)
+        #     return
 
         self.table_us = self.table_old
 

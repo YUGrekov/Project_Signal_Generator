@@ -5,11 +5,8 @@ import sys
 import traceback
 import math
 from enum import Enum
-from datetime import datetime
-from typing import Any
 from lxml import etree
 from general_functions import General_functions
-from enum import Enum
 from typing import NamedTuple
 from request_sql import RequestSQL
 sys.path.append('../Project_Signal_Generator')
@@ -651,8 +648,8 @@ class Button(BaseFunction):
 
 class DefenceMap(BaseFunction):
     '''Запуск генератора карты защит.'''
-    def __init__(self):
-        # self.logsTextEdit = logtext
+    def __init__(self, logtext):
+        self.logsTextEdit = logtext
         self.dop_function = General_functions()
 
     def check_template(self, name: str, number: int) -> str:
@@ -708,8 +705,7 @@ class DefenceMap(BaseFunction):
                 end_index = pump
         return start_index, end_index
 
-    def fill_pic_new(self, list_table: dict,
-                     number_pump: int = None):
+    def fill_pic_new(self, table: str, number_pump: int = None):
         """Заполнение новой формы.
         Args:
             list_table (dict): Список таблиц для формирования форм.
@@ -717,53 +713,51 @@ class DefenceMap(BaseFunction):
             Defaults to None.
         """
         try:
+            self.table = table
             self.request = RequestSQL()
-            for self.table in list_table:
-                # Выделяем конструктор под конкретную таблицу
-                self.kit = self.select_kit()
+            # Выделяем конструктор под конкретную таблицу
+            self.kit = self.select_kit()
 
-                # Определяем цикл
-                start_index, end_index = self.size_for(number_pump)
+            # Определяем цикл
+            start_index, end_index = self.size_for(number_pump)
 
-                # Цикл по каждой форме
-                for num_iter in range(start_index, end_index + 1):
-                    new_form = self.check_template(self.kit.map_name, num_iter)
+            # Цикл по каждой форме
+            for num_iter in range(start_index, end_index + 1):
+                print_tab = self.table if self.choice_table(self.table) else f'{self.table}_{num_iter}'
+                new_form = self.check_template(self.kit.map_name, num_iter)
 
-                    # Max кол-во страниц, защит и кнопка переключения на форме
-                    max_page, max_prot = self.max_condition(num_iter)
+                # Max кол-во страниц, защит и кнопка переключения на форме
+                max_page, max_prot = self.max_condition(num_iter)
 
-                    if max_page is None or max_prot is None:
-                        print_tab = self.table if self.choice_table(self.table) else f'{self.table}_{num_iter}'
-                        print(f'''HMI. {print_tab}. Не определено количество страниц переключений или защит''')
-                        # self.logsTextEdit.logs_msg(f'''HMI. {print_tab}.
-                        #                            Не определено количество
-                        #                            страниц переключений
-                        #                            или защит''', 2)
-                        continue
-                    self.click = True if max_page > 1 else False
-                    # Чтение шаблона
-                    root, tree = self.dop_function.xmlParser(new_form)
-                    # Изменение шаблона
-                    template = Template(self.request, self.kit,
-                                        max_prot, root, self.table)
+                if max_page is None or max_prot is None:
+                    self.logsTextEdit.logs_msg(f'''HMI. {print_tab}.
+                                               Не определено количество
+                                               страниц переключений
+                                               или защит''', 2)
+                    continue
+                self.click = True if max_page > 1 else False
+                # Чтение шаблона
+                root, tree = self.dop_function.xmlParser(new_form)
+                # Изменение шаблона
+                template = Template(self.request, self.kit,
+                                    max_prot, root, self.table)
 
-                    update_data = template.select_name(num_iter, self.choice_table(self.table))
-                    template.change_template(self.click, update_data)
+                update_data = template.select_name(num_iter, self.choice_table(self.table))
+                template.change_template(self.click, update_data)
 
-                    # Сборка защит
-                    defenc_read = TopRow(max_page, root, self.kit, self.request,
-                                         self.table, num_iter, self.click)
-                    defenc_read.form_assembly()
-                    # Сборка кнопок
-                    if self.click:
-                        button = Button(max_page, root, self.kit,
-                                        self.request, self.table, num_iter)
-                        button.form_assembly()
+                # Сборка защит
+                defenc_read = TopRow(max_page, root, self.kit, self.request,
+                                     self.table, num_iter, self.click)
+                defenc_read.form_assembly()
+                # Сборка кнопок
+                if self.click:
+                    button = Button(max_page, root, self.kit,
+                                    self.request, self.table, num_iter)
+                    button.form_assembly()
 
-                    tree.write(new_form, pretty_print=True, encoding='utf-8')
+                tree.write(new_form, pretty_print=True, encoding='utf-8')
+            self.logsTextEdit.logs_msg(f'''HMI. {self.table}.
+                                       Picture заполнена''', 1)
         except Exception:
-            print(traceback.format_exc())
-
-
-a = DefenceMap()
-a.fill_pic_new(['GMPNA'])
+            self.logsTextEdit.logs_msg(f'''HMI. {self.table}. Ошибка:
+                                       {traceback.format_exc()}''', 2)

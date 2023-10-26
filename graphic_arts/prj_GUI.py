@@ -2,6 +2,7 @@ import sys
 import traceback
 from psycopg2 import Error
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIntValidator
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QTabWidget
@@ -25,6 +26,8 @@ from model_new import db_prj
 from model_new import Signals
 from backend_importKD import Import_in_SQL
 from request_sql import RequestSQL
+from hmi_defence import DefenceMap
+from hmi_uso import DaignoPicture
 
 
 SIZE_WORK_BACK = (1200, 500)
@@ -159,6 +162,17 @@ class ElementSignature(QLabel):
                            border-radius: 4;
                            padding: 0px;
                            font: 15px consolas;''')
+
+
+class LabelHMI(QLabel):
+    '''Конструктор класса текста.
+    Подпись элемента виджета'''
+    def __init__(self, *args, **kwargs):
+        super(LabelHMI, self).__init__(*args, **kwargs)
+        self.setStyleSheet('''border-radius: 4;
+                              padding: 0px;
+                              font: 18px consolas;''')
+        self.setAlignment(Qt.AlignCenter)
 
 
 class GenProject(QWidget):
@@ -659,6 +673,84 @@ class ImportKD(QWidget):
             return
 
 
+class GenHMIandDev(QWidget):
+    '''Генерация ВУ HMI и DevStudio.'''
+    def __init__(self, logtext, parent=None):
+        super(GenHMIandDev, self).__init__(parent)
+        self.logsTextEdit = logtext
+        self.parent = parent
+        self.dop_function = DopFunction()
+
+        layout_h1 = QHBoxLayout()
+        layout_v1 = QVBoxLayout(self)
+
+        label_hmi_sign = LabelHMI('HMI')
+        label_devstudio_sign = LabelHMI('DevStudio')
+        self.select_row = LineEdit(placeholderText='Номер МА',
+                                   clearButtonEnabled=True)
+        self.select_row.setMaximumSize(135, 100)
+        self.select_row.setValidator(QIntValidator())
+        self.select_row.setToolTip('''Если необходимо собрать\nзашиты или готовности по конкретному МА,\nто укажи номер''')
+
+        self.checkbox_hmi_ktpr = CheckBox('KTPR')
+        self.checkbox_hmi_ktpra = CheckBox('KTPRA')
+        self.checkbox_hmi_gmpna = CheckBox('GMPNA')
+        self.checkbox_hmi_ktprp = CheckBox('KTPRP')
+        self.checkbox_hmi_uso = CheckBox('USO')
+        self.checkbox_hmi_uts = CheckBox('UTS')
+        self.checkbox_hmi_upts = CheckBox('UPTS')
+
+        self.button_gen_hmi = GenFormButton('\t\t\t\tСобрать Pictures\t\t\t\t')
+        self.button_gen_hmi.clicked.connect(self.gen_hmi)
+
+        layout_h1.addWidget(self.select_row)
+        layout_h1.addWidget(self.checkbox_hmi_ktpra)
+        layout_h1.addWidget(self.checkbox_hmi_gmpna)
+        layout_h1.addWidget(self.checkbox_hmi_ktpr)
+        layout_h1.addWidget(self.checkbox_hmi_ktprp)
+        layout_h1.addWidget(self.checkbox_hmi_uso)
+        layout_h1.addWidget(self.checkbox_hmi_uts)
+        layout_h1.addWidget(self.checkbox_hmi_upts)
+        layout_h1.addWidget(self.button_gen_hmi)
+
+        layout_v1.addWidget(label_hmi_sign)
+        layout_v1.addLayout(layout_h1)
+        layout_v1.addWidget(label_devstudio_sign)
+        layout_v1.addStretch()
+
+    def object_uso(self):
+        self.defence = DefenceMap(self.logsTextEdit)
+        self.defence.fill_pic_new()
+
+    def object_defence(self, table: dict, number_pump: int = None):
+        '''Объект класса генерация защит.'''
+        self.defence = DefenceMap(self.logsTextEdit)
+        self.defence.fill_pic_new(table, number_pump)
+
+    def object_siren(self):
+        pass
+
+    def gen_hmi(self):
+        '''Клик по кнопке собрать Pictures.'''
+        if self.checkbox_hmi_ktpr.isChecked():
+            self.object_defence('KTPR')
+        if self.checkbox_hmi_ktpra.isChecked():
+            num_pump = self.select_row.text()
+            if num_pump == '':
+                num_pump = None
+            self.object_defence('KTPRA', int(num_pump))
+        if self.checkbox_hmi_gmpna.isChecked():
+            num_pump = self.select_row.text()
+            if num_pump == '':
+                num_pump = None
+            self.object_defence('GMPNA', int(num_pump))
+        if self.checkbox_hmi_ktprp.isChecked():
+            self.object_defence('KTPRP')
+
+        # if self.checkbox_hmi_uso.isChecked():
+        #     self.object_uso()
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -718,7 +810,7 @@ class MainWindow(QMainWindow):
         tab_2 = ImportKD(self.logsTextEdit, self)
         tab_3 = TabConnect(self.logsTextEdit)
         tab_4 = TabConnect(self.logsTextEdit)
-        tab_5 = TabConnect(self.logsTextEdit)
+        tab_5 = GenHMIandDev(self.logsTextEdit)
         tab_6 = TabConnect(self.logsTextEdit)
 
         self.tabwidget.addTab(tab_1, 'Соединение')

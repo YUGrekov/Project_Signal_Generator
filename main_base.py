@@ -558,20 +558,28 @@ class Editing_table_SQL():
         return next(zip(*self.cursor.description))
 
     def apply_request_select(self, request, table_used: str, logging):
+        '''Обраблотка запроса от пользователя.'''
+        def column_table(table: str, query_column):
+            if query_column[0] == '*':
+                column_used = self.column_names(table)
+            else:
+                column_used = ', '.join(query_column)
+            return column_used
+
         try:
             self.cursor.execute(f'''{request}''')
+            value = self.cursor.fetchall()
+
             query_table = Parser(f'''{request}''').tables
+            query_column = Parser(f'''{request}''').columns
             name_column = next(zip(*self.cursor.description))
+
             table_used = query_table[0]
 
-            eng_name_column = self.column_names(table_used)
-
             dict_rus = self.exist_check_array(self.read_json(), table_used)
-            rus_eng_name = self.russian_name_column(dict_rus, eng_name_column)
+            rus_eng_name = self.russian_name_column(dict_rus, column_table(table_used, query_column))
 
             c_col = self.exist_check_int(self.read_json(), table_used)
-
-            value = self.cursor.fetchall()
 
             count_column = len(name_column)
             count_row = len(value)
@@ -7314,7 +7322,6 @@ class Filling_USO():
                     except:
                         list_diag['temperature']  = ''
                         msg[f'{today} - Таблица: uso. Сигнал открытой двери шкафа {uso[0]} не найден!'] = 2
-
                     self.cursor.execute(f"""SELECT variable, name
                                             FROM di
                                             WHERE name LIKE '%{uso[0]}%' AND 
@@ -7361,9 +7368,7 @@ class Filling_AI():
         msg = {}
         list_AI = []
         count_AI = 0
-        dop_analog = {'Аварийное отключение'  : ['', 'мА', 'Сигналы с контролем цепи', 'Сигнализаторы', 'Сигналы с контролем цепи', [4, 20], 0],
-                      'Аварийный максимальный': ['', 'мА', 'Сигналы с контролем цепи', 'Сигнализаторы', 'Сигналы с контролем цепи', [4, 20], 0],
-                      'Аварийный минимальный' : ['', 'мА', 'Сигналы с контролем цепи', 'Сигнализаторы', 'Сигналы с контролем цепи', [4, 20], 0],
+        dop_analog = {'аварийн'               : ['', 'мА', 'Сигналы с контролем цепи', 'Сигнализаторы', 'Сигналы с контролем цепи', [4, 20], 0],
                       'объем'                 : ['V', 'м3', '', '', '', [None, None], 0], 
                       'объём'                 : ['V', 'м3', '', '', '', [None, None], 0],
                       'перепад'               : ['dP', 'МПа', 'Аналоги (макс1 = макс.уставка)', 'Перепад давления', '', [0, 1], 2],
@@ -7377,7 +7382,7 @@ class Filling_AI():
                       'сила'                  : ['I', 'A', 'Аналоги (макс1 = повышенная)', 'Общестанционные', '', [0, 1000], 0],
                       'температура'           : ['T', '°C', 'Аналоги (макс1 = повышенная)', 'Температуры', '', [-50, 100], 0],
                       'уровень'               : ['L', 'мм', 'Аналоги (макс1 = макс.уставка)', 'Уровни', '', [200, 1000], 0],
-                      'утечк'                 : ['L', 'мм', 'Сигналы с контролем цепи', 'Сигнализаторы', 'Сигналы с контролем цепи', [4, 20], 0],
+                      'утечк'                 : ['L', 'мА', 'Сигналы с контролем цепи', 'Сигнализаторы', 'Сигналы с контролем цепи', [4, 20], 0],
                       'расход'                : ['Q', 'м3/ч', 'Аналоги (макс1 = макс.уставка)', '', '', [0, 1000], 0],
                       'положени'              : ['Q', '%', '', '', '', [0, 100], 0],
                       'затоплен'              : ['L', 'мА', 'Сигналы с контролем цепи', 'Сигнализаторы', 'Сигналы с контролем цепи', [4, 20], 0],
@@ -7391,7 +7396,7 @@ class Filling_AI():
                     msg[f'{today} - Таблицы: signals или hardware пустые! Заполни таблицу!'] = 2
                     return msg
                 
-                for row_sql in Signals.select().order_by(Signals.id).dicts():
+                for row_sql in Signals.select().order_by(Signals.description).dicts():
                     id_s        = row_sql['id']    
                     uso_s       = row_sql['uso']    
                     tag         = row_sql['tag']
@@ -7772,7 +7777,7 @@ class Filling_DI():
                     msg[f'{today} - Таблицы: signals или hardware пустые! Заполни таблицу!'] = 2
                     return msg
                 
-                for row_sql in Signals.select().order_by(Signals.id).dicts():
+                for row_sql in Signals.select().order_by(Signals.tag).dicts():
                     id_s       = row_sql['id'] 
                     uso_s       = row_sql['uso']    
                     tag         = row_sql['tag']
@@ -7787,6 +7792,7 @@ class Filling_DI():
                     tag_eng = self.dop_function.translate(tag)
 
                     if self.dop_function.str_find(type_signal, {'DI'}) or self.dop_function.str_find(scheme, {'DI'}):
+                        print(description)
                         count_DI += 1
                         # Выбор между полным заполнением или обновлением
                         if self.dop_function.empty_table('di'):

@@ -1,5 +1,7 @@
 from PyQt5.QtCore import Qt
+from functools import partial
 from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QShortcut
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QTableWidget
 from PyQt5.QtWidgets import QPushButton
@@ -236,11 +238,9 @@ class TableWidget(QTableWidget):
     def click_position(self):
         '''Отработка события при изменении ячейки'''
         row, column = self.data_cell()
-
         # При добавлении новой строки она == -1
         if row == -1:
             return
-
         try:
             value = self.text_cell(row, column)
             value_id = self.text_cell(row, 0)
@@ -248,8 +248,13 @@ class TableWidget(QTableWidget):
             value = None
             value_id = None
 
-        hat_name = self.edit_SQL.column_names(self.table_us)
+        # Переход на нижнюю строку
+        if (row + 1) == self.row_count_tabl():
+            self.setCurrentCell(row, column)
+        else:
+            self.setCurrentCell(row + 1, column)
 
+        hat_name = self.edit_SQL.column_names(self.table_us)
         self.edit_SQL.update_row_tabl(column, value, value_id,
                                       self.table_us, hat_name, self.logging)
 

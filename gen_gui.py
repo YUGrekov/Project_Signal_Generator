@@ -1,4 +1,5 @@
 import sys
+from main_base import *
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtWidgets import QFrame
@@ -15,7 +16,6 @@ from uts_upts_hmi import Alarm_map
 from uso_hmi import DaignoPicture as DiagForm
 from windows_base_editing import MainWindow as WinEditing
 from import_exel_back import Import_in_SQL as KD_import
-from main_base import *
 
 # ГРАФИЧЕСКИЙ ИНТЕРФЕЙС ДЛЯ ЗАПУСКА ГЕНЕРАТОРА
 # Сформировать exe: в терминале добавить: auto-py-to-exe
