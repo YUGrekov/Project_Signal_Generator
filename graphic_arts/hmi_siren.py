@@ -55,12 +55,6 @@ class NumName(Enum):
     VER = '5'
 
 
-class DesignedParamsThree(NamedTuple):
-    target: str
-    value: str
-    ver: str
-
-
 class DesignedParamsTwo(NamedTuple):
     target: str
     ver: str
