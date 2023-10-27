@@ -670,7 +670,6 @@ class MainWindow(QMainWindow):
         self.old_row_1 = self.tableWidget_dub.currentRow()
         self.tableWidget_dub.blockSignals(False)
         self.tableWidget.blockSignals(False)
-        print('two')
 
     def type_tabl(self):
         '''Запуск нового окна для просмотра типа столбцов.'''

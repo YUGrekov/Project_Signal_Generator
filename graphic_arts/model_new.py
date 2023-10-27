@@ -8,12 +8,12 @@ from peewee import DoubleField
 from playhouse.migrate import PostgresqlMigrator
 
 connect = Connect()
-db = PostgresqlDatabase(None)
-# db = PostgresqlDatabase(connect.database,
-#                         user=connect.user,
-#                         password=connect.password,
-#                         host=connect.host,
-#                         port=connect.port)
+# db = PostgresqlDatabase(None)
+db = PostgresqlDatabase(connect.database,
+                        user=connect.user,
+                        password=connect.password,
+                        host=connect.host,
+                        port=connect.port)
 db_prj = PostgresqlDatabase(None)
 migrator = PostgresqlMigrator(db)
 
@@ -764,7 +764,7 @@ class UTS(BaseModel):
     Kvit = CharField(null=True)
     Pic = CharField(null=True)
     number_list_VU = IntegerField(null=True)
-    order_number_for_VU = IntegerField(null=True)
+    number_siren_VU = IntegerField(null=True)
     uso = CharField(null=True)
     basket = IntegerField(null=True)
     module = IntegerField(null=True)
@@ -788,7 +788,7 @@ class UPTS(BaseModel):
     Kvit = CharField(null=True)
     Pic = CharField(null=True)
     number_list_VU = IntegerField(null=True)
-    order_number_for_VU = IntegerField(null=True)
+    number_siren_VU = IntegerField(null=True)
     uso = CharField(null=True)
     basket = IntegerField(null=True)
     module = IntegerField(null=True)

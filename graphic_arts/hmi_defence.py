@@ -408,7 +408,7 @@ class Template(BaseFunction):
                 for lvl_2 in lvl_1.iter(NumName.INIT.value):
                     self.update_string(lvl_2.attrib, NumName.VALUE_ATR.value, NumName.IsKTPRA.value, self.kit.isktpra)
 
-    def change_template(self: int, click, name: dict):
+    def change_template(self, click, name: dict):
         '''Редактирование шаблона формы.'''
         size_h, res_coorY = self.size(click)
         # Type
@@ -659,7 +659,7 @@ class DefenceMap(BaseFunction):
 
         if os.path.isfile(new_picture):
             os.remove(new_picture)
-        shutil.copy2(f'{connect.path_hmi_sample}\\Form_Defences_default_new.omobj',
+        shutil.copy2(f'{connect.path_hmi_sample}\\Form_Defences_default.omobj',
                      new_picture)
         return new_picture
 

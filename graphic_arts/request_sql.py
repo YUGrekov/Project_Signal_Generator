@@ -50,7 +50,7 @@ class RequestSQL():
             string = f'SET "{column}"= NULL'
         else:
             string = f'''SET "{column}"= '{change_value}' '''
-        print(f"""UPDATE "{table}" {string} WHERE id={id_cell}""")
+
         self.cursor.execute(f"""UPDATE "{table}"
                                 {string}
                                 WHERE id={id_cell}""")

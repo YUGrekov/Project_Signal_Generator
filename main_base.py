@@ -7488,6 +7488,8 @@ class Filling_AI():
                         value_precision  = 0
 
                         for key, short in dop_analog.items():
+                            if re.findall(r"вибраци.+насос", str(description).lower()):
+                                print(description)
                             if self.dop_function.str_find(str(description).lower(), {key}):
                                 sign = short[0]
                                 unit = short[1]

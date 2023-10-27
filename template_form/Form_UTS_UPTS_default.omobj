@@ -2,8 +2,8 @@
 	<designed target="X" value="0" ver="5"/>
 	<designed target="Y" value="0" ver="5"/>
 	<designed target="Rotation" value="0" ver="5"/>
-	<designed target="Width" value="coordinate_W" ver="5"/>
-	<designed target="Height" value="coordinate_H" ver="5"/>
+	<designed target="Width" value="Width" ver="5"/>
+	<designed target="Height" value="Height" ver="5"/>
 	<designed target="ZValue" value="0" ver="5"/>
 	<designed target="Scale" value="1" ver="5"/>
 	<designed target="Visible" value="true" ver="5"/>
@@ -17,9 +17,9 @@
 	<designed target="BrushStyle" value="1" ver="5"/>
 	<designed target="WindowX" value="0" ver="5"/>
 	<designed target="WindowY" value="0" ver="5"/>
-	<designed target="WindowWidth" value="1920" ver="5"/>
-	<designed target="WindowHeight" value="1080" ver="5"/>
-	<designed target="WindowCaption" value="name_list" ver="5"/>
+	<designed target="WindowWidth" value="W_Width" ver="5"/>
+	<designed target="WindowHeight" value="W_Height" ver="5"/>
+	<designed target="WindowCaption" value="W_Caption" ver="5"/>
 	<designed target="ShowWindowCaption" value="true" ver="5"/>
 	<designed target="ShowWindowMinimize" value="false" ver="5"/>
 	<designed target="ShowWindowMaximize" value="false" ver="5"/>
@@ -49,8 +49,8 @@
 		<designed target="FontColor" value="4278190080" ver="5"/>
 		<designed target="TextAlignment" value="132" ver="5"/>
 	</object>
-	<object access-modifier="private" name="ApTemplate" display-name="ApTemplate" uuid="3cd004bc-155e-4df0-ae6e-69744e4861fd" base-type="ApSource" base-type-id="966603da-f05e-4b4d-8ef0-919efbf8ab2c" ver="5">
-		<designed target="Path" value="designed_path" ver="5"/>
+	<object access-modifier="private" name="ApSource" display-name="ApSource" uuid="3cd004bc-155e-4df0-ae6e-69744e4861fd" base-type="ApSource" base-type-id="966603da-f05e-4b4d-8ef0-919efbf8ab2c" ver="5">
+		<designed target="Path" value="path" ver="5"/>
 		<designed target="Active" value="true" ver="5"/>
 		<designed target="ReAdvise" value="0" ver="5"/>
 		<init target="ParentSource" ver="5" ref="unit.Global.global_ApSource"/>
