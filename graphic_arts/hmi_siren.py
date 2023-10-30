@@ -10,11 +10,11 @@ from model_new import connect
 from request_sql import RequestSQL
 
 
-SIZE_TABLE_FALSE = 61
-SIZE_TABLE_TRUE = 103
+SIZE_TABLE_FALSE = 58
+SIZE_TABLE_TRUE = 94
 HEIGHT_ROW = 26
 OFFSET_CLICK_X = 50
-OFFSET_CLICK_Y = 63
+OFFSET_CLICK_Y = 84
 
 
 class NewRowsParams(NamedTuple):
@@ -112,17 +112,16 @@ class BaseAlarmMap():
                           3: DesignedParams(target='Rotation', value='0'),
                           4: DesignedParams(target='Width', value='40'),
                           5: DesignedParams(target='Height', value='30')}
-    attr_button_init = {'1': DesignedParamsTwo(target='page_number', ver='5'),
-                   '2': DesignedParamsTwo(target='VisibleObject', ver='5'),
-                   '3': DesignedParamsTwo(target='UnVisibleObject1', ver='5'),
-                   '4': DesignedParamsTwo(target='UnVisibleObject2', ver='5'),
-                   '5': DesignedParamsTwo(target='UnVisibleObject3', ver='5'),
-                   '6': DesignedParamsTwo(target='UnVisibleObject4', ver='5'),
-                   '7': DesignedParamsTwo(target='UnVisibleObject5', ver='5'),
-                   '8': DesignedParamsTwo(target='UnVisibleObject6', ver='5'),
-                   '9': DesignedParamsTwo(target='UnVisibleObject7', ver='5'),
-                   '10': DesignedParamsTwo(target='UnVisibleObject8', ver='5'),
-                   '11': DesignedParamsTwo(target='_link_init_ApSource_type_uts_button', ver='5')}
+    attr_button_init = {1: DesignedParams(target='VisibleObject', value=''),
+                        2: DesignedParams(target='_link_init_ApSource_type_uts_button', value=''),
+                        3: DesignedParams(target='UnVisibleObject1', value=''),
+                        4: DesignedParams(target='UnVisibleObject2', value=''),
+                        5: DesignedParams(target='UnVisibleObject3', value=''),
+                        6: DesignedParams(target='UnVisibleObject4', value=''),
+                        7: DesignedParams(target='UnVisibleObject5', value=''),
+                        8: DesignedParams(target='UnVisibleObject6', value=''),
+                        9: DesignedParams(target='UnVisibleObject7', value=''),
+                        10: DesignedParams(target='UnVisibleObject8', value='')}
 
     name_title = 'Управление сигнализацией'
     attrib_top_1 = 'page'
@@ -130,7 +129,7 @@ class BaseAlarmMap():
     attrib_row = 'type_uts_row'
     bt_id_top = '15726dc3-881e-4d8d-b0fa-a8f8237f08ca'
     bt_id_row = '70e32123-f413-4246-a6d8-6eb96bd1f953'
-    width = '870'
+    width = '910'
     req_1 = '"tag"'
     req_2 = '"number_list_VU" = {}'
     order = "number_siren_VU"
@@ -247,12 +246,13 @@ class Template(BaseFunction):
             size = str(((self.max_siren + 1) * HEIGHT_ROW) + SIZE_TABLE_TRUE)
         else:
             size = str(((self.max_siren + 1) * HEIGHT_ROW) + SIZE_TABLE_FALSE)
+        print(size)
         return size
 
     def upd_settings_form(self, lvl, size_h):
         '''Изменение основных настроек формы.'''
-        self.update_string(lvl.attrib, NumName.NAME_ATR.value, NumName.T_NAME.value, self.kit.name_form)
-        self.update_string(lvl.attrib, NumName.D_NAME.value, NumName.T_NAME.value, self.kit.name_form)
+        self.update_string(lvl.attrib, NumName.NAME_ATR.value, NumName.NAME_ATR.value, self.kit.name_form)
+        self.update_string(lvl.attrib, NumName.D_NAME.value, NumName.NAME_ATR.value, self.kit.name_form)
         self.update_string(lvl.attrib, NumName.UUID.value, NumName.UUID.value, str(uuid.uuid1()))
 
         for lvl_1 in lvl.iter(NumName.DESIGNED.value):
@@ -349,7 +349,7 @@ class TopRow(BaseFunction):
                                               self.kit.attrib_row,
                                               self.kit.bt_id_row)
 
-                    coordY = str(HEIGHT_ROW * i)
+                    coordY = str(HEIGHT_ROW * i) if page == 1 else str(HEIGHT_ROW * (i - 1))
                     for key, value in self.kit.attr_row_design.items():
                         atr_val = coordY if key == 2 else value[1]
 
@@ -397,16 +397,16 @@ class Button(BaseFunction):
     def choice_visible(self, key, page):
         '''Подставляем значения для видимости страниц.'''
         if key == 1:
-            value = f'{self.kit.attrib_top}_{page}'
+            value = f'{self.kit.attrib_top_1}_{page}'
         elif key == 2:
-            value = f'{self.kit.apsoure_name}{self.num_iter}'
+            value = f'{self.kit.name_apsoure}'
         elif key > 2:
             for i in range(key, 11):
                 if key == i and page == (key - 2) and self.max_page >= (key - 2):
                     value = 'empty_link'
                     break
                 elif self.max_page >= (key - 2):
-                    value = f'{self.kit.attrib_top}_{key - 2}'
+                    value = f'{self.kit.attrib_top_1}_{key - 2}'
                     break
                 else:
                     value = 'empty_link'
@@ -415,23 +415,11 @@ class Button(BaseFunction):
 
     def req_table(self, page):
         '''Запрос к таблице с данными по каждой странице с защитами.'''
-        req = f"{self.kit.req_2}".format(self.num_iter, page)
-
-        if self.choice_table(self.table):
-            req = f"{self.kit.req_2}".format(page)
-
+        req = f"{self.kit.req_2}".format(page)
         data = self.request.where_select(str(self.table).lower(),
-                                         self.kit.req_path, req,
+                                         self.kit.req_1, req,
                                          self.kit.order)
         return data
-
-    def def_path(self, id_num):
-        '''Указываем группы для подсветки кнопки.'''
-        bit_def = int(id_num) % 4
-        num_bit_defence = '4' if bit_def == 0 else str(bit_def)
-        num_registry = math.ceil(int(id_num) / 4)
-
-        return f'Group_{num_registry}.4' if num_bit_defence == 0 else f'Group_{num_registry}.{num_bit_defence}'
 
     def filling_button(self, lvl):
         '''Добавляется на форму кнопка.'''
@@ -457,18 +445,18 @@ class Button(BaseFunction):
             self.new_row_designed(object, NumName.INIT.value,
                                   'page_number', str(page))
 
-            # for key, value in self.kit.attr_button_init.items():
-            #     self.new_row_init(object,
-            #                       NumName.INIT.value,
-            #                       value[0],
-            #                       self.choice_visible(key, page))
+            for key, value in self.kit.attr_button_init.items():
+                self.new_row_init(object,
+                                  NumName.INIT.value,
+                                  value[0],
+                                  self.choice_visible(key, page))
 
-            # data = self.req_table(page)
-            # for i in range(1, len(data) + 1):
-            #     self.new_row_init(object,
-            #                       NumName.INIT.value,
-            #                       f'def{i}_path',
-            #                       self.def_path(data[i - 1][0]))
+            data = self.req_table(page)
+            for i in range(1, len(data) + 1):
+                self.new_row_init(object,
+                                  NumName.INIT.value,
+                                  f'def{i}_path',
+                                  f'{data[i - 1][0]}.s_State')
 
     def form_assembly(self):
         '''Заполнение кнопкой.'''
@@ -478,8 +466,8 @@ class Button(BaseFunction):
 
 class Alarm_map():
     '''Заполнение карт табло и сирен.'''
-    def __init__(self, table):
-        # self.logsTextEdit = logtext
+    def __init__(self, table, logtext):
+        self.logsTextEdit = logtext
         self.dop_function = General_functions()
         self.table = table
 
@@ -506,15 +494,16 @@ class Alarm_map():
         try:
             self.kit = UTS() if self.table == 'UTS' else UPTS()
             self.request = RequestSQL()
-            # self.logsTextEdit.logs_msg(f'''HMI. {self.table}. Заполнение формы''', 1)
+            self.logsTextEdit.logs_msg(f'''HMI. {self.table}.
+                                       Заполнение формы''', 1)
 
             # Max кол-во страниц, защит и кнопка переключения на форме
             max_page, max_siren = self.max_condition()
             if max_page is None or max_siren is None:
-                # self.logsTextEdit.logs_msg(f'''HMI. {self.table}.
-                #                             Не определено количество
-                #                             страниц переключений
-                #                             или сирен''', 2)
+                self.logsTextEdit.logs_msg(f'''HMI. {self.table}.
+                                            Не определено количество
+                                            страниц переключений
+                                            или сирен''', 2)
                 return
             self.click = True if max_page > 1 else False
 
@@ -537,11 +526,8 @@ class Alarm_map():
                 button.form_assembly()
 
             tree.write(new_form, pretty_print=True, encoding='utf-8')
-            # self.logsTextEdit.logs_msg(f'''HMI. {self.table}.
-            #                            Picture заполнена''', 1)
+            self.logsTextEdit.logs_msg(f'''HMI. {self.table}.
+                                       Форма заполнена''', 1)
         except Exception:
-            print(f'Генерация picture .omobj {traceback.format_exc()}')
-
-
-a = Alarm_map('UTS')
-a.filling_template()
+            self.logsTextEdit.logs_msg(f'''HMI. {self.table}. Ошибка
+                                      {traceback.format_exc()}''', 2)

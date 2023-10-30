@@ -76,21 +76,6 @@ class NumName(Enum):
     RESET_BUT = 'type_reset_all_button_1'
     VER = '5'
 
-    # T_WIDTH = 't_width'
-    # SS_X = 'ss_X'
-    # RENAME_LINK = 'rename_link'
-    # LINK_OUT_Y = 'link_out_Y'
-    # IN_PATH = 'in_path'
-    # OUT_PATH = 'out_path'
-    # VAL_ATTR_1 = '_init_path'
-    # VAL_ATTR_2 = '_link_init_ApSource'
-    # VAL_ATTR_3 = 'unit.Global.global_ApSource'
-    # VAL_ATTR_4 = '5'
-    # COOR_Y = (88, 177)
-    # SS_COOR_Y = (5, 27)
-    # B_COOR_Y = (-110, 180)
-    # M_COOR_X = 40
-
 
 class BaseDefenceMap():
     '''Базовый класс карт защит и готовностей.'''

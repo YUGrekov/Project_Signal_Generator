@@ -4,7 +4,6 @@ from lxml import etree
 
 class General_functions():
     '''Общие функции оспользованные при разработке.'''
-
     def str_find(self, line, array):
         '''Поиск в строке.'''
         for word in array:

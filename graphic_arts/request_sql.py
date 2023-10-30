@@ -95,3 +95,20 @@ class RequestSQL():
                                 FROM "{table.lower()}"
                                 WHERE "{condition[0]}"={condition[1]}''')
         return self.cursor.fetchall()[0][0]
+
+    def empty_table_check(self, table: str):
+        '''Проверка таблицы на заполнение.'''
+        self.cursor.execute(f'''SELECT COUNT (*) FROM "{table}"''')
+        empty = self.cursor.fetchall()
+        return True if int(empty[0][0]) == 0 else False
+
+    def non_repeating_names(self, table: str, column, order):
+        '''Нахождение неповторяющихся сигналов в таблице.'''
+        self.cursor.execute(f'''SELECT DISTINCT "{column}"
+                                FROM "{table}"
+                                ORDER BY "{order}"''')
+        return self.cursor.fetchall()
+
+    def write_base_orm(self, data: dict, model):
+        '''Запись в базу через ORM peewee.'''
+        model.insert_many(data).execute()

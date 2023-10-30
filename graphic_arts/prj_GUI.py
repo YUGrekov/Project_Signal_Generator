@@ -28,6 +28,7 @@ from backend_importKD import Import_in_SQL
 from request_sql import RequestSQL
 from hmi_defence import DefenceMap
 from hmi_uso import DaignoPicture
+from hmi_siren import Alarm_map
 
 
 SIZE_WORK_BACK = (1200, 500)
@@ -719,21 +720,26 @@ class GenHMIandDev(QWidget):
         layout_v1.addStretch()
 
     def object_uso(self):
-        self.defence = DefenceMap(self.logsTextEdit)
-        self.defence.fill_pic_new()
+        '''Объект класса генерация усо.'''
+        self.uso = DaignoPicture(self.logsTextEdit)
+        self.uso.filling_pic_uso()
 
     def object_defence(self, table: dict, number_pump: int = None):
         '''Объект класса генерация защит.'''
         self.defence = DefenceMap(self.logsTextEdit)
         self.defence.fill_pic_new(table, number_pump)
 
-    def object_siren(self):
-        pass
+    def object_siren(self, table: dict):
+        '''Объект класса генерация сирен.'''
+        self.siren = Alarm_map(table, self.logsTextEdit)
+        self.siren.filling_template()
 
     def gen_hmi(self):
         '''Клик по кнопке собрать Pictures.'''
         if self.checkbox_hmi_ktpr.isChecked():
             self.object_defence('KTPR')
+        if self.checkbox_hmi_ktprp.isChecked():
+            self.object_defence('KTPRP')
         if self.checkbox_hmi_ktpra.isChecked():
             num_pump = self.select_row.text()
             if num_pump == '':
@@ -744,11 +750,12 @@ class GenHMIandDev(QWidget):
             if num_pump == '':
                 num_pump = None
             self.object_defence('GMPNA', int(num_pump))
-        if self.checkbox_hmi_ktprp.isChecked():
-            self.object_defence('KTPRP')
-
-        # if self.checkbox_hmi_uso.isChecked():
-        #     self.object_uso()
+        if self.checkbox_hmi_uso.isChecked():
+            self.object_uso()
+        if self.checkbox_hmi_uts.isChecked():
+            self.object_siren('UTS')
+        if self.checkbox_hmi_upts.isChecked():
+            self.object_siren('UPTS')
 
 
 class MainWindow(QMainWindow):

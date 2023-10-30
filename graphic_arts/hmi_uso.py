@@ -751,8 +751,8 @@ class Line(BaseFunction, BaseUSO):
 
 
 class DaignoPicture(BaseUSO):
-    def __init__(self):
-        # self.logsTextEdit = logtext
+    def __init__(self, logtext):
+        self.logsTextEdit = logtext
         self.dop_function = General_functions()
 
     def cabinet_names(self) -> dict:
@@ -827,6 +827,8 @@ class DaignoPicture(BaseUSO):
             system = MNS if connect.type_system == 'MNS' else PT
             name_uso = self.cabinet_names()
             for eng, rus in name_uso.items():
+                self.logsTextEdit.logs_msg(f'''HMI. {eng}.
+                                           Заполнение формы''', 3)
                 # Проверка шаблона и создание новой картинки
                 path_picture = self.check_template(eng)
                 # Парсинг новой картинки
@@ -852,7 +854,9 @@ class DaignoPicture(BaseUSO):
                 # Добавляем точки к линиям
                 line.edit_point()
                 line.edit_point(False)
-
                 tree.write(path_picture, pretty_print=True, encoding='utf-8')
+                self.logsTextEdit.logs_msg(f'''HMI. {eng}.
+                                           Форма заполнена''', 0)
         except Exception:
-            print(traceback.format_exc())
+            self.logsTextEdit.logs_msg(f'''HMI. USO. Ошибка
+                                      {traceback.format_exc()}''', 2)
