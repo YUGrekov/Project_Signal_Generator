@@ -102,12 +102,15 @@ class RequestSQL():
         empty = self.cursor.fetchall()
         return True if int(empty[0][0]) == 0 else False
 
-    def non_repeating_names(self, table: str, column, order):
+    def non_repea_names(self, models, dist, order):
         '''Нахождение неповторяющихся сигналов в таблице.'''
-        self.cursor.execute(f'''SELECT DISTINCT "{column}"
-                                FROM "{table}"
-                                ORDER BY "{order}"''')
-        return self.cursor.fetchall()
+        query = models.select().order_by(order).distinct(dist)
+        return query.execute()
+
+    def non_repea_cond(self, models, dist, where, order):
+        '''Нахождение неповторяющихся по условию сигналов в таблице.'''
+        query = models.select().distinct(dist).where(where).order_by(order)
+        return query.execute()
 
     def write_base_orm(self, data: dict, model):
         '''Запись в базу через ORM peewee.'''
