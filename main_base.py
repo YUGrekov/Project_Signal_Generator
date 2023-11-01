@@ -7790,12 +7790,13 @@ class Filling_DI():
                     module_s    = row_sql['module']
                     channel_s   = row_sql['channel']
 
-                    if tag == 'None' or tag is None: tag = ''
+                    if tag == 'None' or tag is None:
+                        tag = ''
                     tag_eng = self.dop_function.translate(tag)
 
                     if self.dop_function.str_find(type_signal, {'DI'}) or self.dop_function.str_find(scheme, {'DI'}):
-                        print(description)
                         count_DI += 1
+
                         # Выбор между полным заполнением или обновлением
                         if self.dop_function.empty_table('di'):
                             msg[f'{today} - Таблица: di пуста, идет заполнение'] = 1
@@ -7813,9 +7814,9 @@ class Filling_DI():
                             if not bool(exist_tag):
                                 self.cursor.execute(f'''SELECT id, tag 
                                                         FROM di
-                                                        WHERE uso='{uso_s}' AND 
-                                                              basket={basket_s} AND 
-                                                              module={module_s} AND 
+                                                        WHERE uso='{uso_s}' AND
+                                                              basket={basket_s} AND
+                                                              module={module_s} AND
                                                               channel={channel_s}''')
                                 for id_, tag_ in self.cursor.fetchall():
                                     msg[f'{today} - Таблица: di, у сигнала обновлен tag: id = {id_}, ({tag_}) {tag}'] = 2

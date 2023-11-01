@@ -1,7 +1,6 @@
 from PyQt5.QtCore import Qt
-from functools import partial
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QWidget
-from PyQt5.QtWidgets import QShortcut
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QTableWidget
 from PyQt5.QtWidgets import QPushButton
@@ -139,9 +138,9 @@ class TableWidget(QTableWidget):
         self.setRowCount(row)
         self.setHorizontalHeaderLabels(hat_name)
         self.verticalHeader().setVisible(False)
-        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        # self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.installEventFilter(self)
-        style = "::section {""background-color: #bbbabf; }"
+        style = "::section {""background-color: #bbbabf;}"
         self.horizontalHeader().setStyleSheet(style)
         self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
 
@@ -268,6 +267,24 @@ class TableWidget(QTableWidget):
 
         self.edit_SQL.update_row_tabl(column, text, value_id,
                                       self.table_us, hat_name, self.logging)
+
+    def setColorOldRow(self, row, column):
+        '''Закрашиваем предыдущую строку.'''
+        try:
+            for i in range(1, column):
+                self.item(row, i).setBackground(QColor(225, 229, 229))
+                self.item(row, i).setForeground(QColor(0, 0, 0))
+        except Exception:
+            return
+
+    def setColorNewRow(self, row, column):
+        '''Закрашиваем выделенную строку.'''
+        try:
+            for j in range(1, column):
+                self.item(row, j).setBackground(QColor(0, 120, 215))
+                self.item(row, j).setForeground(QColor(255, 255, 255))
+        except Exception:
+            return
 
 
 class TableWidgetLinks(QTableWidget):
@@ -515,6 +532,8 @@ class MainWindow(QMainWindow):
 
         self.editSQL = Editing_table_SQL()
         self.table_us = table_used
+        self.old_row_1 = 0
+        self.old_row_2 = 0
 
         self.logsTextEdit = LogsTextEdit(self)
         self.tableWidget = TableWidget(self.editSQL,
@@ -588,10 +607,48 @@ class MainWindow(QMainWindow):
     def on_Change_one(self):
         '''Активность окна 1.'''
         self.fl_actives_windows = 1
+        # Подкраска с левой стороны
+        self.tableWidget_dub.blockSignals(True)
+        self.tableWidget.blockSignals(True)
+        current_row = self.tableWidget.currentRow()
+        count_column = self.tableWidget.column_count_tabl()
+        column = self.editSQL.exist_check_int(self.editSQL.read_json(),
+                                              self.table_us)
+
+        self.tableWidget_dub.setColorOldRow(self.old_row_2, column)
+        self.tableWidget.setColorOldRow(self.old_row_2, count_column)
+        self.tableWidget_dub.setColorOldRow(self.old_row_1, column)
+        self.tableWidget.setColorOldRow(self.old_row_1, count_column)
+
+        self.tableWidget_dub.setColorNewRow(current_row, column)
+        self.tableWidget.setColorNewRow(current_row, count_column)
+
+        self.old_row_2 = self.tableWidget.currentRow()
+        self.tableWidget_dub.blockSignals(False)
+        self.tableWidget.blockSignals(False)
 
     def on_Change_two(self):
         '''Активность окна 2.'''
         self.fl_actives_windows = 2
+        # Подкраска с правой стороны
+        self.tableWidget.blockSignals(True)
+        self.tableWidget_dub.blockSignals(True)
+        current_row = self.tableWidget_dub.currentRow()
+        count_column = self.tableWidget.column_count_tabl()
+        column = self.editSQL.exist_check_int(self.editSQL.read_json(),
+                                              self.table_us)
+
+        self.tableWidget.setColorOldRow(self.old_row_1, count_column)
+        self.tableWidget_dub.setColorOldRow(self.old_row_1, column)
+        self.tableWidget.setColorOldRow(self.old_row_2, count_column)
+        self.tableWidget_dub.setColorOldRow(self.old_row_2, column)
+
+        self.tableWidget.setColorNewRow(current_row, count_column)
+        self.tableWidget_dub.setColorNewRow(current_row, column)
+
+        self.old_row_1 = self.tableWidget_dub.currentRow()
+        self.tableWidget_dub.blockSignals(False)
+        self.tableWidget.blockSignals(False)
 
     def type_tabl(self):
         '''Запуск нового окна для просмотра типа столбцов.'''

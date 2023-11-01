@@ -657,7 +657,7 @@ class DefenceMap(BaseFunction):
 
         if os.path.isfile(new_picture):
             os.remove(new_picture)
-        shutil.copy2(f'{connect.path_hmi_sample}\\Form_Defences_default_new.omobj',
+        shutil.copy2(f'{connect.path_hmi_sample}\\Form_Defences_default.omobj',
                      new_picture)
         return new_picture
 
