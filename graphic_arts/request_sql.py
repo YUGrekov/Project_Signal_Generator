@@ -102,6 +102,11 @@ class RequestSQL():
         empty = self.cursor.fetchall()
         return True if int(empty[0][0]) == 0 else False
 
+    def select_orm(self, models, where, order):
+        '''Запрос Select через ORM.'''
+        query = models.select().where(where).order_by(order)
+        return query.execute()
+
     def non_repea_names(self, models, dist, order):
         '''Нахождение неповторяющихся сигналов в таблице.'''
         query = models.select().order_by(order).distinct(dist)
@@ -115,3 +120,8 @@ class RequestSQL():
     def write_base_orm(self, data: dict, model):
         '''Запись в базу через ORM peewee.'''
         model.insert_many(data).execute()
+
+    def check_table(self, table: str):
+        '''Проверка на существование таблицы в БД.'''
+        all_tables = self.get_tabl()
+        return True if table in all_tables else False

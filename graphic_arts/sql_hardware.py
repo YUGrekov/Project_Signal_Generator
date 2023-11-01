@@ -58,7 +58,7 @@ class RS():
         return RS.count
 
 
-class BaseUSO():
+class BaseType():
     '''Описания атрибутов и принадлежность классам.'''
     PARAM_MODULE = {
         'ai': AI,
@@ -144,7 +144,7 @@ class ConstValues():
         return num_min, num_max, t_flag
 
 
-class HW(ConstValues, BaseUSO):
+class HW(ConstValues, BaseType):
     '''Заполнение таблицы Hardware.'''
     def __init__(self):
         # self.logsTextEdit = logtext
@@ -153,16 +153,12 @@ class HW(ConstValues, BaseUSO):
 
     def check_table(self):
         '''Проверяем таблицу signals на наличие и заполненость.'''
-        all_tables = self.request.get_tabl()
-        if not self.dop_function.check_in_table(T_SIGNALS, all_tables):
-            print('''SQL. Hardware. Таблица signals отсутсвует''')
+        result = self.request.check_table(T_SIGNALS)
+        if not result:
+            print('''SQL. Hardware. Таблица signals отсутсвует или не заполнена''')
             # self.logsTextEdit.logs_msg('''SQL. Hardware. Таблица
-            #                            signals отсутсвует''', 2)
-            return False
-        if self.request.empty_table_check(T_SIGNALS):
-            print('''SQL. Hardware. Таблица signals не заполнена''')
-            # self.logsTextEdit.logs_msg('''SQL. Hardware. Таблица
-            #                            signals не заполнена''', 2)
+            #                            signals отсутсвует
+            #                            или не заполнена''', 2)
             return False
         return True
 

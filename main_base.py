@@ -7436,7 +7436,7 @@ class Filling_AI():
                                 for id_, tag_ in self.cursor.fetchall():
                                     msg[f'{today} - Таблица: ai, у сигнала обновлен tag: id = {id_}, ({tag_}) {tag}'] = 2
                                 self.cursor.execute(f'''UPDATE ai
-                                                        SET Tag='{tag}' 
+                                                        SET tag='{tag}' 
                                                         WHERE uso='{uso_s}' AND 
                                                             basket={basket_s} AND 
                                                             module={module_s} AND 
@@ -7452,7 +7452,7 @@ class Filling_AI():
                                 for id_, name_ in self.cursor.fetchall():
                                     msg[f'{today} - Таблица: ai, у сигнала обновлено name: id = {id_}, ({name_}) {description}'] = 2
                                 self.cursor.execute(f'''UPDATE ai
-                                                        SET Name='{description}' 
+                                                        SET name='{description}' 
                                                         WHERE uso='{uso_s}' AND 
                                                               basket={basket_s} AND 
                                                               module={module_s} AND 
