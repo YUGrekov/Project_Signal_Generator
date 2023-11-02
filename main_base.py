@@ -22,85 +22,41 @@ class General_functions():
         for el in arr:
             if str(str1).find(el) > -1:
                 return True
-    def translate(self, str):
-            dict = {".":"_",
-                    "/":"_",
-                    "\\":"_",
-                    ",":"_",
-                    ":":"_",
-                    ";":"_",
-                    "А":"A",
-                    "Б":"_B",
-                    "В":"B",
-                    "Г":"G",
-                    "Д":"D",
-                    "Е":"E",
-                    "Ё":"E",
-                    "Ж":"J",
-                    "З":"Z",
-                    "И":"I",
-                    "Й":"I",
-                    "К":"K",
-                    "Л":"L",
-                    "М":"M",
-                    "Н":"H",
-                    "О":"O",
-                    "П":"_P",
-                    "Р":"P",
-                    "С":"C",
-                    "Т":"T",
-                    "У":"U",
-                    "Ф":"F",
-                    "Х":"X",
-                    "Ц":"C",
-                    "Ч":"CH",
-                    "Ш":"SH",
-                    "Щ":"SCH",
-                    "Ь":"b",
-                    "Ы":"_",
-                    "Ъ":"_",
-                    "Э":"E",
-                    "Ю":"U",
-                    "Я":"YA",
-                    "а":"a",
-                    "б":"_b",
-                    "в":"b",
-                    "г":"g",
-                    "д":"d",
-                    "е":"e",
-                    "ё":"e",
-                    "ж":"j",
-                    "з":"z",
-                    "и":"i",
-                    "й":"i",
-                    "к":"k",
-                    "л":"l",
-                    "м":"m",
-                    "н":"h",
-                    "о":"o",
-                    "п":"_p",
-                    "р":"p",
-                    "с":"c",
-                    "т":"t",
-                    "у":"u",
-                    "ф":"f",
-                    "х":"x",
-                    "ц":"c",
-                    "ч":"ch",
-                    "ш":"sh",
-                    "щ":"sch",
-                    "ь":"b",
-                    "ы":"_",
-                    "ъ":"_",
-                    "э":"e",
-                    "ю":"u",
-                    "я":"ya"}
 
-            intab = '.-пПаАфз/еЕсС'
-            outtab = '__ppaafz_eEcC'
-            trantab = str.maketrans(dict)
-            outstr = str.translate(trantab)
-            return outstr
+    def translate(self, str):
+        dict = {".": "_",
+                "/": "_",
+                "\\": "_",
+                ",": "_",
+                ":": "_",
+                ";": "_",
+                "А": "A",
+                "В": "B",
+                "Е": "E",
+                "К": "K",
+                "М": "M",
+                "Н": "H",
+                "О": "O",
+                "Р": "P",
+                "Т": "T",
+                "Х": "X",
+                "а": "a",
+                "в": "b",
+                "е": "e",
+                "к": "k",
+                "м": "m",
+                "н": "h",
+                "о": "o",
+                "р": "p",
+                "т": "t"
+                }
+
+        intab = '.-пПаАфз/еЕсС'
+        outtab = '__ppaafz_eEcC'
+        trantab = str.maketrans(dict)
+        outstr = str.translate(trantab)
+        return outstr
+
     def column_check(self, table_used_model, table_used_base, list_column):
         msg = {}
   
@@ -124,6 +80,7 @@ class General_functions():
             migrate(migrator.add_column(table_used_base,
                                         new_name, IntegerField(null=True)))
         return msg
+
     def empty_table(self, table_used):
         cursor = db.cursor()
         cursor.execute(f'''SELECT COUNT (*) FROM "{table_used}"''')
@@ -7765,144 +7722,182 @@ class Filling_AO():
         msg = self.dop_function.column_check(AO, 'ao', list_default)
         return msg 
 class Filling_DI():
+    di_counter = 0
+
     def __init__(self):
-        self.cursor   = db.cursor()
+        self.cursor = db.cursor()
         self.dop_function = General_functions()
+        self.msg = {}
+
+    def req_sql(self):
+        if self.dop_function.empty_table('signals') or self.dop_function.empty_table('hardware'): 
+            self.msg[f'{today} - Таблицы: signals или hardware пустые! Заполни таблицу!'] = 2
+            return self.msg
+
+        column = '''id, uso, tag, description, type_signal, schema, basket, module, channel'''
+        where_1 = '''tag like 'CSC%' '''
+        where_2 = '''(schema like 'DI%') and (not tag like 'CSC%')'''
+        where_3 = '''(schema like 'DM%') and (type_signal like 'DI%')'''
+
+        for i in range(1, 4):
+            match i:
+                case 1:
+                    where = where_1
+                case 2:
+                    where = where_2
+                case 3:
+                    where = where_3
+            self.cursor.execute(f'''SELECT {column}
+                                    FROM signals
+                                    WHERE {where}
+                                    ORDER BY description''')
+            resultReqSQL = self.cursor.fetchall()
+            number = 0 if i == 3 else int(len(resultReqSQL) * 0.3)
+
+            self.getting_modul(resultReqSQL, number)
+
+        self.msg[f'{today} - Таблица: di, выполнение кода завершено!'] = 1
+        return(self.msg)
+
     # Получаем данные с таблицы Signals 
-    def getting_modul(self):
-        msg = {}
+    def getting_modul(self, dic_di, rez_DI):
         list_DI = []
-        count_DI = 0
-        with db:
-            try:
-                if self.dop_function.empty_table('signals') or self.dop_function.empty_table('hardware'): 
-                    msg[f'{today} - Таблицы: signals или hardware пустые! Заполни таблицу!'] = 2
-                    return msg
-                
-                for row_sql in Signals.select().order_by(Signals.tag).dicts():
-                    id_s       = row_sql['id'] 
-                    uso_s       = row_sql['uso']    
-                    tag         = row_sql['tag']
-                    description = row_sql['description']
-                    type_signal = row_sql['type_signal']
-                    scheme      = row_sql['schema']
-                    basket_s    = row_sql['basket']
-                    module_s    = row_sql['module']
-                    channel_s   = row_sql['channel']
+        count_DI = Filling_DI.di_counter
+        try:
+            for row_sql in dic_di:
+                id_s = row_sql[0] 
+                uso_s = row_sql[1]    
+                tag = row_sql[2]
+                description = row_sql[3]
+                type_signal = row_sql[4]
+                scheme = row_sql[5]
+                basket_s = row_sql[6]
+                module_s = row_sql[7]
+                channel_s = row_sql[8]
 
-                    if tag == 'None' or tag is None:
-                        tag = ''
-                    tag_eng = self.dop_function.translate(tag)
+                if tag == 'None' or tag is None:
+                    tag = ''
+                tag_eng = self.dop_function.translate(tag)
 
-                    if self.dop_function.str_find(type_signal, {'DI'}) or self.dop_function.str_find(scheme, {'DI'}):
-                        count_DI += 1
+                if self.dop_function.str_find(type_signal, {'DI'}) or self.dop_function.str_find(scheme, {'DI'}):
+                    count_DI += 1
 
-                        # Выбор между полным заполнением или обновлением
-                        if self.dop_function.empty_table('di'):
-                            msg[f'{today} - Таблица: di пуста, идет заполнение'] = 1
-                        else:
-                            msg[f'{today} - Таблица: di не пуста, идет обновление'] = 1
+                    # Выбор между полным заполнением или обновлением
+                    # if self.dop_function.empty_table('di'):
+                    #     self.msg[f'{today} - Таблица: di пуста, идет заполнение'] = 1
+                    # else:
+                    #     self.msg[f'{today} - Таблица: di не пуста, идет обновление'] = 1
 
-                        coincidence = DI.select().where(DI.uso     == uso_s,
-                                                        DI.basket  == basket_s,
-                                                        DI.module  == module_s,
-                                                        DI.channel == channel_s)
-                        if bool(coincidence):
-                            exist_tag  = DI.select().where(DI.tag  == tag)
-                            exist_name = DI.select().where(DI.name == description)
+                    coincidence = DI.select().where(DI.uso     == uso_s,
+                                                    DI.basket  == basket_s,
+                                                    DI.module  == module_s,
+                                                    DI.channel == channel_s)
+                    if bool(coincidence):
+                        exist_tag  = DI.select().where(DI.tag  == tag)
+                        exist_name = DI.select().where(DI.name == description)
 
-                            if not bool(exist_tag):
-                                self.cursor.execute(f'''SELECT id, tag 
-                                                        FROM di
-                                                        WHERE uso='{uso_s}' AND
-                                                              basket={basket_s} AND
-                                                              module={module_s} AND
-                                                              channel={channel_s}''')
-                                for id_, tag_ in self.cursor.fetchall():
-                                    msg[f'{today} - Таблица: di, у сигнала обновлен tag: id = {id_}, ({tag_}) {tag}'] = 2
-                                self.cursor.execute(f'''UPDATE di
-                                                        SET tag='{tag}' 
-                                                        WHERE uso='{uso_s}' AND 
-                                                              basket={basket_s} AND 
-                                                              module={module_s} AND 
-                                                              channel={channel_s}''')
-        
-                            if not bool(exist_name):
-                                self.cursor.execute(f'''SELECT id, name 
-                                                        FROM di
-                                                        WHERE uso='{uso_s}' AND 
-                                                              basket={basket_s} AND 
-                                                              module={module_s} AND 
-                                                              channel={channel_s}''')
-                                for id_, name_ in self.cursor.fetchall():
-                                    msg[f'{today} - Таблица: di, у сигнала обновлено name: id = {id_}, ({name_}) {description}'] = 2
-                                self.cursor.execute(f'''UPDATE di
-                                                        SET name='{description}' 
-                                                        WHERE uso='{uso_s}' AND 
-                                                              basket={basket_s} AND 
-                                                              module={module_s} AND 
-                                                              channel={channel_s}''')
-                            continue
-                        # Сквозной номер модуля
-                        try:
-                            for through_module_number in HardWare.select().dicts():
-                                tag_h    = through_module_number['tag']
-                                uso_h    = through_module_number['uso']
-                                basket_h = through_module_number['basket']
+                        if not bool(exist_tag):
+                            self.cursor.execute(f'''SELECT id, tag 
+                                                    FROM di
+                                                    WHERE uso='{uso_s}' AND
+                                                            basket={basket_s} AND
+                                                            module={module_s} AND
+                                                            channel={channel_s}''')
+                            for id_, tag_ in self.cursor.fetchall():
+                                msg[f'{today} - Таблица: di, у сигнала обновлен tag: id = {id_}, ({tag_}) {tag}'] = 2
+                            self.cursor.execute(f'''UPDATE di
+                                                    SET tag='{tag}' 
+                                                    WHERE uso='{uso_s}' AND 
+                                                            basket={basket_s} AND 
+                                                            module={module_s} AND 
+                                                            channel={channel_s}''')
+    
+                        if not bool(exist_name):
+                            self.cursor.execute(f'''SELECT id, name 
+                                                    FROM di
+                                                    WHERE uso='{uso_s}' AND 
+                                                            basket={basket_s} AND 
+                                                            module={module_s} AND 
+                                                            channel={channel_s}''')
+                            for id_, name_ in self.cursor.fetchall():
+                                msg[f'{today} - Таблица: di, у сигнала обновлено name: id = {id_}, ({name_}) {description}'] = 2
+                            self.cursor.execute(f'''UPDATE di
+                                                    SET name='{description}' 
+                                                    WHERE uso='{uso_s}' AND 
+                                                            basket={basket_s} AND 
+                                                            module={module_s} AND 
+                                                            channel={channel_s}''')
+                        continue
+                    # Сквозной номер модуля
+                    try:
+                        for through_module_number in HardWare.select().dicts():
+                            tag_h    = through_module_number['tag']
+                            uso_h    = through_module_number['uso']
+                            basket_h = through_module_number['basket']
 
-                                isdigit_num = ''
-                                if uso_s == uso_h and basket_s == basket_h:
-                                    type_mod = through_module_number[f'variable_{module_s}']
-                                    isdigit_num  = re.findall('\d+', str(type_mod))
+                            isdigit_num = ''
+                            if uso_s == uso_h and basket_s == basket_h:
+                                type_mod = through_module_number[f'variable_{module_s}']
+                                isdigit_num  = re.findall('\d+', str(type_mod))
 
-                                    try   : 
-                                        isdigit_num = isdigit_num[0]
-                                        if tag_h == '':
-                                            msg[f'{today} - В таблице hardware не заполнен tag: {id_s}, {description}, "pValue" некорректно заполнено'] = 2
-                                    except: 
-                                        msg[f'{today} - В таблице hardware не найден модуль сигнала: {id_s}, {tag}, {description}, {uso_s}_A{basket_s}_{module_s}_{channel_s}, "pValue" не заполнен'] = 2
-                                    break
+                                try: 
+                                    isdigit_num = isdigit_num[0]
+                                    if tag_h == '':
+                                        self.msg[f'{today} - В таблице hardware не заполнен tag: {id_s}, {description}, "pValue" некорректно заполнено'] = 2
+                                except: 
+                                    self.msg[f'{today} - В таблице hardware не найден модуль сигнала: {id_s}, {tag}, {description}, {uso_s}_A{basket_s}_{module_s}_{channel_s}, "pValue" не заполнен'] = 2
+                                break
 
-                            if module_s < 10: prefix = f'0{module_s}' 
-                            else            : prefix = f'{module_s}'
-                        except Exception:
-                            msg[f'{today} - Таблица: di, ошибка при заполнении. Заполнение продолжится: {traceback.format_exc()}'] = 2
-                            msg[f'{today} - Таблица: signals, ошибка в строке. Строка пропусается: {row_sql}'] = 2
-                            continue
+                        if module_s < 10: prefix = f'0{module_s}' 
+                        else            : prefix = f'{module_s}'
+                    except Exception:
+                        self.msg[f'{today} - Таблица: di, ошибка при заполнении. Заполнение продолжится: {traceback.format_exc()}'] = 2
+                        self.msg[f'{today} - Таблица: signals, ошибка в строке. Строка пропусается: {row_sql}'] = 2
+                        continue
 
-                        if self.dop_function.str_find(str(tag).lower(), {'csc'}) : group_diskrets = 'Диагностика'
-                        elif self.dop_function.str_find(str(tag).lower(), {'ec'}): group_diskrets = 'Электроснабжение'
-                        else: group_diskrets = 'Общие'
+                    if self.dop_function.str_find(str(tag).lower(), {'csc'}) : group_diskrets = 'Диагностика'
+                    elif self.dop_function.str_find(str(tag).lower(), {'ec'}): group_diskrets = 'Электроснабжение'
+                    else: group_diskrets = 'Общие'
 
-                        if isdigit_num == '':
-                            msg[f'{today} - В таблице hardware не найден модуль сигнала: {id_s}, {tag}, {description}, {uso_s}_A{basket_s}_{module_s}_{channel_s}, "pValue" не заполнен'] = 2
-                        
-                        msg[f'{today} - Таблица: di, добавлен новый сигнал: {row_sql}'] = 1
+                    short_title = re.sub(r'\sшкаф.+[МНСПТРПСАР].+[0-9)КЦБРУ]', '', description)
 
-                        list_DI.append(dict(id = count_DI,
-                                            variable = f'DI[{count_DI}]',
-                                            tag = tag,
-                                            name = description,
-                                            pValue = f'{tag_h}_{prefix}_DI[{channel_s}]',
-                                            pHealth = f'mDI_HEALTH[{str(isdigit_num)}]',
-                                            Inv = 0,
-                                            ErrValue = 0,
-                                            priority_0 = 1,
-                                            priority_1 = 1,
-                                            Msg = 1,
-                                            tabl_msg = 'TblDiscretes',
-                                            group_diskrets = group_diskrets,
-                                            msg_priority_0 = 1,
-                                            msg_priority_1 = 1,
-                                            short_title = description,
-                                            uso = uso_s, basket = basket_s, module = module_s, channel = channel_s, tag_eng = tag_eng,))
+                    if isdigit_num == '':
+                        self.msg[f'{today} - В таблице hardware не найден модуль сигнала: {id_s}, {tag}, {description}, {uso_s}_A{basket_s}_{module_s}_{channel_s}, "pValue" не заполнен'] = 2
+                    
+                    # self.msg[f'{today} - Таблица: di, добавлен новый сигнал: {row_sql}'] = 1
 
-                # Checking for the existence of a database
-                DI.insert_many(list_DI).execute()
-            except Exception:
-                msg[f'{today} - Таблица: di, ошибка при заполнении: {traceback.format_exc()}'] = 2
-            msg[f'{today} - Таблица: di, выполнение кода завершено!'] = 1
-        return(msg)
+                    list_DI.append(dict(id = count_DI,
+                                        variable = f'DI[{count_DI}]',
+                                        tag = tag,
+                                        name = description,
+                                        pValue = f'{tag_h}_{prefix}_DI[{channel_s}]',
+                                        pHealth = f'mDI_HEALTH[{str(isdigit_num)}]',
+                                        Inv = 0,
+                                        ErrValue = 0,
+                                        priority_0 = 1,
+                                        priority_1 = 1,
+                                        Msg = 1,
+                                        tabl_msg = 'TblDiscretes',
+                                        group_diskrets = group_diskrets,
+                                        msg_priority_0 = 1,
+                                        msg_priority_1 = 1,
+                                        short_title = short_title,
+                                        uso = uso_s, basket = basket_s, module = module_s, channel = channel_s, tag_eng = tag_eng,))
+            Filling_DI.di_counter = count_DI
+            for i in range (Filling_DI.di_counter + 1, Filling_DI.di_counter + rez_DI + 1):
+                    list_DI.append(dict(id = i,
+                                        variable = f'DI[{i}]',
+                                        tag = f'LOGIC_DI_{i}',
+                                        name = 'Переменная зарезервирована для логически формируемого сигнала',
+                                        tabl_msg = 'TblDiscretes',
+                                        group_diskrets = 'Общие'))
+
+            # Checking for the existence of a database
+            DI.insert_many(list_DI).execute()
+            Filling_DI.di_counter = Filling_DI.di_counter + rez_DI
+        except Exception:
+            self.msg[f'{today} - Таблица: di, ошибка при заполнении: {traceback.format_exc()}'] = 2
+
     # Заполняем таблицу DI
     def column_check(self):
         list_default = ['variable', 'tag', 'name', 'pValue', 'pHealth', 'Inv',

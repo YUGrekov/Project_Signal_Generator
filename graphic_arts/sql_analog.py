@@ -2,6 +2,7 @@
 import re
 import traceback
 from model_new import AI
+from model_new import HardWare as HW
 from model_new import Signals
 from request_sql import RequestSQL
 from general_functions import General_functions
@@ -38,6 +39,9 @@ class AIParam():
     DeltaT = 0.1
     PhysicEGU = 'мкА'
 
+    def __init__(self, name):
+        self.name = name
+
 
 class AIParamVibr(AIParam):
     '''Параметры для аналогового сигнала вибрации.'''
@@ -63,6 +67,7 @@ class AIParamVibr(AIParam):
             AIParamVibr.Usts = [None, None, None, 3, 7.1, 6,
                                 None, 8.9, 7.1, None, 11.2, 18]
             AIParamVibr.MsgMask = '0111_0110_0111_0001'
+
         if 'вертик' in self.name:
             AIParamVibr.Sign = 'Xверт'
         elif 'горизонт' in self.name:
@@ -235,6 +240,7 @@ class AIParamPres(AIParam):
                 typePress = 6
             else:
                 typePress = 7
+
         match typePress:
             # Давления нефти МНА
             case 1:
@@ -357,22 +363,22 @@ class AIParamLevel(AIParam):
     RuleName = 'Аналоги (макс1 = макс.уставка)'
 
 
-class BaseCls():
-    typeAnalog = {'температур': AIParamTemp,
-                  'вибрац': AIParamVibr,
-                  'Уровень': AIParamLevel,
-                  'давлен': AIParamPres,
-                  'перепад': AIParamDeltaPres,
-                  'сила тока': AIParamEDAmper,
-                  'загазован': AIParamGAS,
-                  'пожар': AIParamNC,
-                  'аварийн': AIParamNC,
-                  'затопл': AIParamNC,
-                  'осев': AIParamMoving
-                  }
+class BaseData():
+    TYPE_ANALOG = {'температур': AIParamTemp,
+                   'вибрац': AIParamVibr,
+                   'уровень': AIParamLevel,
+                   'давлен': AIParamPres,
+                   'перепад': AIParamDeltaPres,
+                   'сила тока': AIParamEDAmper,
+                   'загазован': AIParamGAS,
+                   'пожар': AIParamNC,
+                   'аварийн': AIParamNC,
+                   'затопл': AIParamNC,
+                   'осев': AIParamMoving
+                   }
 
 
-class Analogs():
+class Analogs(BaseData):
     '''Заполнение таблицы AI.'''
     def __init__(self):
         # self.logsTextEdit = logtext
@@ -405,8 +411,109 @@ class Analogs():
                                         AI.basket)
         return bool(coinc)
 
+    def choice_param(self, name: str):
+        '''Выбор базового класса с настройками.'''
+        self.cls_param = AIParam(name)
+        for type_s, variable_s in self.TYPE_ANALOG.items():
+            if type_s.lower() in name.lower():
+                self.cls_param = variable_s
+                return
+
+    def module_calc(self, uso, basket, module):
+        '''Вычисление сквозного номера модуля для
+        заполнения pValue, PHealth из таблицы HW.'''
+        try:
+            hw = self.request.where_select('hardware', f'variable_{module}',
+                                           f'''"uso"='{uso}' and "basket"='{basket}' ''', 'id')
+            print(hw)
+
+        #     for through_module_number in HardWare.select().dicts():
+        #         uso_h    = through_module_number['uso']
+        #         basket_h = through_module_number['basket']
+
+        #         isdigit_num = ''
+        #         if uso_s == uso_h and basket_s == basket_h:
+        #             type_mod = through_module_number[f'variable_{module_s}']
+        #             isdigit_num  = re.findall('\d+', str(type_mod))
+
+        #             try   : isdigit_num = isdigit_num[0]
+        #             except: 
+        #                 msg[f'{today} - В таблице hardware не найден модуль сигнала: {id_s}, {tag}, {description}, {uso_s}_A{basket_s}_{module_s}_{channel_s}, "pValue" не заполнен'] = 2
+        #             break
+        except Exception:
+            print(traceback.format_exc())
+            # msg[f'{today} - Таблица: ai, ошибка при заполнении. Заполнение продолжится: {traceback.format_exc()}'] = 2
+            # msg[f'{today} - Таблица: signals, ошибка в строке. Строка пропускается: {row_sql}'] = 2
+            return
+
+    def exist_param(self, *args):
+        try:
+            print(args)
+        except Exception:
+            pass
+
+    def add_new_signal(self, signal, AI_count):
+        '''Добавление нового сигнала.'''
+        list_AI = []
+        print(self.cls_param)
+        list_AI.append(dict(id=AI_count,
+                            variable=f'AI[{AI_count}]',
+                            tag=signal.tag,
+                            name=signal.description,
+                            # pValue=f'mAI8[{isdigit_num}, {module_s}]',
+                            # pHealth=f'mAI8_HEALTH[{isdigit_num}]',
+                            AnalogGroupId=self.exist_param(),
+                            SetpointGroupId=self.exist_param(self.cls_param.SetpointGroupId),))
+                            # Egu=cls_param.EGU,
+                            # sign_VU=cls_param.Sign,
+                            # IsOilPressure=flag_MPa_kgccm2,
+                            # number_NA_or_aux=None,
+                            # IsPumpVibration=IsPumpVibration,
+                            # vibration_motor=vibration_motor,
+                            # current_motor=current_motor,
+                            # aux_outlet_pressure=None,
+                            # number_ust_min_avar=3,
+                            # number_ust_min_pred=1,
+                            # number_ust_max_pred=2,
+                            # number_ust_max_avar=3,
+                            # LoLimField=cls_param.LoLimField,
+                            # HiLimField=cls_param.HiLimField,
+                            # LoLimEng=cls_param.LoLimEng,
+                            # HiLimEng=cls_param.HiLimEng,
+                            # LoLim=cls_param.LoLim,
+                            # HiLim=cls_param.HiLim,
+                            # Histeresis=cls_param.Histeresis,
+                            # TimeFilter=cls_param.TimeFilter,
+                            # Min6=cls_param.Usts[0],
+                            # Min5=cls_param.Usts[1],
+                            # Min4=cls_param.Usts[2],
+                            # Min3=cls_param.Usts[3],
+                            # Min2=cls_param.Usts[4],
+                            # Min1=cls_param.Usts[5],
+                            # Max1=cls_param.Usts[6],
+                            # Max2=cls_param.Usts[7],
+                            # Max3=cls_param.Usts[8],
+                            # Max4=cls_param.Usts[9],
+                            # Max5=cls_param.Usts[10],
+                            # Max6=cls_param.Usts[11],
+                            # Precision=cls_param.Precision,
+                            # SigMask=cls_param.SigMask,
+                            # MsgMask=cls_param.MsgMask,
+                            # CtrlMask=cls_param.CtrlMask,
+                            # TrendingGroup=None,
+                            # DeltaT=cls_param.DeltaT,
+                            # PhysicEgu=cls_param.PhysicEGU,
+                            # RuleName=cls_param.RuleName,
+                            # uso=signal.uso,
+                            # basket=signal.basket,
+                            # module=signal.module,
+                            # channel=signal.channel))
+                            # tag_eng=tag_eng))
+        self.request.write_base_orm(list_AI, AI)
+
     def ai(self):
         '''Заполнение таблицы.'''
+        AI_count = 0
         try:
             # Проверяем таблицу signals
             if not self.check_table():
@@ -418,11 +525,14 @@ class Analogs():
                                            Signals.description)
             for signal in data:
                 exist = self.check_signal(signal)
+                AI_count += 1
 
                 if exist:
                     print(signal.description)
                 else:
-                    print('не существует')
+                    self.choice_param(signal.description)
+                    self.module_calc(signal.uso, signal.basket, signal.module)
+                    # self.add_new_signal(signal, AI_count)
 
             print('SQL. AI. Таблица заполнена')
             # self.logsTextEdit.logs_msg('''SQL. AI.

@@ -1615,7 +1615,7 @@ class Widget(QWidget):
         di_table = Filling_DI()
         msg = di_table.column_check()
         self.logs_msg('default', 1, msg, True)
-        msg = di_table.getting_modul()
+        msg = di_table.req_sql()
         self.logs_msg('default', 1, msg, True)
     def clear_di_tabl(self):
         msg = self.dop_function.clear_tabl('di', 'DI', self.list_tabl)

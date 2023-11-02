@@ -10,6 +10,38 @@ class General_functions():
             if str(line).find(word) > -1:
                 return True
 
+    def translate(self, str):
+        dict = {".": "_",
+                "/": "_",
+                "\\": "_",
+                ",": "_",
+                ":": "_",
+                ";": "_",
+                "А": "A",
+                "В": "B",
+                "Е": "E",
+                "К": "K",
+                "М": "M",
+                "Н": "H",
+                "О": "O",
+                "Р": "P",
+                "Т": "T",
+                "Х": "X",
+                "а": "a",
+                "в": "b",
+                "е": "e",
+                "к": "k",
+                "м": "m",
+                "н": "h",
+                "о": "o",
+                "р": "p",
+                "т": "t"
+                }
+
+        trantab = str.maketrans(dict)
+        outstr = str.translate(trantab)
+        return outstr
+
     def exist_check_db(self, dbname, user, password, host, port):
         '''Проверка на существование БД'''
         try:
