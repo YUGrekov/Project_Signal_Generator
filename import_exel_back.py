@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import openpyxl as wb
 from models import db
 from models import Signals
@@ -34,6 +35,7 @@ class DataExel():
         self.connect = wb.load_workbook(self.exel,
                                         read_only=True,
                                         data_only=True)
+        self.dop_func = General_functions()
 
     def read_table(self) -> list:
         '''Список таблиц Exel.'''
@@ -118,9 +120,12 @@ class DataExel():
         tuple_name = self.read_hat_table(uso, number_row, True, select_col)
 
         for row in self.sheet.iter_rows(min_row=(int(number_row) + 1)):
-
+            name = row[tuple_name[NameColumn.NAME.value]].value
+            tag = row[tuple_name[NameColumn.TAG.value]].value
             type_s = row[tuple_name[NameColumn.TYPE_SIGNAL.value]].value
             schema = row[tuple_name[NameColumn.SCHEMA.value]].value
+            klk = row[tuple_name[NameColumn.KLK.value]].value
+            contact = row[tuple_name[NameColumn.CONTACT.value]].value
             basket = row[tuple_name[NameColumn.BASKET.value]].value
             module = row[tuple_name[NameColumn.MODULE.value]].value
             channel = row[tuple_name[NameColumn.CHANNEl.value]].value
@@ -134,11 +139,11 @@ class DataExel():
             data.append(dict(id=count_row,
                              type_signal=type_s,
                              uso=uso,
-                             tag=row[tuple_name[NameColumn.TAG.value]].value,
-                             description=row[tuple_name[NameColumn.NAME.value]].value,
+                             tag=tag,
+                             description=name,
                              schema=schema,
-                             klk=row[tuple_name[NameColumn.KLK.value]].value,
-                             contact=row[tuple_name[NameColumn.CONTACT.value]].value,
+                             klk=klk,
+                             contact=contact,
                              basket=basket,
                              module=module,
                              channel=channel))
@@ -258,6 +263,5 @@ class Import_in_SQL(DataExel):
                             'schema', 'klk', 'contact', 'basket', 'module',
                             'channel']
 
-            self.dop_func = General_functions()
             msg = self.dop_func.column_check(Signals, 'signals', list_default)
         return msg

@@ -35,14 +35,19 @@ class General_functions():
                 "Е": "E",
                 "К": "K",
                 "М": "M",
-                "Н": "H",
+                "Н": "N",
                 "О": "O",
-                "Р": "P",
+                "C": "S",
+                "Р": "R",
+                "П": "P",
                 "Т": "T",
+                "Ц": "С",
+                "У": "U",
                 "Х": "X",
                 "а": "a",
                 "в": "b",
                 "е": "e",
+                "с": "s",
                 "к": "k",
                 "м": "m",
                 "н": "h",
@@ -51,11 +56,8 @@ class General_functions():
                 "т": "t"
                 }
 
-        intab = '.-пПаАфз/еЕсС'
-        outtab = '__ppaafz_eEcC'
         trantab = str.maketrans(dict)
-        outstr = str.translate(trantab)
-        return outstr
+        return str.translate(trantab)
 
     def column_check(self, table_used_model, table_used_base, list_column):
         msg = {}

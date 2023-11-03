@@ -96,12 +96,6 @@ class RequestSQL():
                                 WHERE "{condition[0]}"={condition[1]}''')
         return self.cursor.fetchall()[0][0]
 
-    def empty_table_check(self, table: str):
-        '''Проверка таблицы на заполнение.'''
-        self.cursor.execute(f'''SELECT COUNT (*) FROM "{table}"''')
-        empty = self.cursor.fetchall()
-        return True if int(empty[0][0]) == 0 else False
-
     def select_orm(self, models, where, order):
         '''Запрос Select через ORM.'''
         query = models.select().where(where).order_by(order)
@@ -121,7 +115,20 @@ class RequestSQL():
         '''Запись в базу через ORM peewee.'''
         model.insert_many(data).execute()
 
+    def update_base_orm(self, model, update, where):
+        '''Обновление записей базы через ORM peewee.'''
+        model.update(update).where(where).execute()
+
     def check_table(self, table: str):
         '''Проверка на существование таблицы в БД.'''
         all_tables = self.get_tabl()
-        return True if table in all_tables else False
+        if table in all_tables:
+            try:
+                if self.max_value_column(table, 'id') > 0:
+                    return True
+                else:
+                    return False
+            except Exception:
+                return False
+        else:
+            return False

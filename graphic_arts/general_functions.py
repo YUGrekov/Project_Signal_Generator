@@ -11,6 +11,9 @@ class General_functions():
                 return True
 
     def translate(self, str):
+        if str is None:
+            return None
+
         dict = {".": "_",
                 "/": "_",
                 "\\": "_",
@@ -22,14 +25,19 @@ class General_functions():
                 "Е": "E",
                 "К": "K",
                 "М": "M",
-                "Н": "H",
+                "Н": "N",
                 "О": "O",
+                "C": "S",
                 "Р": "P",
+                "П": "P",
                 "Т": "T",
+                "Ц": "С",
+                "У": "U",
                 "Х": "X",
                 "а": "a",
                 "в": "b",
                 "е": "e",
+                "с": "s",
                 "к": "k",
                 "м": "m",
                 "н": "h",
@@ -39,8 +47,7 @@ class General_functions():
                 }
 
         trantab = str.maketrans(dict)
-        outstr = str.translate(trantab)
-        return outstr
+        return str.translate(trantab)
 
     def exist_check_db(self, dbname, user, password, host, port):
         '''Проверка на существование БД'''
