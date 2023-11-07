@@ -48,7 +48,7 @@ class AIParam():
 
     def check_table(self):
         '''Проверяем таблицу signals на наличие и заполненость.'''
-        result = self.request.check_table(T_SIGNALS, )
+        result = self.request.check_table(T_SIGNALS)
         if not result:
             print('''SQL. AI. Таблица signals отсутсвует или не заполнена''')
             # self.logsTextEdit.logs_msg('''SQL. AI. Таблица
@@ -76,12 +76,15 @@ class AIParam():
 
     def choice_param(self):
         '''Выбор базового класса с настройками.'''
-        self.cls_param = self
+        cls_param = self
+
         for type_s, variable_s in TYPE_ANALOG.items():
             if type_s in self.name.lower():
-                self.cls_param = variable_s()
-                self.cls_param.prepare()
-                return
+                cls_param = variable_s()
+                cls_param.prepare()
+                return cls_param
+
+        return cls_param
 
     def module_calc(self, uso, basket, module):
         '''Вычисление сквозного номера модуля для
@@ -105,7 +108,7 @@ class AIParam():
             #                            pHealth не найден!''', 1)
             return 'NULL'
 
-    def add_new_signal(self, signal, num_through):
+    def add_new_signal(self, signal, num_through, cls_param):
         '''Добавление нового сигнала.'''
         list_AI = dict(id=AIParam.ai_count,
                        variable=f'AI[{AIParam.ai_count}]',
@@ -113,46 +116,46 @@ class AIParam():
                        name=signal.description,
                        pValue=f'mAI8[{num_through}, {signal.module}]',
                        pHealth=f'mAI8_HEALTH[{num_through}]',
-                       AnalogGroupId=self.cls_param.AnalogGroupId,
-                       SetpointGroupId=self.cls_param.SetpointGroupId,
-                       Egu=self.cls_param.EGU,
-                       sign_VU=self.cls_param.Sign,
-                       IsOilPressure=self.cls_param.IsOilPressure,
-                       IsPumpVibration=self.cls_param.IsPumpVibration,
-                       vibration_motor=self.cls_param.IsEDVibration,
-                       current_motor=self.cls_param.IsEDAmperage,
-                       aux_outlet_pressure=self.cls_param.IsAuxPressure,
-                       number_ust_min_avar=self.cls_param.UstMinAvar,
-                       number_ust_min_pred=self.cls_param.UstMinWarn,
-                       number_ust_max_pred=self.cls_param.UstMaxWarn,
-                       number_ust_max_avar=self.cls_param.UstMaxAvar,
-                       LoLimField=self.cls_param.LoLimField,
-                       HiLimField=self.cls_param.HiLimField,
-                       LoLimEng=self.cls_param.LoLimEng,
-                       HiLimEng=self.cls_param.HiLimEng,
-                       LoLim=self.cls_param.LoLim,
-                       HiLim=self.cls_param.HiLim,
-                       Histeresis=self.cls_param.Histeresis,
-                       TimeFilter=self.cls_param.TimeFilter,
-                       Min6=self.cls_param.Usts[0],
-                       Min5=self.cls_param.Usts[1],
-                       Min4=self.cls_param.Usts[2],
-                       Min3=self.cls_param.Usts[3],
-                       Min2=self.cls_param.Usts[4],
-                       Min1=self.cls_param.Usts[5],
-                       Max1=self.cls_param.Usts[6],
-                       Max2=self.cls_param.Usts[7],
-                       Max3=self.cls_param.Usts[8],
-                       Max4=self.cls_param.Usts[9],
-                       Max5=self.cls_param.Usts[10],
-                       Max6=self.cls_param.Usts[11],
-                       Precision=self.cls_param.Precision,
-                       SigMask=self.cls_param.SigMask,
-                       MsgMask=self.cls_param.MsgMask,
-                       CtrlMask=self.cls_param.CtrlMask,
-                       DeltaT=self.cls_param.DeltaT,
-                       PhysicEgu=self.cls_param.PhysicEGU,
-                       RuleName=self.cls_param.RuleName,
+                       AnalogGroupId=cls_param.AnalogGroupId,
+                       SetpointGroupId=cls_param.SetpointGroupId,
+                       Egu=cls_param.EGU,
+                       sign_VU=cls_param.Sign,
+                       IsOilPressure=cls_param.IsOilPressure,
+                       IsPumpVibration=cls_param.IsPumpVibration,
+                       vibration_motor=cls_param.IsEDVibration,
+                       current_motor=cls_param.IsEDAmperage,
+                       aux_outlet_pressure=cls_param.IsAuxPressure,
+                       number_ust_min_avar=cls_param.UstMinAvar,
+                       number_ust_min_pred=cls_param.UstMinWarn,
+                       number_ust_max_pred=cls_param.UstMaxWarn,
+                       number_ust_max_avar=cls_param.UstMaxAvar,
+                       LoLimField=cls_param.LoLimField,
+                       HiLimField=cls_param.HiLimField,
+                       LoLimEng=cls_param.LoLimEng,
+                       HiLimEng=cls_param.HiLimEng,
+                       LoLim=cls_param.LoLim,
+                       HiLim=cls_param.HiLim,
+                       Histeresis=cls_param.Histeresis,
+                       TimeFilter=cls_param.TimeFilter,
+                       Min6=cls_param.Usts[0],
+                       Min5=cls_param.Usts[1],
+                       Min4=cls_param.Usts[2],
+                       Min3=cls_param.Usts[3],
+                       Min2=cls_param.Usts[4],
+                       Min1=cls_param.Usts[5],
+                       Max1=cls_param.Usts[6],
+                       Max2=cls_param.Usts[7],
+                       Max3=cls_param.Usts[8],
+                       Max4=cls_param.Usts[9],
+                       Max5=cls_param.Usts[10],
+                       Max6=cls_param.Usts[11],
+                       Precision=cls_param.Precision,
+                       SigMask=cls_param.SigMask,
+                       MsgMask=cls_param.MsgMask,
+                       CtrlMask=cls_param.CtrlMask,
+                       DeltaT=cls_param.DeltaT,
+                       PhysicEgu=cls_param.PhysicEGU,
+                       RuleName=cls_param.RuleName,
                        tag_eng=self.dop_function.translate(self.tag),
                        uso=signal.uso,
                        basket=signal.basket,
@@ -207,11 +210,11 @@ class AIParam():
                 if exist:
                     self.update_table(signal)
                 else:
-                    self.choice_param()
+                    cls_param = self.choice_param()
                     num_through = self.module_calc(signal.uso,
                                                    signal.basket,
                                                    signal.module)
-                    self.add_new_signal(signal, num_through)
+                    self.add_new_signal(signal, num_through, cls_param)
 
             print('SQL. AI. Работа с таблицей завершена')
             # self.logsTextEdit.logs_msg('''SQL. AI. Работа
@@ -234,6 +237,15 @@ class AIParamVibr(AIParam):
     RuleName = 'Вибрации'
 
     def prepare(self):
+        AIParamVibr.SetpointGroupId = 'Вибрации'
+        AIParamVibr.EGU = 'мм/с'
+        AIParamVibr.NumberUstMinWarn = 1
+        AIParamVibr.NumberUstMaxWarn = 1
+        AIParamVibr.LoLim = 3700
+        AIParamVibr.HiLimEng = 30
+        AIParamVibr.HiLim = 21600
+        AIParamVibr.RuleName = 'Вибрации'
+
         if 'насос' in self.name:
             AIParamVibr.AnalogGroupId = 'Вибрации насоса'
             AIParamVibr.IsPumpVibration = 1
@@ -342,6 +354,13 @@ class AIParamTemp(AIParam):
     RuleName = 'Аналоги (макс1 = макс.уставка)'
 
     def prepare(self):
+        AIParamTemp.AnalogGroupId = 'Температуры'
+        AIParamTemp.Sign = 'T'
+        AIParamTemp.EGU = '°C'
+        AIParamTemp.Histeresis = 0.5
+        AIParamTemp.DeltaT = 0.5
+        AIParamTemp.RuleName = 'Аналоги (макс1 = макс.уставка)'
+
         if 'CSC' in self.tag:
             typeTemp = 1
         elif re.search(r'шкаф.+приборн', self.name):
@@ -409,6 +428,10 @@ class AIParamPres(AIParam):
     RuleName = 'Аналоги (макс1 = макс.уставка)'
 
     def prepare(self):
+        AIParamPres.AnalogGroupId = 'Давления'
+        AIParamPres.Sign = 'P'
+        AIParamPres.RuleName = 'Аналоги (макс1 = макс.уставка)'
+
         if 'НА' in self.name:
             if 'нефти' in self.name:
                 typePress = 1
