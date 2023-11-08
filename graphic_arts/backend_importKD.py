@@ -1,7 +1,9 @@
+import re
 import openpyxl as wb
 from models import db
 from models import Signals
 from datetime import datetime
+from general_functions import General_functions as GF
 from enum import Enum
 import traceback
 
@@ -112,6 +114,17 @@ class DataExel():
                 return type_signal
         return type_signal
 
+    def sub_str(self, uso, basket, module, channel):
+        '''Добавляем теги к резервам.'''
+        dop_func = GF()
+        tag = re.sub(r'(МНС)|(ПТ)|(САР)|(РП)|(БРУ)|\)|(c)', '', uso)
+        tag = re.sub(r'(УСО)', 'USO', tag)
+        tag = re.sub(r'\(|\.', '_', tag)
+        tag = dop_func.translate(tag)
+        tag = tag.replace(' ', '')
+        tag = f'REZ{tag}{basket}{module}{channel}'
+        return tag
+
     def preparation_import(self, uso: str, number_row: int,
                            select_col: tuple) -> list:
         '''Подготовка таблицы к импорту.'''
@@ -122,9 +135,12 @@ class DataExel():
         tuple_name = self.read_hat_table(uso, number_row, True, select_col)
 
         for row in self.sheet.iter_rows(min_row=(int(number_row) + 1)):
-
+            name = row[tuple_name[NameColumn.NAME.value]].value
+            tag = row[tuple_name[NameColumn.TAG.value]].value
             type_s = row[tuple_name[NameColumn.TYPE_SIGNAL.value]].value
             schema = row[tuple_name[NameColumn.SCHEMA.value]].value
+            klk = row[tuple_name[NameColumn.KLK.value]].value
+            contact = row[tuple_name[NameColumn.CONTACT.value]].value
             basket = row[tuple_name[NameColumn.BASKET.value]].value
             module = row[tuple_name[NameColumn.MODULE.value]].value
             channel = row[tuple_name[NameColumn.CHANNEl.value]].value
@@ -133,16 +149,19 @@ class DataExel():
                 continue
             count_row += 1
 
+            if tag is None and 'резерв' in name.lower():
+                tag = self.sub_str(uso, basket, module, channel)
+
             type_s = self.search_type(schema, type_s)
 
             data.append(dict(id=count_row,
                              type_signal=type_s,
                              uso=uso,
-                             tag=row[tuple_name[NameColumn.TAG.value]].value,
-                             description=row[tuple_name[NameColumn.NAME.value]].value,
+                             tag=tag,
+                             description=name,
                              schema=schema,
-                             klk=row[tuple_name[NameColumn.KLK.value]].value,
-                             contact=row[tuple_name[NameColumn.CONTACT.value]].value,
+                             klk=klk,
+                             contact=contact,
                              basket=basket,
                              module=module,
                              channel=channel))

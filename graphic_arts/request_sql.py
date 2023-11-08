@@ -111,13 +111,17 @@ class RequestSQL():
         query = models.select().distinct(dist).where(where).order_by(order)
         return query.execute()
 
-    def write_base_orm(self, data: dict, model):
+    def write_base_orm(self, data: dict, models):
         '''Запись в базу через ORM peewee.'''
-        model.insert_many(data).execute()
+        models.insert_many(data).execute()
 
-    def update_base_orm(self, model, update, where):
+    def update_base_orm(self, models, update, where):
         '''Обновление записей базы через ORM peewee.'''
-        model.update(update).where(where).execute()
+        models.update(update).where(where).execute()
+
+    def count_row_orm(self, models):
+        '''Количество строк.'''
+        return models.select().count()
 
     def check_table(self, table: str):
         '''Проверка на существование таблицы в БД.'''

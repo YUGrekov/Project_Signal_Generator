@@ -94,11 +94,11 @@ class AIParam():
                                            f'''"uso"='{uso}' and "basket"='{basket}' ''', 'id')
             if len(hw) > 1:
                 print(f'SQL. AI. {uso}.A{basket}_{module}, при вычислении номера для pValue и pHealth обнаружено несколько модулей!')
-                self.logsTextEdit.logs_msg(f'''SQL. AI.
-                                           {uso}.A{basket}_{module},
-                                           при вычислении номера
-                                           для pValue и pHealth обнаружено
-                                           несколько модулей!''', 2)
+                # self.logsTextEdit.logs_msg(f'''SQL. AI.
+                #                            {uso}.A{basket}_{module},
+                #                            при вычислении номера
+                #                            для pValue и pHealth обнаружено
+                #                            несколько модулей!''', 2)
                 return 'NULL'
             return re.findall('\d+', hw[0][0])[0]
         except Exception:

@@ -1,4 +1,4 @@
-from collections import OrderedDict
+import re
 import openpyxl as wb
 from models import db
 from models import Signals
@@ -110,6 +110,16 @@ class DataExel():
                 return type_signal
         return type_signal
 
+    def sub_str(self, uso, basket, module, channel):
+        '''Добавляем теги к резервам.'''
+        tag = re.sub(r'(МНС)|(ПТ)|(САР)|(РП)|(БРУ)|\)|(c)', '', uso)
+        tag = re.sub(r'(УСО)', 'USO', tag)
+        tag = re.sub(r'\(|\.', '_', tag)
+        tag = self.dop_func.translate(tag)
+        tag = tag.replace(' ', '')
+        tag = f'REZ{tag}{basket}{module}{channel}'
+        return tag
+
     def preparation_import(self, uso: str, number_row: int,
                            select_col: tuple) -> list:
         '''Подготовка таблицы к импорту.'''
@@ -133,6 +143,9 @@ class DataExel():
             if (basket or module or channel) is None:
                 continue
             count_row += 1
+
+            if tag is None and 'резерв' in name.lower():
+                tag = self.sub_str(uso, basket, module, channel)
 
             type_s = self.search_type(schema, type_s)
 
