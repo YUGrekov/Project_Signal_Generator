@@ -1,17 +1,16 @@
-import re
 import traceback
-from model_new import DO as Model
+from model_new import RS as Model
 from model_new import Signals
 from request_sql import RequestSQL
 from general_functions import General_functions
 
 T_SIGNALS = 'signals'
 T_HW = 'hardware'
-T_MOD = ' do'
-TYPE = 'DO'
+T_MOD = ' rs'
+TYPE = 'RS'
 
 
-class OutDiskrets():
+class Interface():
     '''Заполнение таблицы.'''
     def __init__(self, logtext):
         self.logsTextEdit = logtext
@@ -45,7 +44,7 @@ class OutDiskrets():
         '''Вычисление сквозного номера модуля для
         заполнения pValue, pHealth из таблицы HW.'''
         try:
-            hw = self.request.where_select(T_HW, f'variable_{module}, tag',
+            hw = self.request.where_select(T_HW, 'tag',
                                            f'''"uso"='{uso}' and "basket"='{basket}' ''', 'id')
             if len(hw) > 1:
                 self.logsTextEdit.logs_msg(f'''SQL. {TYPE}.
@@ -53,13 +52,13 @@ class OutDiskrets():
                                            при вычислении номера
                                            для pValue и pHealth обнаружено
                                            несколько модулей!''', 2)
-                return 'NULL'
-            return re.findall('\d+', hw[0][0])[0], hw[0][1]
+                return None
+            return hw[0][0]
         except Exception:
             self.logsTextEdit.logs_msg(f'''SQL. {TYPE}. {uso}.A{basket}_
                                        {module}, номер модуля pValue и
                                        pHealth не найден!''', 1)
-            return 'NULL', None
+            return None
 
     def check_signal(self, signal):
         '''Проверка сигнала на существование в таблице.
@@ -78,24 +77,20 @@ class OutDiskrets():
             self.msg_id = i.id
         return bool(coinc)
 
-    def add_new_signal(self, signal, num_through, tag):
+    def add_new_signal(self, signal, tag):
         '''Добавление нового сигнала.'''
         num = f'0{signal.module}' if signal.module < 10 else f'{signal.module}'
 
-        list_DO = dict(id=self.count_row,
-                       variable=f'DO[{self.count_row}]',
-                       tag=signal.tag,
+        list_RS = dict(id=self.count_row,
+                       variable=f'RS[{self.count_row}]',
                        name=signal.description,
-                       pValue=f'{tag}_{num}_DO[{signal.channel}]',
-                       pHealth=f'mDO_HEALTH[{num_through}]',
-                       short_title=signal.description,
-                       tag_eng=self.dop_function.translate(signal.tag),
+                       pValue=f'{tag}_{num}.COM_CH[{signal.channel}]',
                        uso=signal.uso,
                        basket=signal.basket,
                        module=signal.module,
                        channel=signal.channel)
 
-        self.request.write_base_orm(list_DO, Model)
+        self.request.write_base_orm(list_RS, Model)
         self.logsTextEdit.logs_msg(f'''SQL. {TYPE}. Добавлен
                                    новый сигнал: {self.count_row}''', 0)
 
@@ -104,7 +99,7 @@ class OutDiskrets():
         coinc = self.request.select_orm(Model,
                                         (Model.tag == signal.tag) &
                                         (Model.name == signal.description),
-                                        Model.basket)
+                                        (Model.uso))
         if not bool(coinc):
             self.request.update_base_orm(Model,
                                          {'tag': signal.tag,
@@ -117,7 +112,7 @@ class OutDiskrets():
                                        Строка обновлена:
                                        {self.msg_id}''', 0)
 
-    def add_diskrets(self):
+    def add_rs(self):
         try:
             # Проверяем таблицу signals
             if not self.check_table():
@@ -127,7 +122,8 @@ class OutDiskrets():
             data = self.request.select_orm(Signals,
                                            (Signals.type_signal.contains(TYPE)) |
                                            (Signals.schema.contains(TYPE)),
-                                           Signals.description)
+                                           (Signals.uso, Signals.basket,
+                                            Signals.module, Signals.channel))
 
             for signal in data:
                 exist = self.check_signal(signal)
@@ -136,10 +132,10 @@ class OutDiskrets():
                     self.update_table(signal)
                 else:
                     self.count_row += 1
-                    num_through, tag = self.module_calc(signal.uso,
-                                                        signal.basket,
-                                                        signal.module)
-                    self.add_new_signal(signal, num_through, tag)
+                    tag = self.module_calc(signal.uso,
+                                           signal.basket,
+                                           signal.module)
+                    self.add_new_signal(signal, tag)
 
             self.logsTextEdit.logs_msg(f'''SQL. {TYPE}. Работа
                                        с таблицей завершена''', 1)

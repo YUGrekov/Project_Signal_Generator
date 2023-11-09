@@ -241,4 +241,4 @@ class HW(ConstValues, BaseType):
 
 
 a = HW()
-a.hardware(False)
+a.hardware(True)

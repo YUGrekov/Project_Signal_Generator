@@ -340,7 +340,7 @@ class AIParamTemp(AIParam):
     RuleName = 'Аналоги (макс1 = макс.уставка)'
 
     def prepare(self):
-        if 'CSC' in self.tag:
+        if 'CST' in self.tag:
             typeTemp = 1
         elif re.search(r'шкаф.+приборн', self.name):
             typeTemp = 2

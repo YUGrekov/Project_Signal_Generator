@@ -1,4 +1,3 @@
-'''Заполнение таблицы разработки AI.'''
 import re
 import traceback
 from model_new import AI
@@ -9,6 +8,7 @@ from general_functions import General_functions
 T_SIGNALS = 'signals'
 T_HW = 'hardware'
 T_AI = 'ai'
+TYPE = 'AI'
 
 
 class AIParam():
@@ -206,8 +206,8 @@ class AIParam():
             self.count_row = self.request.count_row_orm(AI)
 
             data = self.request.select_orm(Signals,
-                                           (Signals.type_signal.contains('AI')) |
-                                           (Signals.schema.contains('AI')),
+                                           (Signals.type_signal.contains(TYPE)) |
+                                           (Signals.schema.contains(TYPE)),
                                            Signals.description)
             for signal in data:
                 AIParam.name = signal.description
@@ -352,7 +352,7 @@ class AIParamTemp(AIParam):
     RuleName = 'Аналоги (макс1 = макс.уставка)'
 
     def prepare(self):
-        if 'CSC' in self.tag:
+        if 'CST' in self.tag:
             typeTemp = 1
         elif re.search(r'шкаф.+приборн', self.name):
             typeTemp = 2

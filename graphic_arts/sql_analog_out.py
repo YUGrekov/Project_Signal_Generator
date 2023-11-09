@@ -1,17 +1,17 @@
 import re
 import traceback
-from model_new import DO as Model
+from model_new import AO as Model
 from model_new import Signals
 from request_sql import RequestSQL
 from general_functions import General_functions
 
 T_SIGNALS = 'signals'
 T_HW = 'hardware'
-T_MOD = ' do'
-TYPE = 'DO'
+T_MOD = ' ao'
+TYPE = 'AO'
 
 
-class OutDiskrets():
+class OutAnalog():
     '''Заполнение таблицы.'''
     def __init__(self, logtext):
         self.logsTextEdit = logtext
@@ -82,20 +82,19 @@ class OutDiskrets():
         '''Добавление нового сигнала.'''
         num = f'0{signal.module}' if signal.module < 10 else f'{signal.module}'
 
-        list_DO = dict(id=self.count_row,
-                       variable=f'DO[{self.count_row}]',
+        list_AO = dict(id=self.count_row,
+                       variable=f'AO[{self.count_row}]',
                        tag=signal.tag,
                        name=signal.description,
-                       pValue=f'{tag}_{num}_DO[{signal.channel}]',
-                       pHealth=f'mDO_HEALTH[{num_through}]',
-                       short_title=signal.description,
+                       pValue=f'{tag}_{num}_AO[{signal.channel}]',
+                       pHealth=f'mAO_HEALTH[{num_through}]',
                        tag_eng=self.dop_function.translate(signal.tag),
                        uso=signal.uso,
                        basket=signal.basket,
                        module=signal.module,
                        channel=signal.channel)
 
-        self.request.write_base_orm(list_DO, Model)
+        self.request.write_base_orm(list_AO, Model)
         self.logsTextEdit.logs_msg(f'''SQL. {TYPE}. Добавлен
                                    новый сигнал: {self.count_row}''', 0)
 

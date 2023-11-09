@@ -10,7 +10,7 @@ T_HW = 'hardware'
 T_DI = ' di'
 
 
-class Diskrets():
+class InDiskrets():
     '''Заполнение таблицы.'''
     def __init__(self, logtext):
         self.logsTextEdit = logtext
@@ -35,7 +35,7 @@ class Diskrets():
             if not result:
                 self.logsTextEdit.logs_msg('''SQL. DI. Таблица di
                                            отсутсвует''', 2)
-                self.request.new_table_orm(T_DI)
+                self.request.new_table_orm(DI)
                 self.logsTextEdit.logs_msg('''SQL. DI. Таблица di
                                            добавлена''', 0)
             return True
