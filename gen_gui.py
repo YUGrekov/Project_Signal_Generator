@@ -16,6 +16,8 @@ from uts_upts_hmi import Alarm_map
 from uso_hmi import DaignoPicture as DiagForm
 from windows_base_editing import MainWindow as WinEditing
 from import_exel_back import Import_in_SQL as KD_import
+from dev_ai import AIParam as SQL_AI
+from dev_di import Diskrets as SQL_DI
 
 # ГРАФИЧЕСКИЙ ИНТЕРФЕЙС ДЛЯ ЗАПУСКА ГЕНЕРАТОРА
 # Сформировать exe: в терминале добавить: auto-py-to-exe
@@ -1592,10 +1594,8 @@ class Widget(QWidget):
         self.logs_msg('default', 1, msg, True)
     # AI
     def filling_ai(self):
-        ai_table = Filling_AI()
-        msg = ai_table.column_check()
-        self.logs_msg('default', 1, msg, True)
-        msg = ai_table.getting_modul()
+        ai_table = SQL_AI()
+        msg = ai_table.add_sql()
         self.logs_msg('default', 1, msg, True)
     def clear_ai_tabl(self):
         msg = self.dop_function.clear_tabl('ai', 'AI', self.list_tabl)
@@ -1612,10 +1612,8 @@ class Widget(QWidget):
         self.logs_msg('default', 1, msg, True)
     # DI
     def filling_di(self):
-        di_table = Filling_DI()
-        msg = di_table.column_check()
-        self.logs_msg('default', 1, msg, True)
-        msg = di_table.req_sql()
+        di_table = SQL_DI()
+        msg = di_table.add_diskrets()
         self.logs_msg('default', 1, msg, True)
     def clear_di_tabl(self):
         msg = self.dop_function.clear_tabl('di', 'DI', self.list_tabl)

@@ -126,13 +126,15 @@ class RequestSQL():
     def check_table(self, table: str):
         '''Проверка на существование таблицы в БД.'''
         all_tables = self.get_tabl()
-        if table in all_tables:
-            try:
-                if self.max_value_column(table, 'id') > 0:
-                    return True
-                else:
-                    return False
-            except Exception:
-                return False
+        return True if table in all_tables else False
+
+    def check_row_table(self, table: str):
+        '''Проверка наличия строк таблицы в БД.'''
+        if self.max_value_column(table, 'id') > 0:
+            return True
         else:
             return False
+
+    def new_table_orm(self, table: str):
+        '''Добавление новой таблицы.'''
+        db.create_tables([table])

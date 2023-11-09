@@ -117,7 +117,7 @@ class DataExel():
         tag = re.sub(r'\(|\.', '_', tag)
         tag = self.dop_func.translate(tag)
         tag = tag.replace(' ', '')
-        tag = f'REZ{tag}{basket}{module}{channel}'
+        tag = f'REZ{tag}_{basket}_{module}_{channel}'
         return tag
 
     def preparation_import(self, uso: str, number_row: int,
@@ -144,7 +144,7 @@ class DataExel():
                 continue
             count_row += 1
 
-            if tag is None and 'резерв' in name.lower():
+            if tag is None and 'RS' not in schema:
                 tag = self.sub_str(uso, basket, module, channel)
 
             type_s = self.search_type(schema, type_s)

@@ -24,6 +24,9 @@ class General_functions():
                 return True
 
     def translate(self, str):
+        if str is None:
+            return None
+
         dict = {".": "_",
                 "/": "_",
                 "\\": "_",
@@ -406,8 +409,12 @@ class General_functions():
                 root.remove(item)
         tree.write(path_map, pretty_print=True)
         return root, tree
+
     ##############################
-    
+    def get_tabl(self):
+        '''Сбор таблиц базы'''
+        return db.get_tables()
+
     def max_value_column_new(self, table: str, column: str):
         '''Нахождение максимального знач-ния в столбце.'''
         cursor = db.cursor()
@@ -448,6 +455,39 @@ class General_functions():
                            FROM "{table}"
                            WHERE id = {value_id}""")
         return cursor.fetchone()
+
+    def select_orm(self, models, where, order):
+        '''Запрос Select через ORM.'''
+        query = models.select().where(where).order_by(order)
+        return query.execute()
+
+    def write_base_orm(self, data: dict, models):
+        '''Запись в базу через ORM peewee.'''
+        models.insert_many(data).execute()
+
+    def check_table(self, table: str):
+        '''Проверка на существование таблицы в БД.'''
+        all_tables = self.get_tabl()
+        return True if table in all_tables else False
+
+    def check_row_table(self, table: str):
+        '''Проверка наличия строк таблицы в БД.'''
+        if self.max_value_column_new(table, 'id') > 0:
+            return True
+        else:
+            return False
+
+    def new_table_orm(self, table: str):
+        '''Добавление новой таблицы.'''
+        db.create_tables([table])
+
+    def count_row_orm(self, models):
+        '''Количество строк.'''
+        return models.select().count()
+
+    def update_base_orm(self, models, update, where):
+        '''Обновление записей базы через ORM peewee.'''
+        models.update(update).where(where).execute()
 
 
 class Editing_table_SQL():
@@ -7316,280 +7356,6 @@ class Filling_USO():
                         ]
         msg = self.dop_function.column_check(USO, 'uso', list_default)
         return msg 
-class Filling_AI():
-    def __init__(self):
-        self.cursor   = db.cursor()
-        self.dop_function = General_functions()
-    # Получаем данные с таблицы Signals 
-    def getting_modul(self):
-        msg = {}
-        list_AI = []
-        count_AI = 0
-        dop_analog = {'аварийн'               : ['', 'мА', 'Сигналы с контролем цепи', 'Сигнализаторы', 'Сигналы с контролем цепи', [4, 20], 0],
-                      'объем'                 : ['V', 'м3', '', '', '', [None, None], 0], 
-                      'объём'                 : ['V', 'м3', '', '', '', [None, None], 0],
-                      'перепад'               : ['dP', 'МПа', 'Аналоги (макс1 = макс.уставка)', 'Перепад давления', '', [0, 1], 2],
-                      'давлени'               : ['P', 'МПа', 'Аналоги (макс1 = повышенная)', 'Давления', '', [0, 6], 2],
-                      'загазованность'        : ['Газ', '%', 'Загазованность', 'Загазованность', '', [0, 100], 0],
-                      'вертик'                : ['Xверт', 'мм/с', 'Вибрации', '', '', [0, 30], 0],
-                      'горизонт'              : ['Xгор', 'мм/с', 'Вибрации', '', '', [0, 30], 0],
-                      'осевая'                : ['Xос', 'мм/с', 'Вибрации', '', '', [0, 30], 0],
-                      'попереч'               : ['Xпоп', 'мм/с', 'Вибрации', '', '', [0, 30], 0],
-                      'осевое'                : ['Xoc', 'мм/с', 'Вибрации', 'Осевые смещения', '', [0, 30], 0],
-                      'сила'                  : ['I', 'A', 'Аналоги (макс1 = повышенная)', 'Общестанционные', '', [0, 1000], 0],
-                      'температура'           : ['T', '°C', 'Аналоги (макс1 = повышенная)', 'Температуры', '', [-50, 100], 0],
-                      'уровень'               : ['L', 'мм', 'Аналоги (макс1 = макс.уставка)', 'Уровни', '', [200, 1000], 0],
-                      'утечк'                 : ['L', 'мА', 'Сигналы с контролем цепи', 'Сигнализаторы', 'Сигналы с контролем цепи', [4, 20], 0],
-                      'расход'                : ['Q', 'м3/ч', 'Аналоги (макс1 = макс.уставка)', '', '', [0, 1000], 0],
-                      'положени'              : ['Q', '%', '', '', '', [0, 100], 0],
-                      'затоплен'              : ['L', 'мА', 'Сигналы с контролем цепи', 'Сигнализаторы', 'Сигналы с контролем цепи', [4, 20], 0],
-                      'частот'                : ['F', 'Гц', '', 'Уровни', '', [0, 100], 0],
-                      'процен'                : ['Q', '%', 'Аналоги (макс1 = макс.уставка)', '', '', [0, 100], 0],
-                      'заслон'                : ['Q', '%', 'Аналоги (макс1 = макс.уставка)', '', '', [0, 100], 0],
-                     }
-        with db:
-            try:
-                if self.dop_function.empty_table('signals') or self.dop_function.empty_table('hardware'): 
-                    msg[f'{today} - Таблицы: signals или hardware пустые! Заполни таблицу!'] = 2
-                    return msg
-                
-                for row_sql in Signals.select().order_by(Signals.description).dicts():
-                    id_s        = row_sql['id']    
-                    uso_s       = row_sql['uso']    
-                    tag         = row_sql['tag']
-                    description = row_sql['description']
-                    type_signal = row_sql['type_signal']
-                    scheme      = row_sql['schema']
-                    basket_s    = row_sql['basket']
-                    module_s    = row_sql['module']
-                    channel_s   = row_sql['channel']
-
-                    if tag == 'None' or tag is None: tag = ''
-                    tag_eng = self.dop_function.translate(tag)
-
-                    if self.dop_function.str_find(type_signal, {'AI'}) or self.dop_function.str_find(scheme, {'AI'}):
-                        count_AI += 1
-                        # Выбор между полным заполнением или обновлением
-                        if self.dop_function.empty_table('ai'):
-                            msg[f'{today} - Таблица: ai пуста, идет заполнение'] = 1
-                        else:
-                            msg[f'{today} - Таблица: ai не пуста, идет обновление'] = 1
-
-                        coincidence = AI.select().where(AI.uso     == uso_s,
-                                                        AI.basket  == basket_s,
-                                                        AI.module  == module_s,
-                                                        AI.channel == channel_s)
-                        if bool(coincidence):
-                            exist_tag  = AI.select().where(AI.tag  == tag)
-                            exist_name = AI.select().where(AI.name == description)
-
-                            if not bool(exist_tag):
-                                self.cursor.execute(f"""SELECT id, "tag" 
-                                                        FROM ai
-                                                        WHERE uso='{uso_s}' AND 
-                                                              basket={basket_s} AND 
-                                                              module={module_s} AND 
-                                                              channel={channel_s}""")
-                                for id_, tag_ in self.cursor.fetchall():
-                                    msg[f'{today} - Таблица: ai, у сигнала обновлен tag: id = {id_}, ({tag_}) {tag}'] = 2
-                                self.cursor.execute(f'''UPDATE ai
-                                                        SET tag='{tag}' 
-                                                        WHERE uso='{uso_s}' AND 
-                                                            basket={basket_s} AND 
-                                                            module={module_s} AND 
-                                                            channel={channel_s}''')
-        
-                            if not bool(exist_name):
-                                self.cursor.execute(f'''SELECT id, "name" 
-                                                        FROM ai
-                                                        WHERE uso='{uso_s}' AND 
-                                                              basket={basket_s} AND 
-                                                              module={module_s} AND 
-                                                              channel={channel_s}''')
-                                for id_, name_ in self.cursor.fetchall():
-                                    msg[f'{today} - Таблица: ai, у сигнала обновлено name: id = {id_}, ({name_}) {description}'] = 2
-                                self.cursor.execute(f'''UPDATE ai
-                                                        SET name='{description}' 
-                                                        WHERE uso='{uso_s}' AND 
-                                                              basket={basket_s} AND 
-                                                              module={module_s} AND 
-                                                              channel={channel_s}''')
-                            continue
-                        # Сквозной номер модуля
-                        try:
-                            for through_module_number in HardWare.select().dicts():
-                                uso_h    = through_module_number['uso']
-                                basket_h = through_module_number['basket']
-
-                                isdigit_num = ''
-                                if uso_s == uso_h and basket_s == basket_h:
-                                    type_mod = through_module_number[f'variable_{module_s}']
-                                    isdigit_num  = re.findall('\d+', str(type_mod))
-                                    
-                                    try   : isdigit_num = isdigit_num[0]
-                                    except: 
-                                        msg[f'{today} - В таблице hardware не найден модуль сигнала: {id_s}, {tag}, {description}, {uso_s}_A{basket_s}_{module_s}_{channel_s}, "pValue" не заполнен'] = 2
-                                    break
-                        except Exception:
-                            msg[f'{today} - Таблица: ai, ошибка при заполнении. Заполнение продолжится: {traceback.format_exc()}'] = 2
-                            msg[f'{today} - Таблица: signals, ошибка в строке. Строка пропускается: {row_sql}'] = 2
-                            continue
-
-                        sign             = ''
-                        unit             = ''
-                        rule             = ''
-                        group_analog     = ''
-                        group_ust_analog = ''
-                        eng_min          = None
-                        eng_max          = None
-                        value_precision  = 0
-
-                        for key, short in dop_analog.items():
-                            if re.findall(r"вибраци.+насос", str(description).lower()):
-                                print(description)
-                            if self.dop_function.str_find(str(description).lower(), {key}):
-                                sign = short[0]
-                                unit = short[1]
-                                rule = short[2]
-                                group_analog = short[3]
-                                group_ust_analog = short[4]
-                                eng_min = short[5][0]
-                                eng_max = short[5][1]
-                                value_precision = short[6]
-                                break
-
-                        flag_MPa_kgccm2 = 1 if self.dop_function.str_find(str(description).lower(), {'давлен'}) else 0
-
-                        IsPumpVibration = 1 if self.dop_function.str_find(str(description).lower(), {'вибрац'}) and self.dop_function.str_find(str(description).lower(), {'насос'}) else None
-                        vibration_motor = 1 if self.dop_function.str_find(str(description).lower(), {'вибрац'}) and self.dop_function.str_find(str(description).lower(), {'эд'}) else None
-                        current_motor = 1 if self.dop_function.str_find(str(description).lower(), {'сила тока'}) else None
-
-                        current_motor = 1 if self.dop_function.str_find(str(description).lower(), {'сила тока'}) else None
-                        
-                        if self.dop_function.str_find(str(description).lower(), {'вибрац'}) and self.dop_function.str_find(str(description).lower(), {'насос'}):
-                            SigMask = '0111_1111_0111_0001'
-                            MsgMask = '0111_1111_0111_0001'
-                            CtrlMask = '0000_1111_0000_0000'
-                        elif self.dop_function.str_find(str(description).lower(), {'вибрац'}) and \
-                            (self.dop_function.str_find(str(description).lower(), {'эд'} or self.dop_function.str_find(str(description).lower(), {'двигат'}))):
-                            SigMask = '0111_0110_0111_0001'
-                            MsgMask = '0111_0110_0111_0001'
-                            CtrlMask = '0000_1101_0000_0000'
-                        elif self.dop_function.str_find(str(description).lower(), {'аварийное откл'}) or \
-                             self.dop_function.str_find(str(description).lower(), {'аварийн'}) or \
-                             self.dop_function.str_find(str(description).lower(), {'затоплен'}) or \
-                             self.dop_function.str_find(str(description).lower(), {'утечк'}) or \
-                             self.dop_function.str_find(str(description).lower(), {'пожар'}):
-                            SigMask = '0100_0100_0000_0001'
-                            MsgMask = '0100_0100_0000_0001'
-                            CtrlMask = '0000_1111_0000_1111'
-                        elif self.dop_function.str_find(str(description).lower(), {'температура нефт'}) or \
-                             self.dop_function.str_find(str(description).lower(), {'уровень неф'}) or \
-                             self.dop_function.str_find(str(description).lower(), {'температура охл'}) or \
-                             self.dop_function.str_find(str(description).lower(), {'давление неф'}) or \
-                             self.dop_function.str_find(str(description).lower(), {'пожар'}):
-                            SigMask = '0100_0000_0000_0001'
-                            MsgMask = '0100_0000_0000_0001'
-                            CtrlMask = '0000_0000_0000_0000'
-                        elif self.dop_function.str_find(str(description).lower(), {'давление на вых'}) or \
-                             self.dop_function.str_find(str(description).lower(), {'давление мас'}) or \
-                             self.dop_function.str_find(str(description).lower(), {'перепад давл'}):
-                            SigMask = '0100_0000_0001_0001'
-                            MsgMask = '0100_0000_0001_0001'
-                            CtrlMask = '0000_0000_0000_0000'
-                        elif self.dop_function.str_find(str(description).lower(), {'сила тока'}):
-                            SigMask = '0100_0000_0010_0001'
-                            MsgMask = '0100_0000_0010_0001'
-                            CtrlMask = '0000_0000_0000_0000'
-                        elif self.dop_function.str_find(str(description).lower(), {'Температура возд'}):
-                            SigMask = '0100_0010_0010_0001'
-                            MsgMask = '0100_0010_0010_0001'
-                            CtrlMask = '0000_0000_0000_0000'
-                        elif self.dop_function.str_find(str(description).lower(), {'температура горяч'}) or \
-                             self.dop_function.str_find(str(description).lower(), {'температура задн'}) or \
-                             self.dop_function.str_find(str(description).lower(), {'температура корп'}) or \
-                             self.dop_function.str_find(str(description).lower(), {'температура упор'}) or \
-                             self.dop_function.str_find(str(description).lower(), {'температура холо'}):
-                            SigMask = '0100_0101_0000_0001'
-                            MsgMask = '0100_0101_0000_0001'
-                            CtrlMask = '0000_1111_0000_1111'
-                        elif self.dop_function.str_find(str(description).lower(), {'загазован'}) or \
-                             self.dop_function.str_find(str(description).lower(), {'Температура желез'}) or \
-                             self.dop_function.str_find(str(description).lower(), {'температура обмо'}):
-                            SigMask = '0100_0110_0000_0001'
-                            MsgMask = '0100_0111_1000_0001'
-                            CtrlMask = '0000_1111_0000_1111'
-                        else:
-                            SigMask = '0000_0000_0000_0000'
-                            MsgMask = '0000_0000_0000_0000'
-                            CtrlMask = '0000_0000_0000_0000'
-
-                        if isdigit_num == '':
-                            msg[f'{today} - В таблице hardware не найден модуль сигнала: {id_s}, {tag}, {description}, {uso_s}_A{basket_s}_{module_s}_{channel_s}, "pValue" не заполнен'] = 2
-
-                        msg[f'{today} - Таблица: ai, добавлен новый сигнал: {row_sql}'] = 1
-                        list_AI.append(dict(id = count_AI,
-                                            variable = f'AI[{count_AI}]',
-                                            tag = tag,
-                                            name = description,
-                                            pValue = f'mAI8[{isdigit_num}, {module_s}]',
-                                            pHealth = f'mAI8_HEALTH[{isdigit_num}]',
-                                            AnalogGroupId = group_analog,
-                                            SetpointGroupId = group_ust_analog,
-                                            Egu = unit,
-                                            sign_VU = sign,
-                                            IsOilPressure = flag_MPa_kgccm2,
-                                            number_NA_or_aux = None,
-                                            IsPumpVibration = IsPumpVibration,
-                                            vibration_motor = vibration_motor,
-                                            current_motor = current_motor,
-                                            aux_outlet_pressure = None,
-                                            number_ust_min_avar = 3,
-                                            number_ust_min_pred = 1,
-                                            number_ust_max_pred = 2,
-                                            number_ust_max_avar = 3,
-                                            LoLimField = 4000,
-                                            HiLimField = 20000,
-                                            LoLimEng = eng_min,
-                                            HiLimEng = eng_max,
-                                            LoLim = 3900,
-                                            HiLim = 20100,
-                                            Histeresis = 0,
-                                            TimeFilter = 0,
-                                            Min6 = None, Min5 = None, Min4 = None, Min3 = None, Min2 = None, Min1 = None,
-                                            Max1 = None, Max2 = None, Max3 = None, Max4 = None, Max5 = None, Max6 = None,
-                                            Precision = value_precision,
-                                            SigMask = SigMask, 
-                                            MsgMask = MsgMask, 
-                                            CtrlMask = CtrlMask,
-                                            Pic = '', TrendingGroup = None, DeltaT = 0, PhysicEgu = 'мкА', 
-                                            RuleName = rule, fuse = '', uso = uso_s, basket = basket_s, module = module_s, channel = channel_s, tag_eng = tag_eng,
-                                            AlphaHMI = '', AlphaHMI_PIC1 = '', AlphaHMI_PIC1_Number_kont = '', AlphaHMI_PIC2 = '', 
-                                            AlphaHMI_PIC2_Number_kont = '', AlphaHMI_PIC3 = '', AlphaHMI_PIC3_Number_kont = '', 
-                                            AlphaHMI_PIC4 = '', AlphaHMI_PIC4_Number_kont = ''))
-
-                # Checking for the existence of a database
-                AI.insert_many(list_AI).execute()
-            except Exception:
-                msg[f'{today} - Таблица: ai, ошибка при заполнении: {traceback.format_exc()}'] = 2
-            msg[f'{today} - Таблица: ai, выполнение кода завершено!'] = 1
-        return(msg)
-    # Заполняем таблицу AI
-    def column_check(self):
-        list_default = ['variable', 'tag', 'name', 'pValue', 'pHealth', 'AnalogGroupId',
-                        'SetpointGroupId',  'Egu',  'sign_VU',  'IsOilPressure',  'number_NA_or_aux',  
-                        'IsPumpVibration',  'vibration_motor',  'current_motor',  'aux_outlet_pressure', 
-                        'number_ust_min_avar',  'number_ust_min_pred',  'number_ust_max_pred',  'number_ust_max_avar', 
-                        'LoLimField',  'HiLimField',  'LoLimEng', 'HiLimEng', 'LoLim', 'HiLim', 
-                        'Histeresis', 'TimeFilter', 
-                        'Min6', 'Min5', 'Min4', 'Min3', 'Min2', 'Min1', 'Max1', 'Max2', 'Max3', 'Max4', 'Max5', 'Max6', 
-                        'SigMask', 'MsgMask', 'CtrlMask', 'Precision', 'Pic', 'TrendingGroup', 'DeltaT', 
-                        'PhysicEgu', 'RuleName', 'fuse', 'uso', 'basket', 'module', 'channel', 'tag_eng', 'AlphaHMI', 'AlphaHMI_PIC1', 
-                        'AlphaHMI_PIC1_Number_kont', 'AlphaHMI_PIC2', 'AlphaHMI_PIC2_Number_kont',
-                        'AlphaHMI_PIC3', 'AlphaHMI_PIC3_Number_kont', 'AlphaHMI_PIC4', 'AlphaHMI_PIC4_Number_kont']
-    
-        msg = self.dop_function.column_check(AI, 'ai', list_default)
-        return msg 
 class Filling_AO():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -7720,195 +7486,6 @@ class Filling_AO():
     def column_check(self):
         list_default = ['variable', 'tag', 'name', 'pValue', 'pHealth', 'uso', 'basket', 'module', 'channel', 'tag_eng']
         msg = self.dop_function.column_check(AO, 'ao', list_default)
-        return msg 
-class Filling_DI():
-    di_counter = 0
-
-    def __init__(self):
-        self.cursor = db.cursor()
-        self.dop_function = General_functions()
-        self.msg = {}
-
-    def req_sql(self):
-        if self.dop_function.empty_table('signals') or self.dop_function.empty_table('hardware'): 
-            self.msg[f'{today} - Таблицы: signals или hardware пустые! Заполни таблицу!'] = 2
-            return self.msg
-
-        column = '''id, uso, tag, description, type_signal, schema, basket, module, channel'''
-        where_1 = '''tag like 'CSC%' '''
-        where_2 = '''(schema like 'DI%') and (not tag like 'CSC%')'''
-        where_3 = '''(schema like 'DM%') and (type_signal like 'DI%')'''
-
-        for i in range(1, 4):
-            match i:
-                case 1:
-                    where = where_1
-                case 2:
-                    where = where_2
-                case 3:
-                    where = where_3
-            self.cursor.execute(f'''SELECT {column}
-                                    FROM signals
-                                    WHERE {where}
-                                    ORDER BY description''')
-            resultReqSQL = self.cursor.fetchall()
-            number = 0 if i == 3 else int(len(resultReqSQL) * 0.3)
-
-            self.getting_modul(resultReqSQL, number)
-
-        self.msg[f'{today} - Таблица: di, выполнение кода завершено!'] = 1
-        return(self.msg)
-
-    # Получаем данные с таблицы Signals 
-    def getting_modul(self, dic_di, rez_DI):
-        list_DI = []
-        count_DI = Filling_DI.di_counter
-        try:
-            for row_sql in dic_di:
-                id_s = row_sql[0] 
-                uso_s = row_sql[1]    
-                tag = row_sql[2]
-                description = row_sql[3]
-                type_signal = row_sql[4]
-                scheme = row_sql[5]
-                basket_s = row_sql[6]
-                module_s = row_sql[7]
-                channel_s = row_sql[8]
-
-                if tag == 'None' or tag is None:
-                    tag = ''
-                tag_eng = self.dop_function.translate(tag)
-
-                if self.dop_function.str_find(type_signal, {'DI'}) or self.dop_function.str_find(scheme, {'DI'}):
-                    count_DI += 1
-
-                    # Выбор между полным заполнением или обновлением
-                    # if self.dop_function.empty_table('di'):
-                    #     self.msg[f'{today} - Таблица: di пуста, идет заполнение'] = 1
-                    # else:
-                    #     self.msg[f'{today} - Таблица: di не пуста, идет обновление'] = 1
-
-                    coincidence = DI.select().where(DI.uso     == uso_s,
-                                                    DI.basket  == basket_s,
-                                                    DI.module  == module_s,
-                                                    DI.channel == channel_s)
-                    if bool(coincidence):
-                        exist_tag  = DI.select().where(DI.tag  == tag)
-                        exist_name = DI.select().where(DI.name == description)
-
-                        if not bool(exist_tag):
-                            self.cursor.execute(f'''SELECT id, tag 
-                                                    FROM di
-                                                    WHERE uso='{uso_s}' AND
-                                                            basket={basket_s} AND
-                                                            module={module_s} AND
-                                                            channel={channel_s}''')
-                            for id_, tag_ in self.cursor.fetchall():
-                                msg[f'{today} - Таблица: di, у сигнала обновлен tag: id = {id_}, ({tag_}) {tag}'] = 2
-                            self.cursor.execute(f'''UPDATE di
-                                                    SET tag='{tag}' 
-                                                    WHERE uso='{uso_s}' AND 
-                                                            basket={basket_s} AND 
-                                                            module={module_s} AND 
-                                                            channel={channel_s}''')
-    
-                        if not bool(exist_name):
-                            self.cursor.execute(f'''SELECT id, name 
-                                                    FROM di
-                                                    WHERE uso='{uso_s}' AND 
-                                                            basket={basket_s} AND 
-                                                            module={module_s} AND 
-                                                            channel={channel_s}''')
-                            for id_, name_ in self.cursor.fetchall():
-                                msg[f'{today} - Таблица: di, у сигнала обновлено name: id = {id_}, ({name_}) {description}'] = 2
-                            self.cursor.execute(f'''UPDATE di
-                                                    SET name='{description}' 
-                                                    WHERE uso='{uso_s}' AND 
-                                                            basket={basket_s} AND 
-                                                            module={module_s} AND 
-                                                            channel={channel_s}''')
-                        continue
-                    # Сквозной номер модуля
-                    try:
-                        for through_module_number in HardWare.select().dicts():
-                            tag_h    = through_module_number['tag']
-                            uso_h    = through_module_number['uso']
-                            basket_h = through_module_number['basket']
-
-                            isdigit_num = ''
-                            if uso_s == uso_h and basket_s == basket_h:
-                                type_mod = through_module_number[f'variable_{module_s}']
-                                isdigit_num  = re.findall('\d+', str(type_mod))
-
-                                try: 
-                                    isdigit_num = isdigit_num[0]
-                                    if tag_h == '':
-                                        self.msg[f'{today} - В таблице hardware не заполнен tag: {id_s}, {description}, "pValue" некорректно заполнено'] = 2
-                                except: 
-                                    self.msg[f'{today} - В таблице hardware не найден модуль сигнала: {id_s}, {tag}, {description}, {uso_s}_A{basket_s}_{module_s}_{channel_s}, "pValue" не заполнен'] = 2
-                                break
-
-                        if module_s < 10: prefix = f'0{module_s}' 
-                        else            : prefix = f'{module_s}'
-                    except Exception:
-                        self.msg[f'{today} - Таблица: di, ошибка при заполнении. Заполнение продолжится: {traceback.format_exc()}'] = 2
-                        self.msg[f'{today} - Таблица: signals, ошибка в строке. Строка пропусается: {row_sql}'] = 2
-                        continue
-
-                    if self.dop_function.str_find(str(tag).lower(), {'csc'}) : group_diskrets = 'Диагностика'
-                    elif self.dop_function.str_find(str(tag).lower(), {'ec'}): group_diskrets = 'Электроснабжение'
-                    else: group_diskrets = 'Общие'
-
-                    short_title = re.sub(r'\sшкаф.+[МНСПТРПСАР].+[0-9)КЦБРУ]', '', description)
-
-                    if isdigit_num == '':
-                        self.msg[f'{today} - В таблице hardware не найден модуль сигнала: {id_s}, {tag}, {description}, {uso_s}_A{basket_s}_{module_s}_{channel_s}, "pValue" не заполнен'] = 2
-                    
-                    # self.msg[f'{today} - Таблица: di, добавлен новый сигнал: {row_sql}'] = 1
-
-                    list_DI.append(dict(id = count_DI,
-                                        variable = f'DI[{count_DI}]',
-                                        tag = tag,
-                                        name = description,
-                                        pValue = f'{tag_h}_{prefix}_DI[{channel_s}]',
-                                        pHealth = f'mDI_HEALTH[{str(isdigit_num)}]',
-                                        Inv = 0,
-                                        ErrValue = 0,
-                                        priority_0 = 1,
-                                        priority_1 = 1,
-                                        Msg = 1,
-                                        tabl_msg = 'TblDiscretes',
-                                        group_diskrets = group_diskrets,
-                                        msg_priority_0 = 1,
-                                        msg_priority_1 = 1,
-                                        short_title = short_title,
-                                        uso = uso_s, basket = basket_s, module = module_s, channel = channel_s, tag_eng = tag_eng,))
-            Filling_DI.di_counter = count_DI
-            for i in range (Filling_DI.di_counter + 1, Filling_DI.di_counter + rez_DI + 1):
-                    list_DI.append(dict(id = i,
-                                        variable = f'DI[{i}]',
-                                        tag = f'LOGIC_DI_{i}',
-                                        name = 'Переменная зарезервирована для логически формируемого сигнала',
-                                        tabl_msg = 'TblDiscretes',
-                                        group_diskrets = 'Общие'))
-
-            # Checking for the existence of a database
-            DI.insert_many(list_DI).execute()
-            Filling_DI.di_counter = Filling_DI.di_counter + rez_DI
-        except Exception:
-            self.msg[f'{today} - Таблица: di, ошибка при заполнении: {traceback.format_exc()}'] = 2
-
-    # Заполняем таблицу DI
-    def column_check(self):
-        list_default = ['variable', 'tag', 'name', 'pValue', 'pHealth', 'Inv',
-                        'ErrValue', 'priority_0', 'priority_1', 'Msg', 'isDI_NC',  
-                        'isAI_Warn', 'isAI_Avar', 'pNC_AI',  'TS_ID', 
-                        'isModuleNC',  'Pic',  'tabl_msg',  'group_diskrets', 
-                        'msg_priority_0',  'sound_msg_0', 'msg_priority_1', 'sound_msg_1', 'short_title', 'uso', 'basket', 'module', 'channel', 'tag_eng',
-                        'AlphaHMI', 'AlphaHMI_PIC1', 'AlphaHMI_PIC1_Number_kont', 'AlphaHMI_PIC2',
-                        'AlphaHMI_PIC2_Number_kont','AlphaHMI_PIC3', 'AlphaHMI_PIC3_Number_kont', 
-                        'AlphaHMI_PIC4', 'AlphaHMI_PIC4_Number_kont']
-        msg = self.dop_function.column_check(DI, 'di', list_default)
         return msg 
 class Filling_DO():
     def __init__(self):

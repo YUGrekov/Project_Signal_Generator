@@ -1,10 +1,11 @@
 '''Заполнение таблицы разработки AI.'''
 import re
 import traceback
-from model_new import AI
-from model_new import Signals
-from request_sql import RequestSQL
-from general_functions import General_functions
+from datetime import datetime
+from models import AI
+from models import Signals
+from main_base import General_functions
+today = datetime.now()
 
 T_SIGNALS = 'signals'
 T_HW = 'hardware'
@@ -48,25 +49,21 @@ class AIParam():
 
     def check_table(self):
         '''Проверяем таблицу signals на наличие и заполненость.'''
-        result_tb_signals = self.request.check_table(T_SIGNALS)
+        result_tb_signals = self.dop_function.check_table(T_SIGNALS)
         if not result_tb_signals:
-            self.logsTextEdit.logs_msg('''SQL. AI. Таблица
-                                       signals отсутсвует''', 2)
+            self.msg[f'{today} - SQL. AI. Таблица signals отсутсвует'] = 2
             return False
         else:
-            result_row_signals = self.request.check_row_table(T_SIGNALS)
+            result_row_signals = self.dop_function.check_row_table(T_SIGNALS)
             if not result_row_signals:
-                self.logsTextEdit.logs_msg('''SQL. AI. Таблица
-                                           signals не заполнена''', 2)
+                self.msg[f'{today} - SQL. AI. Таблица signals не заполнена'] = 2
                 return False
 
-            result = self.request.check_table(T_AI)
-            if not result:
-                self.logsTextEdit.logs_msg('''SQL. AI. Таблица ai
-                                           отсутсвует''', 2)
-                self.request.new_table_orm(AI)
-                self.logsTextEdit.logs_msg('''SQL. AI. Таблица ai
-                                           добавлена''', 0)
+            result_tb_ai = self.dop_function.check_table(T_AI)
+            if not result_tb_ai:
+                self.msg[f'{today} - SQL. AI. Таблица ai отсутсвует'] = 2
+                self.dop_function.new_table_orm(AI)
+                self.msg[f'{today} - SQL. AI. Таблица ai добавлена'] = 0
             return True
 
     def check_signal(self, signal) -> bool:
@@ -76,12 +73,12 @@ class AIParam():
         basket = signal.basket
         module = signal.module
         channel = signal.channel
-        coinc = self.request.select_orm(AI,
-                                        (AI.uso == uso) &
-                                        (AI.basket == basket) &
-                                        (AI.module == module) &
-                                        (AI.channel == channel),
-                                        AI.basket)
+        coinc = self.dop_function.select_orm(AI,
+                                             (AI.uso == uso) &
+                                             (AI.basket == basket) &
+                                             (AI.module == module) &
+                                             (AI.channel == channel),
+                                             AI.basket)
         for i in coinc:
             self.msg_id = i.id
         return bool(coinc)
@@ -102,20 +99,14 @@ class AIParam():
         '''Вычисление сквозного номера модуля для
         заполнения pValue, pHealth из таблицы HW.'''
         try:
-            hw = self.request.where_select(T_HW, f'variable_{module}',
-                                           f'''"uso"='{uso}' and "basket"='{basket}' ''', 'id')
+            hw = self.dop_function.where_select(T_HW, f'variable_{module}',
+                                                f'''"uso"='{uso}' and "basket"='{basket}' ''', 'id')
             if len(hw) > 1:
-                self.logsTextEdit.logs_msg(f'''SQL. AI.
-                                           {uso}.A{basket}_{module},
-                                           при вычислении номера
-                                           для pValue и pHealth обнаружено
-                                           несколько модулей!''', 2)
+                self.msg[f'{today} - SQL. AI. {uso}.A{basket}_{module}, при вычислении номера для pValue и pHealth обнаружено несколько модулей!'] = 2
                 return 'NULL'
             return re.findall('\d+', hw[0][0])[0]
         except Exception:
-            self.logsTextEdit.logs_msg(f'''SQL. AI. {uso}.A{basket}_{module},
-                                       номер модуля pValue и
-                                       pHealth не найден!''', 1)
+            self.msg[f'{today} - SQL. AI. {uso}.A{basket}_{module}, номер модуля pValue и pHealth не найден!'] = 2
             return 'NULL'
 
     def add_new_signal(self, signal, num_through, cls_param):
@@ -172,43 +163,40 @@ class AIParam():
                        module=signal.module,
                        channel=signal.channel)
 
-        self.request.write_base_orm(list_AI, AI)
-        self.logsTextEdit.logs_msg(f'''SQL. AI. Добавлен новый
-                                   сигнал: {self.count_row}''', 0)
+        self.dop_function.write_base_orm(list_AI, AI)
+        self.msg[f'{today} - SQL. AI. Добавлен новый сигнал: {self.count_row}'] = 1
 
     def update_table(self, signal):
         '''Обновление тега и названия сигнала в таблице.'''
-        coinc = self.request.select_orm(AI,
-                                        (AI.tag == signal.tag) &
-                                        (AI.name == signal.description),
-                                        AI.basket)
+        coinc = self.dop_function.select_orm(AI,
+                                             (AI.tag == signal.tag) &
+                                             (AI.name == signal.description),
+                                             AI.basket)
         if not bool(coinc):
-            self.request.update_base_orm(AI,
-                                         {'tag': AIParam.tag,
-                                          'name': AIParam.name},
-                                         (AI.uso == signal.uso) &
-                                         (AI.basket == signal.basket) &
-                                         (AI.module == signal.module) &
-                                         (AI.channel == signal.channel))
-            self.logsTextEdit.logs_msg(f'''SQL. AI.
-                                       Строка обновлена:
-                                       {self.msg_id}''', 0)
+            self.dop_function.update_base_orm(AI,
+                                              {'tag': AIParam.tag,
+                                               'name': AIParam.name},
+                                              (AI.uso == signal.uso) &
+                                              (AI.basket == signal.basket) &
+                                              (AI.module == signal.module) &
+                                              (AI.channel == signal.channel))
+            self.msg[f'{today} - SQL. AI. Строка обновлена: {self.msg_id}'] = 1
 
-    def add_sql(self, logtext):
+    def add_sql(self):
         '''Заполнение таблицы.'''
-        self.logsTextEdit = logtext
-        self.request = RequestSQL()
         self.dop_function = General_functions()
+        self.msg = {}
         try:
-            # Проверяем таблицу signals
+            # Проверяем таблицу signals и ai
             if not self.check_table():
                 raise
-            self.count_row = self.request.count_row_orm(AI)
 
-            data = self.request.select_orm(Signals,
-                                           (Signals.type_signal.contains('AI')) |
-                                           (Signals.schema.contains('AI')),
-                                           Signals.description)
+            self.count_row = self.dop_function.count_row_orm(AI)
+
+            data = self.dop_function.select_orm(Signals,
+                                                (Signals.type_signal.contains('AI')) |
+                                                (Signals.schema.contains('AI')),
+                                                Signals.description)
             for signal in data:
                 AIParam.name = signal.description
                 AIParam.tag = signal.tag
@@ -225,11 +213,11 @@ class AIParam():
                                                    signal.module)
                     self.add_new_signal(signal, num_through, cls_param)
 
-            self.logsTextEdit.logs_msg('''SQL. AI. Работа
-                                       с таблицей завершена''', 1)
+            self.msg[f'{today} - SQL. AI. Работа с таблицей завершена'] = 1
+            return self.msg
         except Exception:
-            self.logsTextEdit.logs_msg(f'''SQL. AI. Ошибка
-                                       {traceback.format_exc()}''', 2)
+            self.msg[f'{today} - SQL. AI. Ошибка {traceback.format_exc()}'] = 2
+            return self.msg
 
 
 class AIParamVibr(AIParam):
