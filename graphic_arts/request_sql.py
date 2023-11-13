@@ -130,9 +130,12 @@ class RequestSQL():
 
     def check_row_table(self, table: str):
         '''Проверка наличия строк таблицы в БД.'''
-        if self.max_value_column(table, 'id') > 0:
-            return True
-        else:
+        try:
+            if self.max_value_column(table, 'id') > 0:
+                return True
+            else:
+                return False
+        except Exception:
             return False
 
     def new_table_orm(self, table: str):

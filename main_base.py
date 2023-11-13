@@ -41,8 +41,9 @@ class General_functions():
                 "Н": "H",
                 "О": "O",
                 "Р": "P",
+                "С": "C",
                 "Т": "T",
-                "Ц": "C",
+                "Ц": "TC",
                 "Х": "X",
                 "а": "a",
                 "в": "b",
@@ -52,8 +53,9 @@ class General_functions():
                 "н": "h",
                 "о": "o",
                 "р": "p",
+                "с": "c",
                 "т": "t",
-                "ц": "c",
+                "ц": "tc",
                 "х": "x"
                 }
 
@@ -8294,6 +8296,7 @@ class Filling_ZD():
                 name_zd_old = self.cursor.fetchall()
                 tabl_zd_name = []
                 for i in name_zd_old:
+                    print(i)
                     tabl_zd_name.append(i[0])
 
                 # Количество строк в таблице
@@ -8811,7 +8814,7 @@ class Filling_UTS():
                                               (name LIKE '%звон%' AND tag LIKE '%BB%') OR
                                               (name LIKE '%ОТВ%' OR name LIKE '%отв%') OR
                                               (name LIKE '%сигнализац%')
-                                        ORDER BY tag""")
+                                        ORDER BY name""")
                 list_uts_do = self.cursor.fetchall()
                 # Количество строк в таблице
                 self.cursor.execute(f"""SELECT COUNT(*) FROM {tabl_used}""")
@@ -8825,8 +8828,10 @@ class Filling_UTS():
                     name_uts = str(name_uts).replace(' - включить', '')
                     name_uts = str(name_uts).replace('-включить', '')
                     name_uts = str(name_uts).replace('Включение сирены', 'Сирены')
+                    name_uts = str(name_uts).replace('Включение сирен', 'Сирены')
                     name_uts = str(name_uts).replace('Включение табло', 'Табло')
                     name_uts = str(name_uts).replace('Включение/отключение сирены', 'Сирены')
+                    name_uts = str(name_uts).replace('Включение/отключение сирен', 'Сирены')
                     name_uts = str(name_uts).replace('Включение/отключение табло', 'Табло')
                     name_uts = str(name_uts).replace('Включение звуковой сигнализации', 'Звуковая сигнализация')
 
@@ -8888,23 +8893,15 @@ class Filling_UTS():
                                                           channel={uts_do[6]}""")
                         continue
                     count_row += 1
-                    msg[f'{today} - Таблица: {tabl_used}, добавлен новый сигнал: id = {uts_do[0]}, ({uts_do[1]}), {name_uts}'] = 1
-                    siren = 1 if self.dop_function.str_find(str(name_uts).lower(), {'сирен'}) else 0
+                    msg[f'{today} - Таблица: {tabl_used}, добавлен новый сигнал: id = {count_row}, ({uts_do[1]}), {name_uts}'] = 1
+                    siren = 1 if 'сирен' in str(name_uts).lower() else 0
                     list_uts.append(dict(id = count_row,
                                          variable = f'{variable}[{count_row}]',
                                          tag = f'{uts_do[1]}',
                                          name = f'{name_uts}',
-                                         short_name = '',
-                                         location = '',
                                          VKL = f'ctrlDO[{uts_do[0]}]',
                                          siren = siren, 
                                          Does_not_require_autoshutdown = '0', 
-                                         Serviceability_of_circuits_of_inclusion = '',
-                                         Examination = '', 
-                                         Kvit = '',
-                                         Pic = '',
-                                         number_list_VU = None,
-                                         order_number_for_VU = None, 
                                          uso = f'{uts_do[3]}', 
                                          basket =  uts_do[4], 
                                          module =  uts_do[5], 
@@ -8919,7 +8916,7 @@ class Filling_UTS():
     # Заполняем таблицу UTS
     def column_check(self, bool_uts_upts):
         list_default = ['variable', 'tag', 'name', 'short_name', 'location', 'VKL', 'Serviceability_of_circuits_of_inclusion', 'siren', 'Does_not_require_autoshutdown', 'Examination',
-                        'Kvit', 'Pic', 'number_list_VU', 'order_number_for_VU', 'uso', 'basket', 'module', 'channel']
+                        'Kvit', 'Pic', 'number_list_VU', 'number_siren_VU', 'uso', 'basket', 'module', 'channel']
         if bool_uts_upts:
             msg = self.dop_function.column_check(UPTS, 'upts', list_default)
         else:
