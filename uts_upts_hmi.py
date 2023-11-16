@@ -400,7 +400,7 @@ class Alarm_map():
             # Исправляем размеры главного листа
             # Размеры зависят от количества табло и сирен на 1 листе
             parser.modification_list_uts_upts(int(max_value_2), new_pic_path,
-                                            work_tabl, button_bool)
+                                              work_tabl, button_bool)
 
             data_value = dop_function.connect_by_sql_order(work_tabl,
                                     f'{NumberColumn.TAG.value}, "{NumberColumn.NUMBER_LIST_VU.value}", "{NumberColumn.ORDER_NUMBER_FOR_VU.value}"',
