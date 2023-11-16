@@ -8296,7 +8296,6 @@ class Filling_ZD():
                 name_zd_old = self.cursor.fetchall()
                 tabl_zd_name = []
                 for i in name_zd_old:
-                    print(i)
                     tabl_zd_name.append(i[0])
 
                 # Количество строк в таблице

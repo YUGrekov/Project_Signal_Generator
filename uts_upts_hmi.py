@@ -33,7 +33,7 @@ class NewRowsParams(NamedTuple):
 class NumberColumn(Enum):
     '''Перечисление статических столбцов таблицы.'''
     NUMBER_LIST_VU = 'number_list_VU'
-    ORDER_NUMBER_FOR_VU = 'order_number_for_VU'
+    ORDER_NUMBER_FOR_VU = 'number_siren_VU'
     TAG = 'tag'
     NAME = 'name'
 
@@ -390,7 +390,7 @@ class Alarm_map():
             max_value_1 = dop_function.max_value_column(work_tabl, NumberColumn.NUMBER_LIST_VU.value, False)
             max_value_2 = dop_function.max_value_column(work_tabl, NumberColumn.ORDER_NUMBER_FOR_VU.value, False)
 
-            msg[f'{today} - Столбец таблицы {work_tabl} - number_list_VU или order_number_for_VU не определены'] = 2
+            msg[f'{today} - Столбец таблицы {work_tabl} - number_list_VU или number_siren_VU не определены'] = 2
             button_bool = True if int(max_value_1) > 1 else False
 
             # Начало работы с созданным файлом
