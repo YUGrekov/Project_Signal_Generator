@@ -368,8 +368,13 @@ class Template(BaseFunction):
         for lvl_1 in lvl.iter(NumName.OBJECT.value):
             self.update_string(lvl_1.attrib, NumName.NAME_ATR.value, NumName.APSOURCE.value, name[2])
             self.update_string(lvl_1.attrib, NumName.D_NAME.value, NumName.APSOURCE.value, name[2])
+            self.update_string(lvl_1.attrib, NumName.UUID.value, NumName.UUID.value, str(uuid.uuid1()))
             for lvl_2 in lvl_1.iter(NumName.DESIGNED.value):
                 self.update_string(lvl_2.attrib, NumName.VALUE_ATR.value, NumName.PATH_SERVER.value, name[3])
+
+    def upd_empty_link(self, lvl, name):
+        for lvl_1 in lvl.iter(NumName.OBJECT.value):
+            self.update_string(lvl_1.attrib, NumName.UUID.value, NumName.UUID.value, str(uuid.uuid1()))
 
     def upd_basetype_win(self, lvl, name):
         '''Изменение раздела, где name="type_name" и base-type=Window.'''
@@ -384,6 +389,8 @@ class Template(BaseFunction):
         '''Изменение раздела, где name="type_reset_all_button_1".'''
         for lvl_1 in lvl.iter(NumName.OBJECT.value):
             if self.search_string(lvl_1.attrib, NumName.NAME_ATR.value, NumName.RESET_BUT.value):
+                # Обновление UUID
+                self.update_string(lvl_1.attrib, NumName.UUID.value, NumName.UUID.value, str(uuid.uuid1()))
                 # Для таблицы GMPNA кнопку удаляем
                 if self.table == 'GMPNA':
                     self.root.remove(lvl_1)
@@ -401,6 +408,8 @@ class Template(BaseFunction):
             self.upd_settings_form(lvl, name, size_h)
             # name="ApSource"
             self.upd_apsource(lvl, name)
+            # name="empty_link"
+            self.upd_empty_link(lvl, name)
             # base-type=Window
             self.upd_basetype_win(lvl, name)
             # name="type_reset_all_button_1"
@@ -559,7 +568,10 @@ class Button(BaseFunction):
         if key == 1:
             value = f'{self.kit.attrib_top}_{page}'
         elif key == 2:
-            value = f'{self.kit.apsoure_name}{self.num_iter}'
+            if self.table == 'KTPR' or self.table == 'KTPRP':
+                value = f'{self.kit.apsoure_name}'
+            else:
+                value = f'{self.kit.apsoure_name}{self.num_iter}'
         elif key > 2:
             for i in range(key, 11):
                 if key == i and page == (key - 2) and self.max_page >= (key - 2):
@@ -620,10 +632,10 @@ class Button(BaseFunction):
 
             data = self.req_table(page)
             for i in range(1, len(data) + 1):
-                self.new_row_init(object,
-                                  NumName.INIT.value,
-                                  f'def{i}_path',
-                                  self.def_path(data[i - 1][0]))
+                self.new_row_designed(object,
+                                      NumName.INIT.value,
+                                      f'def{i}_path',
+                                      self.def_path(data[i - 1][0]))
 
     def form_assembly(self):
         '''Заполнение кнопкой.'''

@@ -32,7 +32,7 @@
 	<designed target="MonitorNumber" value="0" ver="5"/>
 	<designed target="WindowPosition" value="2" ver="5"/>
 	<designed target="WindowCloseMode" value="0" ver="5"/>
-	<object access-modifier="private" name="ApSource" display-name="ApSource" uuid="7365cdd6-8b7c-42e0-81d9-9acf699c2503" base-type="ApSource" base-type-id="966603da-f05e-4b4d-8ef0-919efbf8ab2c" ver="5">
+	<object access-modifier="private" name="ApSource" display-name="ApSource" uuid="uuid" base-type="ApSource" base-type-id="966603da-f05e-4b4d-8ef0-919efbf8ab2c" ver="5">
 		<designed target="Path" value="path_server" ver="5"/>
 		<designed target="Active" value="true" ver="5"/>
 		<designed target="ReAdvise" value="0" ver="5"/>
@@ -43,7 +43,7 @@
 		<designed target="ClientDisplayName" value="HMI" ver="5"/>
 		<designed target="ClientId" value="HMI" ver="5"/>
 	</object>
-	<object access-modifier="private" name="empty_link" display-name="empty_link" uuid="3134e86f-cb7a-47a1-a142-b6db7fc72554" base-type="type_defence_top" base-type-id="6b175e7c-6060-4e11-a416-88a851f6b4a5" ver="5">
+	<object access-modifier="private" name="empty_link" display-name="empty_link" uuid="uuid" base-type="type_defence_top" base-type-id="6b175e7c-6060-4e11-a416-88a851f6b4a5" ver="5">
 		<designed target="X" value="1" ver="5"/>
 		<designed target="Y" value="39" ver="5"/>
 		<designed target="Rotation" value="0" ver="5"/>
@@ -57,7 +57,7 @@
 		<init target="Group" ver="5" ref="link_ref"/>
 	</object>
 	<designed target="Flip" value="0" ver="5"/>
-	<object access-modifier="private" name="type_reset_all_button_1" display-name="type_reset_all_button_1" uuid="abe19024-52cd-11ed-aca8-68ecc529a7d0" base-type="type_reset_all_button" base-type-id="63a525da-c1a1-4436-ac7a-4031350c94e2" ver="5">
+	<object access-modifier="private" name="type_reset_all_button_1" display-name="type_reset_all_button_1" uuid="uuid" base-type="type_reset_all_button" base-type-id="63a525da-c1a1-4436-ac7a-4031350c94e2" ver="5">
 		<designed target="X" value="901" ver="2"/>
 		<designed target="Y" value="coord_Y" ver="2"/>
 		<designed target="Rotation" value="0" ver="2"/>

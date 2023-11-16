@@ -2,6 +2,7 @@ import uuid
 import shutil
 import os
 import traceback
+from datetime import datetime
 from models import HardWare
 from models import connect
 from main_base import General_functions
@@ -9,6 +10,7 @@ from lxml.etree import CDATA
 from lxml import etree
 from enum import Enum
 from typing import NamedTuple
+today = datetime.now()
 
 
 class NewRowsParams(NamedTuple):
@@ -397,7 +399,7 @@ class ParserFile(BaseUSO):
                     for lvl_2 in lvl_1.iter(NumName.BODY.value):
                         lvl_2.text = CDATA(f'_link_D_{connect.type_system}_{uso_eng}_for_enable.Enabled=true;')
 
-    def in_out_name(self, root, data_value: dict):
+    def in_out_name(self, root, data_value: dict, fl_not_link: bool):
         '''Корректировка названий на входе и выходе корзин'''
         def sign_path(fl_CPU: bool, uso: str):
             if fl_CPU:
@@ -405,11 +407,20 @@ class ParserFile(BaseUSO):
             else:
                 return f'Diag.CNs.{uso}_01'
 
+        def delete_in_out(root, lvl_1):
+            '''Удаляем линию если необходимо'''
+            root.remove(lvl_1)
+
         len_data = len(data_value)
         for lvl in root.iter(NumName.TYPE_ROOT.value):
 
             for lvl_1 in lvl.iter(NumName.OBJECT.value):
+
                 if self.search_string(lvl_1.attrib, NumName.NAME_ATR.value, 't_input_link'):
+
+                    if fl_not_link:
+                        delete_in_out(root, lvl_1)
+                        continue
 
                     for lvl_2 in lvl_1.iter(NumName.INIT.value):
                         self.update_string(lvl_2.attrib, NumName.VALUE_ATR.value, NumName.IN_PATH.value,
@@ -417,6 +428,10 @@ class ParserFile(BaseUSO):
                                                      data_value[0]['net'][0][5].split(';')[0]))
 
                 if self.search_string(lvl_1.attrib, NumName.NAME_ATR.value, 't_output_link'):
+
+                    if fl_not_link:
+                        delete_in_out(root, lvl_1)
+                        return
 
                     for lvl_2 in lvl_1.iter(NumName.DESIGNED.value):
                         self.update_string(lvl_2.attrib,
@@ -550,7 +565,6 @@ class ParserFile(BaseUSO):
             m_number = f'0{m_number}' if m_number < 10 else m_number
             attribut = self.attr_CNs if t_modul.NAME.value == 'CNs' else self.attr_set_mod
             faceplate = ('true', 'false') if b_number >= 2 else ('false', 'true')
-
             for net in net_data:
                 if net[4] == b_number:
                     net_link_in = str(net[5]).split(';')
@@ -562,9 +576,15 @@ class ParserFile(BaseUSO):
                 elif key == '3':
                     attr_value = faceplate[1]
                 elif key == '6':
-                    attr_value = f'{net_link_in[2]} корзина {net_link_in[1]}'
+                    try:
+                        attr_value = f'{net_link_in[2]} корзина {net_link_in[1]}'
+                    except Exception:
+                        attr_value = ''
                 elif key == '7':
-                    attr_value = f'{net_link_out[2]} корзина {net_link_out[1]}'
+                    try:
+                        attr_value = f'{net_link_out[2]} корзина {net_link_out[1]}'
+                    except Exception:
+                        attr_value = ''
                 else:
                     attr_value = value[1]
 
@@ -615,22 +635,22 @@ class ParserFile(BaseUSO):
             '''Формируем значения входной и выходной линии.'''
             for net in net_uso:
                 if net[4] == b_number:
-                    basket = net[3]
+                    basket = net[4]
                     in_basket = net[5].split(';')
                     out_basket = net[6].split(';')
                     line = in_basket if flag_in else out_basket
-                    sign_in_out = 'MNs' if line[0].find('KC') > -1 else 'CNs'
-                    sign_current = 'MNs' if uso_eng.find('KC') > -1 else 'CNs'
+                    sign_in_out = 'MNs' if 'KC' in line[0] else 'CNs'
+                    sign_current = 'MNs' if 'KC' in line[0] else 'CNs'
                     if flag_in:
                         if attr_number == 5:
                             value_attr = f'Diag.{sign_in_out}.{line[0]}_01.ch_CN_02.ePNotLink'
                         elif attr_number == 6:
-                            value_attr = f'Diag.{sign_current}.{uso_eng}_{basket}_01.ch_CN_01.ePNotLink'
+                            value_attr = f'Diag.{sign_current}.{uso_eng}_A{basket}_01.ch_CN_01.ePNotLink'
                         else:
                             value_attr = def_value
                     else:
                         if attr_number == 5:
-                            value_attr = f'Diag.{sign_current}.{uso_eng}_{basket}_01.ch_CN_02.ePNotLink'
+                            value_attr = f'Diag.{sign_current}.{uso_eng}_A{basket}_01.ch_CN_02.ePNotLink'
                         elif attr_number == 6:
                             value_attr = f'Diag.{sign_in_out}.{line[0]}_01.ch_CN_01.ePNotLink'
                         else:
@@ -742,6 +762,7 @@ class DaignoPicture():
         data = []
 
         net_value = self.dop_function.connect_by_sql_condition('net', '*', f'''"name"='{uso_rus}' ''')
+        fl_not_link = True if not len(net_value) else False
         for column in HardWare.select().order_by(HardWare.id).dicts():
             uso = column['uso']
             if uso_rus == uso:
@@ -753,33 +774,44 @@ class DaignoPicture():
                                  basket=basket,
                                  data=data_b,
                                  net=net_value))
-        return data
+        return data, fl_not_link
 
     def filling_pic_uso(self):
+        msg = {}
         system = MNS if connect.type_system == 'MNS' else PT
-        name_uso = self.cabinet_names()
-        for eng, rus in name_uso.items():
-            # Проверка шаблона и создание новой картинки
-            path_picture = self.check_template(eng) 
-            # Парсинг новой картинки
-            parser = ParserFile(path_picture)
-            root, tree = parser()
-            # Правка шаблона
-            parser.edit_template(system, root, eng, rus)
-            # Добавление служебных сигналов
-            parser.service_signals(root, self.request_ss(rus))
-            # Собираем корзины
-            data = self.request_basket(rus)
-            # Заполняем форму
-            parser.edit_basket(root, data)
-            parser.edit_modul(root, data, eng, rus)
-            # Добавляем подписи к линиям
-            parser.in_out_name(root, data)
-            # Добавляем линии корзины
-            parser.line_in_out(root, data, eng)
-            parser.line_in_out(root, data, eng, False)
-            # Добавляем точки к линиям
-            parser.edit_point(root, data)
-            parser.edit_point(root, data, False)
+        try:
+            name_uso = self.cabinet_names()
+            for eng, rus in name_uso.items():
+                # Корзина КЦ не нужна
+                if 'KC' in eng:
+                    continue
+                # Проверка шаблона и создание новой картинки
+                path_picture = self.check_template(eng)
+                # Парсинг новой картинки
+                parser = ParserFile(path_picture)
+                root, tree = parser()
+                # Правка шаблона
+                parser.edit_template(system, root, eng, rus)
+                # Добавление служебных сигналов
+                parser.service_signals(root, self.request_ss(rus))
+                # Собираем корзины
+                data, fl_not_link = self.request_basket(rus)
+                # Заполняем форму
+                parser.edit_basket(root, data)
+                parser.edit_modul(root, data, eng, rus)
+                # Добавляем подписи к линиям
+                parser.in_out_name(root, data, fl_not_link)
+                # Если есть связь между корзинами
+                if not fl_not_link:
+                    # Добавляем линии корзины
+                    parser.line_in_out(root, data, eng)
+                    parser.line_in_out(root, data, eng, False)
+                    # Добавляем точки к линиям
+                    parser.edit_point(root, data)
+                    parser.edit_point(root, data, False)
 
-            tree.write(path_picture, pretty_print=True, encoding='utf-8')
+                tree.write(path_picture, pretty_print=True, encoding='utf-8')
+            return msg
+        except Exception:
+            msg[f'{today} - HMI. USO. Ошибка {traceback.format_exc()}'] = 2
+            return msg

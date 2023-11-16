@@ -87,4 +87,8 @@ else
 }]]>
 		</body>
 	</do-on>
+	<object access-modifier="private" name="Window_Control" display-name="Window_Control" uuid="037ce72c-4e7e-447b-a08a-c64201c255b6" base-type="Window" base-type-id="04615219-28bb-4a9a-bba4-50ac66972eb0" ver="5" description="" cardinal="1">
+		<do-on access-modifier="private" name="Handler_1" display-name="Handler_1" ver="5" event="MessageReceived" form-action="close"/>
+		<init target="Group" ver="5" ref="unit.WorkspaceControl.Form_UPTS_Control"/>
+	</object>
 </type>

@@ -390,7 +390,10 @@ class Alarm_map():
             max_value_1 = dop_function.max_value_column(work_tabl, NumberColumn.NUMBER_LIST_VU.value, False)
             max_value_2 = dop_function.max_value_column(work_tabl, NumberColumn.ORDER_NUMBER_FOR_VU.value, False)
 
-            msg[f'{today} - Столбец таблицы {work_tabl} - number_list_VU или number_siren_VU не определены'] = 2
+            if max_value_1 is None or max_value_2 is None:
+                msg[f'{today} - Столбец таблицы {work_tabl} - number_list_VU или number_siren_VU не определены'] = 2
+                return msg
+
             button_bool = True if int(max_value_1) > 1 else False
 
             # Начало работы с созданным файлом

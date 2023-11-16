@@ -743,13 +743,15 @@ class GenHMIandDev(QWidget):
         if self.checkbox_hmi_ktpra.isChecked():
             num_pump = self.select_row.text()
             if num_pump == '':
-                num_pump = None
-            self.object_defence('KTPRA', int(num_pump))
+                self.object_defence('KTPRA')
+            else:
+                self.object_defence('KTPRA', int(num_pump))
         if self.checkbox_hmi_gmpna.isChecked():
             num_pump = self.select_row.text()
             if num_pump == '':
-                num_pump = None
-            self.object_defence('GMPNA', int(num_pump))
+                self.object_defence('GMPNA')
+            else:
+                self.object_defence('GMPNA', int(num_pump))
         if self.checkbox_hmi_uso.isChecked():
             self.object_uso()
         if self.checkbox_hmi_uts.isChecked():

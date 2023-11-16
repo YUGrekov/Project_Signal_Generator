@@ -665,7 +665,7 @@ class Line(BaseFunction, BaseUSO):
             '''Формируем значения входной и выходной линии.'''
             for net in net_uso:
                 if net[4] == b_number:
-                    basket = net[3]
+                    basket = net[4]
                     in_basket = net[5].split(';')
                     out_basket = net[6].split(';')
                     line = in_basket if flag_in else out_basket
@@ -675,12 +675,12 @@ class Line(BaseFunction, BaseUSO):
                         if attr_number == 5:
                             value_attr = f'Diag.{sign_in_out}.{line[0]}_01.ch_CN_02.ePNotLink'
                         elif attr_number == 6:
-                            value_attr = f'Diag.{sign_current}.{uso_eng}_{basket}_01.ch_CN_01.ePNotLink'
+                            value_attr = f'Diag.{sign_current}.{uso_eng}_A{basket}_01.ch_CN_01.ePNotLink'
                         else:
                             value_attr = def_value
                     else:
                         if attr_number == 5:
-                            value_attr = f'Diag.{sign_current}.{uso_eng}_{basket}_01.ch_CN_02.ePNotLink'
+                            value_attr = f'Diag.{sign_current}.{uso_eng}_A{basket}_01.ch_CN_02.ePNotLink'
                         elif attr_number == 6:
                             value_attr = f'Diag.{sign_in_out}.{line[0]}_01.ch_CN_01.ePNotLink'
                         else:
@@ -827,6 +827,9 @@ class DaignoPicture(BaseUSO):
             system = MNS if connect.type_system == 'MNS' else PT
             name_uso = self.cabinet_names()
             for eng, rus in name_uso.items():
+                # Корзина КЦ не нужна
+                if 'KC' in eng:
+                    continue
                 self.logsTextEdit.logs_msg(f'''HMI. {eng}.
                                            Заполнение формы''', 3)
                 # Проверка шаблона и создание новой картинки
