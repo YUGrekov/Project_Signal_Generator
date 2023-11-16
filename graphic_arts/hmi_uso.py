@@ -574,9 +574,15 @@ class Basket(BaseFunction, BaseUSO):
                 elif key == '3':
                     attr_value = faceplate[1]
                 elif key == '6':
-                    attr_value = f'{net_link_in[2]} корзина {net_link_in[1]}'
+                    try:
+                        attr_value = f'{net_link_in[2]} корзина {net_link_in[1]}'
+                    except Exception:
+                        attr_value = ''
                 elif key == '7':
-                    attr_value = f'{net_link_out[2]} корзина {net_link_out[1]}'
+                    try:
+                        attr_value = f'{net_link_out[2]} корзина {net_link_out[1]}'
+                    except Exception:
+                        attr_value = ''
                 else:
                     attr_value = value[1]
 
@@ -604,6 +610,7 @@ class Line(BaseFunction, BaseUSO):
         self.root = arg[0]
         self.data_value = arg[1]
         self.uso_eng = arg[2]
+        self.fl_not_link = arg[3]
 
     def in_out_name(self):
         '''Корректировка названий на входе и выходе корзин'''
@@ -613,8 +620,21 @@ class Line(BaseFunction, BaseUSO):
             else:
                 return f'Diag.CNs.{uso}_01'
 
+        def delete_in_out(lvl):
+            '''Удаляем линию если необходимо'''
+            array = [self.T_LINK_IN, self.T_LINK_OUT]
+            for row in array:
+                for lvl_1 in lvl.iter(NumName.OBJECT.value):
+                    if self.search_string(lvl_1.attrib, NumName.NAME_ATR.value, row):
+                        self.root.remove(lvl_1)
+                        break
+
         len_data = len(self.data_value)
         for lvl in self.root.iter(NumName.TYPE_ROOT.value):
+            # Удаление строк
+            if self.fl_not_link:
+                delete_in_out(lvl)
+                return
 
             for lvl_1 in lvl.iter(NumName.OBJECT.value):
                 if self.search_string(lvl_1.attrib, NumName.NAME_ATR.value, self.T_LINK_IN):
@@ -669,7 +689,7 @@ class Line(BaseFunction, BaseUSO):
                     in_basket = net[5].split(';')
                     out_basket = net[6].split(';')
                     line = in_basket if flag_in else out_basket
-                    sign_in_out = 'MNs' if line[0].find('KC') > -1 else 'CNs'
+                    sign_in_out = 'MNs' if 'KC' in line[0] else 'CNs'
                     sign_current = 'MNs' if uso_eng.find('KC') > -1 else 'CNs'
                     if flag_in:
                         if attr_number == 5:
@@ -782,7 +802,7 @@ class DaignoPicture(BaseUSO):
         data_value = self.request.where_select(self.CONST_TABLE_USO,
                                                self.ALL_DATA, req_1,
                                                self.CONST_TABLE_ID)
-        req_2 = f'''"variable" = '{data_value[0][3]}' '''
+        req_2 = f'''"variable" = '{data_value[0][4]}' '''
         data_AI = self.request.where_select(self.CONST_TABLE_AI,
                                             self.TAG_ENG, req_2,
                                             self.CONST_TABLE_ID)
@@ -807,6 +827,7 @@ class DaignoPicture(BaseUSO):
         net_value = self.request.where_select(self.CONST_TABLE_NET,
                                               self.ALL_DATA, req_1,
                                               self.CONST_TABLE_ID)
+        fl_not_link = True if not len(net_value) else False
 
         for column in HardWare.select().order_by(HardWare.id).dicts():
             uso = column['uso']
@@ -819,7 +840,7 @@ class DaignoPicture(BaseUSO):
                                  basket=basket,
                                  data=data_b,
                                  net=net_value))
-        return data
+        return data, fl_not_link
 
     def filling_pic_uso(self):
         try:
@@ -843,20 +864,21 @@ class DaignoPicture(BaseUSO):
                 servseig = ServiceSignals(root, self.request_ss(rus))
                 servseig.service_signals()
                 # Собираем корзины
-                data = self.request_basket(rus)
+                data, fl_not_link = self.request_basket(rus)
                 # Заполняем форму
                 basket = Basket(root, data, eng)
                 basket.edit_basket()
                 basket.edit_modul()
                 # Добавляем подписи к линиям
-                line = Line(root, data, eng)
+                line = Line(root, data, eng, fl_not_link)
                 line.in_out_name()
-                # Добавляем линии корзины
-                line.line_in_out()
-                line.line_in_out(False)
-                # Добавляем точки к линиям
-                line.edit_point()
-                line.edit_point(False)
+                if not fl_not_link:
+                    # Добавляем линии корзины
+                    line.line_in_out()
+                    line.line_in_out(False)
+                    # Добавляем точки к линиям
+                    line.edit_point()
+                    line.edit_point(False)
                 tree.write(path_picture, pretty_print=True, encoding='utf-8')
                 self.logsTextEdit.logs_msg(f'''HMI. {eng}.
                                            Форма заполнена''', 0)
