@@ -1522,3 +1522,18 @@ class NPS(BaseModel):
 
     class Meta:
         table_name = 'nps'
+
+
+class Modbus(BaseModel):
+    group_name = CharField(null=True)
+    variable = CharField(null=True)
+    start_address = IntegerField(null=True)
+    end_address = IntegerField(null=True)
+    number_of_regs = IntegerField(null=True)
+    PLC_variable = CharField(null=True)
+    type = CharField(null=True)
+    description = CharField(null=True)
+    note = CharField(null=True)
+
+    class Meta:
+        table_name = 'modbus'

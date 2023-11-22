@@ -2931,7 +2931,7 @@ class Filling_attribute_DevStudio():
                             if self.dop_function.str_find(value_di[0], isdigitKVO):
                                 break
                 except Exception:
-                    tag_di = ''
+                    tag_di = ' '
 
                 try:
                     isdigitOPEN = re.findall('\d+', open_in_zd)
@@ -2941,7 +2941,7 @@ class Filling_attribute_DevStudio():
                             if self.dop_function.str_find(value_do[0], isdigitOPEN):
                                 break
                 except Exception:
-                    tag_di = ''
+                    tag_do = ' '
 
                 tag = f'ZD_{number}'
                 # Наличие мутфа, авария
@@ -3402,6 +3402,7 @@ class Filling_attribute_DevStudio():
             msg[f'{today} - Ошибка при добавлении значений атрибутов Diag.{variable_mod}: {traceback.format_exc()}'] = 2
             return msg
     def mklogic_DI_DO_atrib(self, variable_mod, type_mod):
+
         link_path = [f'{connect.path_to_devstudio}\\AttributesMapKlk.xml', 
                      f'{connect.path_to_devstudio}\\AttributesMapKont.xml', 
                      f'{connect.path_to_devstudio}\\AttributesMapSignalName.xml',
@@ -3411,7 +3412,7 @@ class Filling_attribute_DevStudio():
             data_hw = self.hardware_data(type_mod)
 
             for path in link_path:
-                root, tree = self.dop_function.parser_diag_map('.Diag.{variable_mod}.', path)
+                root, tree = self.dop_function.parser_diag_map(f'.Diag.{variable_mod}.', path)
 
                 for data in data_hw:
                     uso          = data['uso']

@@ -46,16 +46,23 @@ class ZD():
     def new_list_valves(self):
         '''Состовляем новый список задвижек.'''
         new_zd = []
+        name_klapan = ['продувк', 'воздушн', 'Воздушн', 'соленоидн', 'приточн']
         where = (DI.name % ('%задвижк%') | DI.name % ('%Задвижк%') |
                  DI.name % ('%клап%') | DI.name % ('%Клап%') |
                  DI.name % ('%клоп%') | DI.name % ('%Клоп%') |
-                 DI.name % ('%кран шар%') | DI.name % ('%Кран шар%'))
+                 DI.name % ('%кран шар%') | DI.name % ('%Кран шар%') |
+                 DI.name % ('%Заслон%') | DI.name % ('%заслон%') |
+                 DI.name % ('%Жалюз%') | DI.name % ('%жалюз%'))
 
         list_zd = self.request.select_orm(DI, where, DI.name)
         for zd in list_zd:
+            fl_repl = True
             valves = zd.name.split(' - ')[0]
-            valves = re.sub(r'(Открыт)|(открыт)|(Закрыт)|(закрыт)', '', valves)
-            if 'продувк' not in valves:
+            valves = re.sub(r'(открыт)+[аы]|(закрыт)+[аы]|(открыт)|(закрыт)', '', valves)
+            for name in name_klapan:
+                if name in valves:
+                    fl_repl = False
+            if fl_repl:
                 valves = re.sub(r'( Клапан)|( клапан)|(. Клапан)', '', valves)
             new_zd.append(valves)
         for i in sorted(set(new_zd)):
