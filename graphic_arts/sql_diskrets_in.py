@@ -153,7 +153,8 @@ class InDiskrets():
                              tag=f'LOGIC_DI_{i}',
                              name='Переменная зарезервирована для логически формируемого сигнала',
                              tabl_msg='TblDiscretes',
-                             group_diskrets='Общие')
+                             group_diskrets='Общие',
+                             tag_eng=f'LOGIC_DI_{i}')
             self.request.write_base_orm(empty_row, DI)
         self.count_row = self.count_row + count_rez
 
