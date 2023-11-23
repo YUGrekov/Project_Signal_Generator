@@ -633,7 +633,7 @@ class GMPNAMap(BaseMap):
                       {self.variable}''')
                 raise
 
-            count_na = self.request.non_repea_names(KTPRA, KTPRA.number_pump_VU, KTPRA.number_pump_VU)
+            count_na = self.request.non_repea_names(GMPNA, GMPNA.number_pump_VU, GMPNA.number_pump_VU)
             for na in count_na:
                 max_row = self.request.max_value_column_cond('gmpna', 'id_num', 'number_pump_VU', na.number_pump_VU)
                 count_group = math.ceil(max_row / 4)
