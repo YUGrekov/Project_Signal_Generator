@@ -18,6 +18,7 @@ from windows_base_editing import MainWindow as WinEditing
 from import_exel_back import Import_in_SQL as KD_import
 from dev_ai import AIParam as SQL_AI
 from dev_di import Diskrets as SQL_DI
+from address_map import AnalogsMap
 
 # ГРАФИЧЕСКИЙ ИНТЕРФЕЙС ДЛЯ ЗАПУСКА ГЕНЕРАТОРА
 # Сформировать exe: в терминале добавить: auto-py-to-exe
@@ -2365,8 +2366,89 @@ class Widget(QWidget):
         msg = self.filing_attrib.clear_omx(self.list_gen_vu)
         self.logs_msg('default', 1, msg, True)
     def map_list(self):
-        msg = self.filing_attrib.write_in_map(self.list_gen_vu)
-        self.logs_msg('default', 1, msg, True)
+        if len(self.list_gen_vu) == 0:             
+            msg[f'{today} - Не выбраны выбраны объекты для заполнения карты адресов'] = 2
+            return msg
+
+        for tabl in self.list_gen_vu: 
+            if tabl == 'AI': 
+                map_ai = AnalogsMap()
+                msg = map_ai.work_file()
+                self.logs_msg('default', 1, msg, True)
+                continue
+            # if tabl == 'DI': 
+            #     msg.update(self.diskret_maps())
+            #     continue
+            # if tabl == 'VS': 
+            #     msg.update(self.auxsystem_maps())
+            #     continue
+            # if tabl == 'ZD': 
+            #     msg.update(self.valves_maps())
+            #     continue
+            # if tabl == 'NA': 
+            #     msg.update(self.na_maps())
+            #     continue
+            # if tabl == 'PIC': 
+            #     msg.update(self.picturs_maps())
+            #     continue
+            # if tabl == 'SS': 
+            #     msg.update(self.ss_maps())
+            #     continue
+            # if tabl == 'UTS': 
+            #     msg.update(self.uts_maps())
+            #     continue
+            # if tabl == 'UPTS': 
+            #     msg.update(self.upts_maps())
+            #     continue
+            # if tabl == 'KTPR': 
+            #     msg.update(self.ktpr_maps())
+            #     continue
+            # if tabl == 'KTPRP': 
+            #     msg.update(self.ktprp_maps())
+            #     continue
+            # if tabl == 'KTPRA': 
+            #     msg.update(self.ktpra_maps())
+            #     continue
+            # if tabl == 'GMPNA': 
+            #     msg.update(self.gmpna_maps())
+            #     continue
+            # if tabl == 'PI': 
+            #     msg.update(self.pi_maps())
+            #     continue
+            # if tabl == 'PZ': 
+            #     msg.update(self.pz_maps())
+            #     continue
+            # if tabl == 'AO_diag': 
+            #     msg.update(self.mklogic_DIAG_maps_param('AOs', 'MK-514-008', list_param_AI_AO))
+            #     continue
+            # if tabl == 'AI_diag': 
+            #     msg.update(self.mklogic_DIAG_maps_param('AIs', 'MK-516-008A', list_param_AI_AO))
+            #     continue
+            # if tabl == 'DO_diag': 
+            #     msg.update(self.mklogic_DIAG_maps_param('DOs', 'MK-531-032', list_param_DI_DO))
+            #     continue
+            # if tabl == 'DI_diag': 
+            #     msg.update(self.mklogic_DIAG_maps_param('DIs', 'MK-521-032', list_param_DI_DO))
+            #     continue
+            # if tabl == 'CPU_diag': 
+            #     msg.update(self.mklogic_DIAG_maps_param('CPUs', 'MK-504-120', list_param_CPU))
+            #     continue
+            # if tabl == 'CN_diag': 
+            #     msg.update(self.mklogic_DIAG_maps_param('CNs', 'MK-545-010', list_param_CN))
+            #     continue
+            # if tabl == 'MN_diag': 
+            #     msg.update(self.mklogic_DIAG_maps_param('MNs', 'MK-546-010', list_param_MN))
+            #     continue
+            # if tabl == 'PSU_diag': 
+            #     msg.update(self.mklogic_DIAG_maps_param('PSUs', 'MK-550-024', list_param_PSU))
+            #     continue
+            # if tabl == 'RS_diag': 
+            #     msg.update(self.mklogic_DIAG_maps_param('RSs', 'MK-541-002', list_param_RS))
+            #     continue
+            # if tabl == 'RackStates_diag': 
+            #     msg.update(self.mklogic_rackstates_maps(list_param_RackS))
+            #     continue
+
     def map_clear(self):
         msg = self.filing_attrib.clear_map(self.list_gen_vu)
         self.logs_msg('default', 1, msg, True)

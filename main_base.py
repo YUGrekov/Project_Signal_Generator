@@ -12,7 +12,6 @@ from models import *
 from lxml import etree
 from datetime import datetime
 from sql_metadata import Parser
-from logging_text import LogsTextEdit
 today = datetime.now()
 
 
@@ -387,8 +386,8 @@ class General_functions():
         except:
             return 1, 0, 0
     
-    def parser_map(self, directory):
-        path_map = f'{connect.path_to_devstudio}\\OUA.xml'
+    def parser_map(self, directory, file_xml):
+        path_map = f'{connect.path_to_devstudio}\\{file_xml}.xml'
         parser = etree.XMLParser(remove_blank_text=True)
         tree = etree.parse(path_map, parser)
         root = tree.getroot()
@@ -400,6 +399,7 @@ class General_functions():
                 root.remove(parent)
         tree.write(path_map, pretty_print=True)
         return root, tree
+    
     def parser_diag_map(self, directory, path_map):
         parser = etree.XMLParser(remove_blank_text=True)
         tree = etree.parse(path_map, parser)
@@ -490,6 +490,16 @@ class General_functions():
     def update_base_orm(self, models, update, where):
         '''Обновление записей базы через ORM peewee.'''
         models.update(update).where(where).execute()
+
+    def select_orm(self, models, where, order):
+        '''Запрос Select через ORM.'''
+        query = models.select().where(where).order_by(order)
+        return query.execute()
+
+    def non_repea_names(self, models, dist, order):
+        '''Нахождение неповторяющихся сигналов в таблице.'''
+        query = models.select().order_by(order).distinct(dist)
+        return query.execute()
 
 
 class Editing_table_SQL():
@@ -2200,6 +2210,7 @@ class Generate_database_SQL():
 class Filling_attribute_DevStudio():
     def __init__(self):
         self.dop_function = General_functions()
+    
     def write_in_omx(self, list_tabl):
         msg = {}
         if len(list_tabl) == 0:             
@@ -2295,97 +2306,7 @@ class Filling_attribute_DevStudio():
                 msg.update(self.egu_map())
                 continue
         return msg  
-    def write_in_map(self, list_tabl):
-            list_param_AI_AO = ['mod_State', 'ch_01', 'ch_02', 'ch_03', 'ch_04', 'ch_05', 'ch_06', 'ch_07', 'ch_08' ]
-            list_param_DI_DO = ['mod_State', 'mDI']
-            list_param_CPU   = ['mod_State', 'mod_State_ext', 'mod_State_Err', 'CPUMemFree', 'CPULoad', 'ClcCurr', 'ClcMax', 'RsrCRC32', 'DiskFreeSpace']
-            list_param_CN    = ['mod_State', 'mod_State_ext', 'ports_State', 'pwl_ID']
-            list_param_MN    = ['mod_State_ext', 'ports_State']
-            list_param_PSU   = ['mod_State', 'mod_State_ext', 'SupplyVoltage', 'CanBusSpeed', 'Can1ErrorCounter', 'Can2ErrorCounter']
-            list_param_RS    = ['mod_State', 'mod_State_ext']
-            list_param_RackS = ['mBUS', 'mBUSandCh', 'mBUSblink']
-            
-            msg = {}
-            if len(list_tabl) == 0:             
-                msg[f'{today} - Файл omx: не выбраны атрибуты'] = 2
-                return msg
-            for tabl in list_tabl: 
-                if tabl == 'AI': 
-                    msg.update(self.analogs_maps())
-                    continue
-                if tabl == 'DI': 
-                    msg.update(self.diskret_maps())
-                    continue
-                if tabl == 'VS': 
-                    msg.update(self.auxsystem_maps())
-                    continue
-                if tabl == 'ZD': 
-                    msg.update(self.valves_maps())
-                    continue
-                if tabl == 'NA': 
-                    msg.update(self.na_maps())
-                    continue
-                if tabl == 'PIC': 
-                    msg.update(self.picturs_maps())
-                    continue
-                if tabl == 'SS': 
-                    msg.update(self.ss_maps())
-                    continue
-                if tabl == 'UTS': 
-                    msg.update(self.uts_maps())
-                    continue
-                if tabl == 'UPTS': 
-                    msg.update(self.upts_maps())
-                    continue
-                if tabl == 'KTPR': 
-                    msg.update(self.ktpr_maps())
-                    continue
-                if tabl == 'KTPRP': 
-                    msg.update(self.ktprp_maps())
-                    continue
-                if tabl == 'KTPRA': 
-                    msg.update(self.ktpra_maps())
-                    continue
-                if tabl == 'GMPNA': 
-                    msg.update(self.gmpna_maps())
-                    continue
-                if tabl == 'PI': 
-                    msg.update(self.pi_maps())
-                    continue
-                if tabl == 'PZ': 
-                    msg.update(self.pz_maps())
-                    continue
-                if tabl == 'AO_diag': 
-                    msg.update(self.mklogic_DIAG_maps_param('AOs', 'MK-514-008', list_param_AI_AO))
-                    continue
-                if tabl == 'AI_diag': 
-                    msg.update(self.mklogic_DIAG_maps_param('AIs', 'MK-516-008A', list_param_AI_AO))
-                    continue
-                if tabl == 'DO_diag': 
-                    msg.update(self.mklogic_DIAG_maps_param('DOs', 'MK-531-032', list_param_DI_DO))
-                    continue
-                if tabl == 'DI_diag': 
-                    msg.update(self.mklogic_DIAG_maps_param('DIs', 'MK-521-032', list_param_DI_DO))
-                    continue
-                if tabl == 'CPU_diag': 
-                    msg.update(self.mklogic_DIAG_maps_param('CPUs', 'MK-504-120', list_param_CPU))
-                    continue
-                if tabl == 'CN_diag': 
-                    msg.update(self.mklogic_DIAG_maps_param('CNs', 'MK-545-010', list_param_CN))
-                    continue
-                if tabl == 'MN_diag': 
-                    msg.update(self.mklogic_DIAG_maps_param('MNs', 'MK-546-010', list_param_MN))
-                    continue
-                if tabl == 'PSU_diag': 
-                    msg.update(self.mklogic_DIAG_maps_param('PSUs', 'MK-550-024', list_param_PSU))
-                    continue
-                if tabl == 'RS_diag': 
-                    msg.update(self.mklogic_DIAG_maps_param('RSs', 'MK-541-002', list_param_RS))
-                    continue
-                if tabl == 'RackStates_diag': 
-                    msg.update(self.mklogic_rackstates_maps(list_param_RackS))
-                    continue
-            return msg
+    
     def clear_omx(self, list_tabl):
         path_AI_AO = [f'{connect.path_to_devstudio}\\AttributesMapAI_Ref.xml',
                       f'{connect.path_to_devstudio}\\AttributesMapKlk.xml',
@@ -2493,6 +2414,7 @@ class Filling_attribute_DevStudio():
                 msg.update(self.dop_function.clear_objects_attrib('.Analogs', path_egu))
                 continue
         return msg
+    
     def clear_map(self, list_tabl):
         msg = {}
         if len(list_tabl) == 0: 
@@ -2500,7 +2422,7 @@ class Filling_attribute_DevStudio():
             return msg
         for tabl in list_tabl: 
             if tabl == 'AI': 
-                self.dop_function.parser_map('.Analogs.')
+                self.dop_function.parser_map('.Analogs.', 'Modbus503')
                 msg[f'{today} - Карта адресов: адреса Analogs очищены'] = 1
                 continue
             if tabl == 'DI': 
@@ -3641,557 +3563,6 @@ class Filling_attribute_DevStudio():
         except Exception:
             msg[f'{today} - Ошибка при добавлении значений в карту атрибутов AttributesMapEGU: {traceback.format_exc()}'] = 2
             return msg
-    # Заполнение карты адресов
-    def analogs_maps(self):
-        dop_analog    = {'AIVisualValue', 'AIElValue', 'AIValue', 'AIRealValue', 'StateAI'}
-        dop_analog_lv = {'AIVisualValue', 'AIElValue', 'AIValue', 'AIRealValue', 'StateAI', 'Range_Bottom', 'Range_Top'}
-        msg = {}
-        try:
-            data = self.dop_function.connect_by_sql('ai', f'"id", "tag", "name", "AnalogGroupId"')
-            root, tree  = self.dop_function.parser_map('.Analogs.')
-
-            for value in data:
-                number     = value[0]
-                tag        = value[1]
-                name       = value[2]
-                grp_analog = value[3]
-
-                if tag == '' or tag is None: continue
-                if name == '' or name is None: continue
-
-                # У уровней особый набор параметров
-                if grp_analog == 'Уровни': list_analog = dop_analog_lv
-                else:                      list_analog = dop_analog
-
-                tag = self.dop_function.translate(str(tag))
-
-                for key in list_analog:
-                    signal = f'Root{connect.prefix_system}.Analogs.{tag}.{key}'
-
-                    object = etree.Element('item')
-                    object.attrib['Binding'] = 'Introduced'
-
-                    self.dop_function.new_map_str(object, 'node-path', signal)
-                    self.dop_function.new_map_str(object, 'table-path', f'Holding Registers')
-                    self.dop_function.new_map_str(object, 'address', 2 * (number - 1))
-                    
-                    root.append(object)
-                tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
-            msg[f'{today} - Карта адресов: адреса Analogs заполнены'] = 1
-            return msg
-        except Exception:
-            msg[f'{today} - Карта адресов: ошибка при заполнении карты адресов Analogs: {traceback.format_exc()}'] = 2
-            return msg
-    def diskret_maps(self):
-        msg = {}
-        try:
-            data = self.dop_function.connect_by_sql('di', f'"id", "tag", "name"')
-            root, tree  = self.dop_function.parser_map('.Diskrets.')
-
-            for value in data:
-                number = value[0]
-                tag    = value[1]
-                name   = value[2]
-
-                if tag == '' or tag  is None: continue
-                if name == '' or name is None: continue
-
-                tag = self.dop_function.translate(str(tag))
-                signal = f'Root{connect.prefix_system}.Diskrets.{tag}.StateDI'
-
-                object = etree.Element('item')
-                object.attrib['Binding'] = 'Introduced'
-
-                self.dop_function.new_map_str(object, 'node-path', signal)
-                self.dop_function.new_map_str(object, 'table', f'Holding Registers')
-                self.dop_function.new_map_str(object, 'address', 2 * (number - 1))
-                    
-                root.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
-            msg[f'{today} - Карта адресов: адреса Diskrets заполнены'] = 1
-            return msg
-        except Exception:
-            msg[f'{today} - Карта адресов: ошибка при заполнении карты адресов Diskrets: {traceback.format_exc()}'] = 2
-            return msg
-    def picturs_maps(self):
-        msg = {}
-        try:
-            data = self.dop_function.connect_by_sql('pic', f'"id", "frame"')
-            root, tree  = self.dop_function.parser_map('.Pictures.')
-
-            for value in data:
-                number = value[0]
-                frame  = value[1]
-
-                if frame == '' or frame is None: continue
-                signal = f'Root{connect.prefix_system}.Pictures.{frame}.StatePicture'
-
-                object = etree.Element('item')
-                object.attrib['Binding'] = 'Introduced'
-        
-                self.dop_function.new_map_str(object, 'node-path', signal)
-                self.dop_function.new_map_str(object, 'table', f'Holding Registers')
-                self.dop_function.new_map_str(object, 'address', 2 * (number - 1))
-                    
-                root.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
-            msg[f'{today} - Карта адресов: адреса Pictures заполнены'] = 1
-            return msg
-        except Exception:
-            msg[f'{today} - Карта адресов: ошибка при заполнении карты адресов Pictures: {traceback.format_exc()}'] = 2
-            return msg
-    def auxsystem_maps(self):
-        dop_vs = {'StateAuxSystem', 'numOfStart', 'operatingTimeCurrentMonth', 'operatingTimeLastMonth', 'operatingTime'}
-        msg = {}
-        try:
-            data = self.dop_function.connect_by_sql('vs', f'"id"')
-            root, tree  = self.dop_function.parser_map('.AuxSystems.')
-
-            for value in data:
-                number = value[0]
-
-                if number == '' or number is None: continue
-                for key in dop_vs:
-                    tag = f'VS_{number}'
-                    signal = f'Root{connect.prefix_system}.AuxSystems.{tag}.{key}'
-
-                    object = etree.Element('item')
-                    object.attrib['Binding'] = 'Introduced'
-
-                    self.dop_function.new_map_str(object, 'node-path', signal)
-                    self.dop_function.new_map_str(object, 'table', f'Holding Registers')
-                    self.dop_function.new_map_str(object, 'address', 2 * (number - 1))
-
-                    root.append(object)
-                tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
-            msg[f'{today} - Карта адресов: адреса AuxSystems заполнены'] = 1
-            return msg
-        except Exception:
-            msg[f'{today} - Карта адресов: ошибка при заполнении карты адресов AuxSystems: {traceback.format_exc()}'] = 2
-            return msg
-    def valves_maps(self):
-        dop_zd = {'StateValve1', 'StateValve2', 'StateValve3', 'Tm.tmZD', 'NumOfOpenings', 'NumOfClosings'}
-        msg = {}
-        try:
-            data = self.dop_function.connect_by_sql('zd', f'"id"')
-            root, tree  = self.dop_function.parser_map('.Valves.')
-
-            for value in data:
-                number = value[0]
-
-                if number == '' or number is None: continue
-
-                for key in dop_zd:
-                    tag = f'ZD_{number}'
-                    signal = f'Root{connect.prefix_system}.Valves.{tag}.{key}'
-
-                    object = etree.Element('item')
-                    object.attrib['Binding'] = 'Introduced'
-
-                    self.dop_function.new_map_str(object, 'node-path', signal)
-                    self.dop_function.new_map_str(object, 'table', f'Holding Registers')
-                    self.dop_function.new_map_str(object, 'address', 2 * (number - 1))
-
-                    root.append(object)
-                tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
-            msg[f'{today} - Карта адресов: адреса Valves заполнены'] = 1
-            return msg
-        except Exception:
-            msg[f'{today} - Карта адресов: ошибка при заполнении карты адресов Valves: {traceback.format_exc()}'] = 2
-            return msg
-    def na_maps(self):
-        dop_na = {'StateNA','StateNAEx','StateNAStatistic','operatingTimeSinceSwitchingOn','operatingTimeSinceSwitchingOnSet','operatingTimeBeforeOverhaul',
-                  'operatingTimeBeforeOverhaulSet','numOfStart','dateTimeOfStart','dateTimeOfStop','operatingTimeCurrentMonth','operatingTimeLastMonth',
-                  'operatingTimeTO','operatingTimeTO1','operatingTimeTOSet','operatingTimeMidTO','operatingTimeMidTOSet','operatingTimeThisKvart',
-                  'operatingTimeLastKvart','operatingTimeFromBegin','operatingTimeED','operatingTimeEDSet','numOfStartSet','time24hStart',
-                  'timeFromHotStart','numOfStarts24h','OperatingTimeState',}
-        msg = {}
-        try:
-            data = self.dop_function.connect_by_sql('umpna', f'"id"')
-            root, tree  = self.dop_function.parser_map('.NAs.')
-
-            for value in data:
-                number = value[0]
-
-                if number == '' or number is None: continue
-
-                for key in dop_na:
-                    tag    = f'NA_{number}'
-                    signal = f'Root{connect.prefix_system}.NAs.{tag}.{key}'
-
-                    object = etree.Element('item')
-                    object.attrib['Binding'] = 'Introduced'
-                    
-                    self.dop_function.new_map_str(object, 'node-path', signal)
-                    self.dop_function.new_map_str(object, 'table', f'Holding Registers')
-                    self.dop_function.new_map_str(object, 'address', 2 * (number - 1))
-
-                    root.append(object)
-                tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
-            msg[f'{today} - Карта адресов: адреса NAs заполнены'] = 1
-            return msg
-        except Exception:
-            msg[f'{today} - Карта адресов: ошибка при заполнении карты адресов NAs: {traceback.format_exc()}'] = 2
-            return msg
-    def ss_maps(self):
-        msg = {}
-        try:
-            data = self.dop_function.connect_by_sql('ss', f'"id", "name"')
-            root, tree  = self.dop_function.parser_map('.SSs.')
-
-            for value in data:
-                number = value[0]
-                name   = value[1]
-
-                if number == '' or number is None: continue
-                if name == '' or name   is None: continue
-
-                signal = f'Root{connect.prefix_system}.SSs.SS_{number}.StateSS'
-
-                object = etree.Element('item')
-                object.attrib['Binding'] = 'Introduced'
-
-                self.dop_function.new_map_str(object, 'node-path', signal)
-                self.dop_function.new_map_str(object, 'table', f'Holding Registers')
-                self.dop_function.new_map_str(object, 'address', 2 * (number - 1))
-
-                root.append(object)
-                tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
-            msg[f'{today} - Карта адресов: адреса SSs заполнены'] = 1
-            return msg
-        except Exception:
-            msg[f'{today} - Карта адресов: ошибка при заполнении карты адресов SSs: {traceback.format_exc()}'] = 2
-            return msg
-    def uts_maps(self):
-        msg = {}
-        try:
-            data = self.dop_function.connect_by_sql('uts', f'"id", "tag", "name"')
-            root, tree  = self.dop_function.parser_map('.UTSs.')
-
-            for value in data:
-                number = value[0]
-                tag    = value[1]
-                name   = value[2]
-
-                if number == '' or number is None: continue
-                if name == '' or name is None: continue
-                if tag == '' or tag is None: continue
-
-                tag = self.dop_function.translate(str(tag))
-                signal = f'Root{connect.prefix_system}.UTSs.{tag}.StateUTS'
-
-                object = etree.Element('item')
-                object.attrib['Binding'] = 'Introduced'
-                
-                self.dop_function.new_map_str(object, 'node-path', signal)
-                self.dop_function.new_map_str(object, 'table', f'Holding Registers')
-                self.dop_function.new_map_str(object, 'address', 2 * (number - 1))
-
-                root.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
-            msg[f'{today} - Карта адресов: адреса UTSs заполнены'] = 1
-            return msg
-        except Exception:
-            msg[f'{today} - Карта адресов: ошибка при заполнении карты адресов UTSs: {traceback.format_exc()}'] = 2
-            return msg
-    def upts_maps(self):
-        msg = {}
-        try:
-            data = self.dop_function.connect_by_sql('upts', f'"id", "tag", "name"')
-            root, tree  = self.dop_function.parser_map('.UPTSs.')
-
-            for value in data:
-                number = value[0]
-                tag    = value[1]
-                name   = value[2]
-
-                if number == '' or number is None: continue
-                if name == '' or name is None: continue
-                if tag == '' or tag is None: continue
-
-                tag = self.dop_function.translate(str(tag))
-                signal = f'Root{connect.prefix_system}.UPTSs.{tag}.StateUPTS'
-
-                object = etree.Element('item')
-                object.attrib['Binding'] = 'Introduced'
-
-                self.dop_function.new_map_str(object, 'node-path', signal)
-                self.dop_function.new_map_str(object, 'table', f'Holding Registers')
-                self.dop_function.new_map_str(object, 'address', 2 * (number - 1))
-
-                root.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
-            msg[f'{today} - Карта адресов: адреса UPTSs заполнены'] = 1
-            return msg
-        except Exception:
-            msg[f'{today} - Карта адресов: ошибка при заполнении карты адресов UPTSs: {traceback.format_exc()}'] = 2
-            return msg
-    def ktpr_maps(self):
-        msg = {}
-        number_group = 0
-        try:
-            data = self.dop_function.connect_by_sql('ktpr', f'"id"')
-            root, tree  = self.dop_function.parser_map('.KTPRs.')
-
-            for value in data:
-                number_defence = value[0]
-                if number_defence == '' or number_defence is None: continue
-                number_group += 1
-
-            count_group = math.ceil(number_group/4)
-
-            for count in range(count_group):
-                signal = f'Root{connect.prefix_system}.KTPRs.Group_{count + 1}.StateKTPRx'
-
-                object = etree.Element('item')
-                object.attrib['Binding'] = 'Introduced'
-
-                self.dop_function.new_map_str(object, 'node-path', signal)
-                self.dop_function.new_map_str(object, 'table', f'Holding Registers')
-                self.dop_function.new_map_str(object, 'address', 2 * ((count - 1)))
-
-                root.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
-            msg[f'{today} - Карта адресов: адреса KTPRs заполнены'] = 1
-            return msg
-        except Exception:
-            msg[f'{today} - Карта адресов: ошибка при заполнении карты адресов KTPRs: {traceback.format_exc()}'] = 2
-            return msg
-    def ktprp_maps(self):
-        msg = {}
-        number_group = 0
-        try:
-            data = self.dop_function.connect_by_sql('ktprp', f'"id"')
-            root, tree  = self.dop_function.parser_map('.KTPRs.')
-
-            for value in data:
-                number_defence = value[0]
-                if number_defence == '' or number_defence is None: continue
-                number_group += 1
-
-            count_group = math.ceil(number_group / 4)
-
-            for count in range(count_group):
-                signal = f'Root{connect.prefix_system}.KTPRs.Group_{count + 1}.StateKTPRx'
-
-                object = etree.Element('item')
-                object.attrib['Binding'] = 'Introduced'
-                
-                self.dop_function.new_map_str(object, 'node-path', signal)
-                self.dop_function.new_map_str(object, 'table', f'Holding Registers')
-                self.dop_function.new_map_str(object, 'address', 2 * ((count - 1)))
-
-                root.append(object)
-
-            tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
-            msg[f'{today} - Карта адресов: адреса KTPRPs заполнены'] = 1
-            return msg
-        except Exception:
-            msg[f'{today} - Карта адресов: ошибка при заполнении карты адресов KTPRPs: {traceback.format_exc()}'] = 2
-            return msg 
-    def ktpra_maps(self):
-        msg = {}
-        number_pumps_old = ''
-        count_pumps      = 0
-        count            = 0
-        try:
-            data = self.dop_function.connect_by_sql('ktpra', f'"id", "NA"')
-            root, tree  = self.dop_function.parser_map('.KTPRAs.')
-
-            for value in data:
-                number_defence   = value[0]
-                number_pumps_int = value[1]
-
-                if number_defence == '' or  number_defence   is None: continue
-                if number_pumps_int == '' or number_pumps_int is None: continue
-
-                if number_pumps_int != number_pumps_old:
-                    number_pumps_old = number_pumps_int
-                    count_pumps  += 1
-                    number_group  = 0
-
-                if number_defence % 4 == 0:
-                    number_group += 1
-                    count += 1
-                    signal = f'Root{connect.prefix_system}.KTPRAs.KTPRAs_{count_pumps}.Group_{number_group}.StateKTPRx'
-
-                    object = etree.Element('item')
-                    object.attrib['Binding'] = 'Introduced'
-
-                    self.dop_function.new_map_str(object, 'node-path', signal)
-                    self.dop_function.new_map_str(object, 'table', f'Holding Registers')
-                    self.dop_function.new_map_str(object, 'address', 2 * ((count - 1)))
-
-                    root.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
-            msg[f'{today} - Карта адресов: адреса KTPRAs заполнены'] = 1
-            return msg
-        except Exception:
-            msg[f'{today} - Карта адресов: ошибка при заполнении карты адресов KTPRAs: {traceback.format_exc()}'] = 2
-            return msg  
-    def gmpna_maps(self):
-        msg = {}
-        number_pumps_old = ''
-        count_pumps      = 0
-        count            = 0
-        try:
-            data = self.dop_function.connect_by_sql('gmpna', f'"id", "NA"')
-            root, tree  = self.dop_function.parser_map('.GMPNAs.')
-
-            for value in data:
-                number_defence   = value[0]
-                number_pumps_int = value[1]
-
-                if number_defence == '' or  number_defence   is None: continue
-                if number_pumps_int == '' or number_pumps_int is None: continue
-
-                if number_pumps_int != number_pumps_old:
-                    number_pumps_old = number_pumps_int
-                    count_pumps += 1
-                    number_group = 0
-
-                if number_defence % 4 == 0:
-                    number_group += 1
-                    count        += 1
-                    signal = f'Root{connect.prefix_system}.GMPNAs.GMPNAs_{count_pumps}.Group_{number_group}.StateGMPNA'
-
-                    object = etree.Element('item')
-                    object.attrib['Binding'] = 'Introduced'
-
-                    self.dop_function.new_map_str(object, 'node-path', signal)
-                    self.dop_function.new_map_str(object, 'table', f'Holding Registers')
-                    self.dop_function.new_map_str(object, 'address', 2 * ((count - 1)))
-
-                    root.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
-            msg[f'{today} - Карта адресов: адреса GMPNAs заполнены'] = 1
-            return msg
-        except Exception:
-            msg[f'{today} - Карта адресов: ошибка при заполнении карты адресов GMPNAs: {traceback.format_exc()}'] = 2
-            return msg  
-    def pi_maps(self):
-        msg = {}
-        try:
-            data = self.dop_function.connect_by_sql('pi', f'"id", "tag"')
-            root, tree  = self.dop_function.parser_map('.PIs.')
-
-            for value in data:
-                number = value[0]
-                tag    = value[1]
-
-                if number == '' or number is None: continue
-                if tag == '' or tag    is None: continue
-
-                tag = self.translate(str(tag))
-                signal = f'Root{connect.prefix_system}.PIs.{tag}.StatePI'
-
-                object = etree.Element('item')
-                object.attrib['Binding'] = 'Introduced'
-
-                self.dop_function.new_map_str(object, 'node-path', signal)
-                self.dop_function.new_map_str(object, 'table', f'Holding Registers')
-                self.dop_function.new_map_str(object, 'address', 2 * ((number - 1)))
-
-                root.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
-            msg[f'{today} - Карта адресов: адреса PIs заполнены'] = 1
-            return msg
-        except Exception:
-            msg[f'{today} - Карта адресов: ошибка при заполнении карты адресов PIs: {traceback.format_exc()}'] = 2
-            return msg  
-    def pz_maps(self):
-        # Зоны с тушением
-        dop_pz_ptush = ['StatePZ', 'exStatePZ', 'ReadyFlags', 'TimetoNextAttack', 'AttackCounter', 'TimetoEvacuation']
-        # Зоны без тушения
-        #dop_pz = ['StatePZ', 'exStatePZ', 'ReadyFlags']
-
-        msg = {}
-        try:
-            data = self.dop_function.connect_by_sql('pz', f'"id", "type_zone"')
-            root, tree  = self.dop_function.parser_map('.PZs.')
-
-            for value in data:
-                number    = value[0]
-                zone_type = value[1]
-
-                if number == '' or number    is None: continue
-                if zone_type == '' or zone_type is None: continue
-                # Выбираем от типа
-                #set_words = dop_pz if zone_type == 0 else dop_pz_ptush
-
-                for key in dop_pz_ptush:
-                    signal = f'Root{connect.prefix_system}.PZs.PZ_{number}.{key}'
-
-                    object = etree.Element('item')
-                    object.attrib['Binding'] = 'Introduced'
-
-                    self.dop_function.new_map_str(object, 'node-path', signal)
-                    self.dop_function.new_map_str(object, 'table', f'Holding Registers')
-                    self.dop_function.new_map_str(object, 'address', 2 * ((number - 1)))
-
-                    root.append(object)
-            tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
-            msg[f'{today} - Карта адресов: адреса PZs заполнены'] = 1
-            return msg
-        except Exception:
-            msg[f'{today} - Карта адресов: ошибка при заполнении карты адресов PZs: {traceback.format_exc()}'] = 2
-            return msg  
-    
-    def mklogic_DIAG_maps_param(self, variable_mod, type_mod, list_param):
-        msg = {}
-        try:
-            root, tree  = self.dop_function.parser_map(f'.Diag.{variable_mod}.')
-            data_hw = self.hardware_data(type_mod)
-
-            for data in data_hw:
-                string_name  = data['string_name']
-                for i in list_param:
-                    name = f'Root{connect.prefix_system}.Diag.{variable_mod}.{string_name}.{i}'
-
-                    object = etree.Element('item')
-                    object.attrib['Binding'] = 'Introduced'
-
-                    self.dop_function.new_map_str(object, 'node-path', f'{name}')
-                    self.dop_function.new_map_str(object, 'table', f'Holding Registers')
-                    self.dop_function.new_map_str(object, 'address', f'{i}')
-                    
-                    root.append(object)
-                tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
-            msg[f'{today} - Карта адресов: адреса Diag.{variable_mod} заполнены'] = 1
-            return msg
-        except Exception:
-            msg[f'{today} - Карта адресов: ошибка при заполнении карты адресов Diag.{variable_mod}: {traceback.format_exc()}'] = 2
-            return msg  
-    def mklogic_rackstates_maps(self, list_param):
-        msg = {}
-        try:
-            root, tree  = self.dop_function.parser_map(f'.Diag.RackStates.')
-            data_hw = self.dop_function.connect_count_row_sql('hardware')
-            if data_hw == True:
-                msg[f'{today} - Карта адресов: ошибка при заполнении карты адресов RackStates. Количество корзин не определено'] = 2
-                return msg
-            for i in data_hw:
-                count = i[0]
-
-            for i in range(count):
-                for j in list_param:
-                    name = f'Root{connect.prefix_system}.Diag.RackStates.rack_{i + 1}.{j}'
-
-                    object = etree.Element('item')
-                    object.attrib['Binding'] = 'Introduced'
-
-                    self.dop_function.new_map_str(object, 'node-path', f'{name}')
-                    self.dop_function.new_map_str(object, 'table', f'Holding Registers')
-                    self.dop_function.new_map_str(object, 'address', f'{i}')
-                    
-                    root.append(object)
-                tree.write(f'{connect.path_to_devstudio}\\OUA.xml', pretty_print=True)
-            msg[f'{today} - Карта адресов: адреса Diag.RackStates заполнены'] = 1
-            return msg
-        except Exception:
-            msg[f'{today} - Карта адресов: ошибка при заполнении карты адресов Diag.RackStates: {traceback.format_exc()}'] = 2
-            return msg  
-
 
 class Filling_CodeSys():     
     def __init__(self):

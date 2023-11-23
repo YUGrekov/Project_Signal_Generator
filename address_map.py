@@ -1,25 +1,27 @@
 import traceback
 import math
 from lxml import etree
-from request_sql import RequestSQL
-from general_functions import General_functions
-from model_new import connect
-from model_new import AI
-from model_new import DI
-from model_new import SS
-from model_new import PIC
-from model_new import VS
-from model_new import ZD
-from model_new import UMPNA
-from model_new import UTS
-from model_new import UPTS
-from model_new import KTPR
-from model_new import KTPRP
-from model_new import KTPRA
-from model_new import GMPNA
-from model_new import Modbus
+from datetime import datetime
+from main_base import General_functions
+from models import connect
+from models import AI
+from models import DI
+from models import SS
+from models import PIC
+from models import VS
+from models import ZD
+from models import UMPNA
+from models import UTS
+from models import UPTS
+from models import KTPR
+from models import KTPRP
+from models import KTPRA
+from models import GMPNA
+from models import HardWare
+from models import Modbus
 
 
+today = datetime.now()
 MODBUS_503 = 'ModBus503.xml'
 MODBUS = 'ModBus.xml'
 ANALOGs = '.Analogs.'
@@ -37,12 +39,9 @@ GMPNAs = '.GMPNAs.'
 
 class BaseMap():
     '''Базовые методы заполнения.'''
-    def __init__(self) -> None:
-        self.request = RequestSQL()
-        self.gen_funct = General_functions()
-
     def path_file(self, p_file: str, section: str):
         '''Формирование пути до файла и очистка перед заполнением.'''
+        self.gen_funct = General_functions()
         path = f'{connect.path_to_devstudio}\{p_file}'
         root, tree = self.gen_funct.xmlParser(path)
         self.search_clear_section(root, section)
@@ -50,7 +49,7 @@ class BaseMap():
 
     def _read_address_mb(self):
         '''Чтение адресов ModBus из базы.'''
-        modbus = self.request.select_orm(Modbus, None, Modbus.id)
+        modbus = self.gen_funct.select_orm(Modbus, None, Modbus.id)
         start_addrr = {}
         for row in modbus:
 
@@ -86,32 +85,56 @@ class BaseMap():
         object.append(address)
         root.append(object)
 
+    def get_modul(self, type_modul: str):
+        '''Собираем данные для дигностики по корзина с выбранным модулем.'''
+        modul = []
+        count = 0
+        for basket in HardWare.select().dicts().order_by(HardWare.id):
+            id_ = basket['id']
+            tag = basket['tag']
+            uso = basket['uso']
+            num_basket = basket['basket']
+
+            for key, value in basket.items():
+                if value == type_modul:
+                    number_modul = str(key).split('_')[1]
+                    if int(number_modul) < 10:
+                        string_name = f'{tag}_0{number_modul}'
+                        modPosition = f'A{num_basket}.0{number_modul}'
+                    else:
+                        string_name = f'{tag}_{number_modul}'
+                        modPosition = f'A{num_basket}.{number_modul}'
+                    count += 1
+                    modul.append(dict(count=count,
+                                      id_=id_,
+                                      uso=uso,
+                                      string_name=string_name,
+                                      num_basket=num_basket,
+                                      number_modul=number_modul,
+                                      modPosition=modPosition))
+        return modul
+
 
 class AnalogsMap(BaseMap):
     '''Заполнение ModBus карты адресов.'''
-    prefix = ['AIVisualValue', 'AIElValue',
-              'AIValue', 'AIRealValue',
+    prefix = ['AIVisualValue', 'AIElValue', 'AIValue', 'AIRealValue',
               'StateAI', 'Range_Bottom', 'Range_Top']
 
     variable = ['AIVisualValue', 'AIElValue', 'AIValue',
                 'AIRealValue', 'StateAI', 'AIParam']
 
-    def _work_file(self):
+    def work_file(self):
         '''Запись в файл.'''
+        msg = {}
         try:
             root, tree, path = self.path_file(MODBUS_503, ANALOGs)
 
-            data = self.request.select_orm(AI, None, AI.id)
+            data = self.gen_funct.select_orm(AI, None, AI.id)
             list_addrr = self._read_address_mb()
 
             if len(list_addrr) != len(self.variable):
-                # self.logsTextEdit.logs_msg(f'''DevStudio. Map {ANALOGs} Ошибка
-                #                            отсутствует адрес из списка
-                #                            {self.variable}''', 2)
-                print(f'''DevStudio. Map {ANALOGs}
-                        Отсутствует адрес из списка
-                        {self.variable}''')
-                raise
+                msg[f'{today} - DevStudio. Map {ANALOGs} Отсутствует адрес из списка {self.variable}'] = 2
+                return msg
 
             for row in data:
                 for i in range(len(self.prefix)):
@@ -138,12 +161,11 @@ class AnalogsMap(BaseMap):
 
                     self.new_element(root, name, address)
             tree.write(path, pretty_print=True)
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {ANALOGs}
-            #                            Заполнено''', 1)
+            msg[f'{today} - DevStudio. Map {ANALOGs} Заполнено'] = 1
+            return msg
         except Exception:
-            print(traceback.format_exc())
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {ANALOGs} Ошибка
-            #                            {traceback.format_exc()}''', 2)
+            msg[f'{today} - DevStudio. Map {ANALOGs} Ошибка {traceback.format_exc()}'] = 2
+            return msg
 
 
 class DiskretsMap(BaseMap):
@@ -155,7 +177,7 @@ class DiskretsMap(BaseMap):
         try:
             root, tree, path = self.path_file(MODBUS, DISCRETs)
 
-            data = self.request.select_orm(DI, None, DI.id)
+            data = self.gen_funct.select_orm(DI, None, DI.id)
             list_addrr = self._read_address_mb()
 
             if len(list_addrr) != len(self.variable):
@@ -191,7 +213,7 @@ class PicturesMap(BaseMap):
         try:
             root, tree, path = self.path_file(MODBUS, PICTUREs)
 
-            data = self.request.select_orm(PIC, None, PIC.id)
+            data = self.gen_funct.select_orm(PIC, None, PIC.id)
             list_addrr = self._read_address_mb()
 
             if len(list_addrr) != len(self.variable):
@@ -232,7 +254,7 @@ class VSMap(BaseMap):
         try:
             root, tree, path = self.path_file(MODBUS, VSs)
 
-            data = self.request.select_orm(VS, None, VS.id)
+            data = self.gen_funct.select_orm(VS, None, VS.id)
             list_addrr = self._read_address_mb()
 
             if len(list_addrr) != len(self.variable):
@@ -281,7 +303,7 @@ class ZDMap(BaseMap):
         try:
             root, tree, path = self.path_file(MODBUS, ZDs)
 
-            data = self.request.select_orm(ZD, None, ZD.id)
+            data = self.gen_funct.select_orm(ZD, None, ZD.id)
             list_addrr = self._read_address_mb()
 
             if len(list_addrr) != len(self.variable):
@@ -354,7 +376,7 @@ class PumpsMap(BaseMap):
         try:
             root, tree, path = self.path_file(MODBUS, NAs)
 
-            data = self.request.select_orm(UMPNA, None, UMPNA.id)
+            data = self.gen_funct.select_orm(UMPNA, None, UMPNA.id)
             list_addrr = self._read_address_mb()
 
             if len(list_addrr) != len(self.variable):
@@ -435,7 +457,7 @@ class RelaytedSystemMap(BaseMap):
         try:
             root, tree, path = self.path_file(MODBUS, SSs)
 
-            data = self.request.select_orm(SS, None, SS.id)
+            data = self.gen_funct.select_orm(SS, None, SS.id)
             list_addrr = self._read_address_mb()
 
             if len(list_addrr) != len(self.variable):
@@ -488,7 +510,7 @@ class UtsUptsMap(BaseMap):
                       {self.variable}''')
                 raise
 
-            data = self.request.select_orm(self.model, None, self.model.id)
+            data = self.gen_funct.select_orm(self.model, None, self.model.id)
 
             for row in data:
                 name = f'Root{connect.prefix_system}{self.sign}{row.tag}.{self.prefix}'
@@ -524,7 +546,7 @@ class KTPRMap(BaseMap):
                       {self.variable}''')
                 raise
 
-            count_group = math.ceil(self.request.count_row_orm(KTPR) / 4)
+            count_group = math.ceil(self.gen_funct.count_row_orm(KTPR) / 4)
             for group in range(1, count_group + 1):
                 name = f'Root{connect.prefix_system}{KTPRs}Group_{group}.StateKTPRx'
 
@@ -559,7 +581,7 @@ class KTPRPMap(BaseMap):
                       {self.variable}''')
                 raise
 
-            count_group = math.ceil(self.request.count_row_orm(KTPRP) / 4)
+            count_group = math.ceil(self.gen_funct.count_row_orm(KTPRP) / 4)
             for group in range(1, count_group + 1):
                 name = f'Root{connect.prefix_system}{KTPRs}Group_{group}.StateKTPRx'
 
@@ -594,9 +616,9 @@ class KTPRAMap(BaseMap):
                       {self.variable}''')
                 raise
 
-            count_na = self.request.non_repea_names(KTPRA, KTPRA.number_pump_VU, KTPRA.number_pump_VU)
+            count_na = self.gen_funct.non_repea_names(KTPRA, KTPRA.number_pump_VU, KTPRA.number_pump_VU)
             for na in count_na:
-                max_row = self.request.max_value_column_cond('ktpra', 'id_num', 'number_pump_VU', na.number_pump_VU)
+                max_row = self.gen_funct.max_value_column_cond('ktpra', 'id_num', 'number_pump_VU', na.number_pump_VU)
                 count_group = math.ceil(max_row / 4)
 
                 for grp in range(1, count_group + 1):
@@ -633,9 +655,9 @@ class GMPNAMap(BaseMap):
                       {self.variable}''')
                 raise
 
-            count_na = self.request.non_repea_names(GMPNA, GMPNA.number_pump_VU, GMPNA.number_pump_VU)
+            count_na = self.gen_funct.non_repea_names(GMPNA, GMPNA.number_pump_VU, GMPNA.number_pump_VU)
             for na in count_na:
-                max_row = self.request.max_value_column_cond('gmpna', 'id_num', 'number_pump_VU', na.number_pump_VU)
+                max_row = self.gen_funct.max_value_column_cond('gmpna', 'id_num', 'number_pump_VU', na.number_pump_VU)
                 count_group = math.ceil(max_row / 4)
 
                 for grp in range(1, count_group + 1):
@@ -651,7 +673,3 @@ class GMPNAMap(BaseMap):
             print(traceback.format_exc())
             # self.logsTextEdit.logs_msg(f'''DevStudio. Map {GMPNAs} Ошибка
             #                            {traceback.format_exc()}''', 2)
-
-
-a = GMPNAMap()
-a._work_file()
