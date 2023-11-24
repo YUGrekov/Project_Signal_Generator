@@ -24,17 +24,18 @@ from models import Modbus
 today = datetime.now()
 MODBUS_503 = 'ModBus503.xml'
 MODBUS = 'ModBus.xml'
-ANALOGs = '.Analogs.'
-DISCRETs = '.Diskrets.'
-PICTUREs = '.Pictures.'
-VSs = '.AuxSystems.'
-ZDs = '.Valves.'
-NAs = '.NAs.'
-SSs = '.SSs.'
-KTPRs = '.KTPRs.'
-KTPRPs = '.KTPRPs.'
-KTPRAs = '.KTPRAs.'
-GMPNAs = '.GMPNAs.'
+ANALOGs = 'Analogs.'
+DISCRETs = 'Diskrets.'
+PICTUREs = 'Pictures.'
+UTSs = 'UTSs.'
+UPTSs = 'UPTSs.'
+VSs = 'AuxSystems.'
+ZDs = 'Valves.'
+NAs = 'NAs.'
+SSs = 'SSs.'
+KTPRs = 'KTPRs.'
+KTPRAs = 'KTPRAs.'
+GMPNAs = 'GMPNAs.'
 
 
 class BaseMap():
@@ -64,7 +65,7 @@ class BaseMap():
     def search_clear_section(self, root, section: str):
         '''Поиск раздела для парсинга карты адресов.'''
         for item in root.iter('node-path'):
-            signal = f'Root{connect.prefix_system}{section}'
+            signal = f'Root{connect.prefix_system}.{section}'
 
             if signal in item.text:
                 parent = item.getparent()
@@ -133,14 +134,15 @@ class AnalogsMap(BaseMap):
             list_addrr = self._read_address_mb()
 
             if len(list_addrr) != len(self.variable):
-                msg[f'{today} - DevStudio. Map {ANALOGs} Отсутствует адрес из списка {self.variable}'] = 2
+                msg[f'{today} - DevStudio. Map. {ANALOGs} Отсутствует адрес из списка {self.variable}'] = 2
                 return msg
 
             for row in data:
                 for i in range(len(self.prefix)):
-                    name = f'Root{connect.prefix_system}{ANALOGs}{row.tag_eng}.{self.prefix[i]}'
+                    name = f'Root{connect.prefix_system}.{ANALOGs}{row.tag_eng}.{self.prefix[i]}'
+
                     # Для уровней другой набор префиксов
-                    if 'Уровни' in str(row.AnalogGroupId):
+                    if 'Уровни' != str(row.AnalogGroupId):
                         if i > 4:
                             break
 
@@ -161,10 +163,10 @@ class AnalogsMap(BaseMap):
 
                     self.new_element(root, name, address)
             tree.write(path, pretty_print=True)
-            msg[f'{today} - DevStudio. Map {ANALOGs} Заполнено'] = 1
+            msg[f'{today} - DevStudio. Map. {ANALOGs} Заполнено'] = 1
             return msg
         except Exception:
-            msg[f'{today} - DevStudio. Map {ANALOGs} Ошибка {traceback.format_exc()}'] = 2
+            msg[f'{today} - DevStudio. Map. {ANALOGs} Ошибка {traceback.format_exc()}'] = 2
             return msg
 
 
@@ -172,8 +174,9 @@ class DiskretsMap(BaseMap):
     '''Заполнение ModBus карты адресов.'''
     variable = ['StateDI']
 
-    def _work_file(self):
+    def work_file(self):
         '''Запись в файл.'''
+        msg = {}
         try:
             root, tree, path = self.path_file(MODBUS, DISCRETs)
 
@@ -181,35 +184,30 @@ class DiskretsMap(BaseMap):
             list_addrr = self._read_address_mb()
 
             if len(list_addrr) != len(self.variable):
-                # self.logsTextEdit.logs_msg(f'''DevStudio. Map {DISCRETs} Ошибка
-                #                            отсутствует адрес из списка
-                #                            {self.variable}''', 2)
-                print(f'''DevStudio. Map {DISCRETs}
-                      Отсутствует адрес из списка
-                      {self.variable}''')
-                raise
+                msg[f'{today} - DevStudio. Map. {DISCRETs} Отсутствует адрес из списка {self.variable}'] = 2
+                return msg
 
             for row in data:
-                name = f'Root{connect.prefix_system}{DISCRETs}{row.tag_eng}.StateDI'
+                name = f'Root{connect.prefix_system}.{DISCRETs}{row.tag_eng}.StateDI'
 
                 address = list_addrr['StateDI'] + (row.id - 1)
                 self.new_element(root, name, address)
 
             tree.write(path, pretty_print=True)
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {DISCRETs}
-            #                            Заполнено''', 1)
+            msg[f'{today} - DevStudio. Map. {DISCRETs} Заполнено'] = 1
+            return msg
         except Exception:
-            print(1)
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {DISCRETs} Ошибка
-            #                            {traceback.format_exc()}''', 2)
+            msg[f'{today} - DevStudio. Map. {DISCRETs} Ошибка {traceback.format_exc()}'] = 2
+            return msg
 
 
 class PicturesMap(BaseMap):
     '''Заполнение ModBus карты адресов.'''
     variable = ['StatePicture']
 
-    def _work_file(self):
+    def work_file(self):
         '''Запись в файл.'''
+        msg = {}
         try:
             root, tree, path = self.path_file(MODBUS, PICTUREs)
 
@@ -217,26 +215,23 @@ class PicturesMap(BaseMap):
             list_addrr = self._read_address_mb()
 
             if len(list_addrr) != len(self.variable):
-                # self.logsTextEdit.logs_msg(f'''DevStudio. Map {PICTUREs} Ошибка
-                #                            отсутствует адрес из списка
-                #                            {self.variable}''', 2)
-                print(f'''DevStudio. Map {PICTUREs} Отсутствует адрес из списка {self.variable}''')
-                raise
+                msg[f'{today} - DevStudio. Map. {PICTUREs} Отсутствует адрес из списка {self.variable}'] = 2
+                return msg
 
             for row in data:
                 if row.frame is None or row.frame == '':
                     continue
-                name = f'Root{connect.prefix_system}{PICTUREs}{row.frame}.StatePicture'
+                name = f'Root{connect.prefix_system}.{PICTUREs}{row.frame}.StatePicture'
 
                 address = list_addrr['StatePicture'] + (row.id - 1)
                 self.new_element(root, name, address)
 
             tree.write(path, pretty_print=True)
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {PICTUREs} Заполнено''', 1)
+            msg[f'{today} - DevStudio. Map. {PICTUREs} Заполнено'] = 1
+            return msg
         except Exception:
-            print(1)
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {PICTUREs} Ошибка
-            #                            {traceback.format_exc()}''', 2)
+            msg[f'{today} - DevStudio. Map. {PICTUREs} Ошибка {traceback.format_exc()}'] = 2
+            return msg
 
 
 class VSMap(BaseMap):
@@ -249,8 +244,9 @@ class VSMap(BaseMap):
     variable = ['StateAuxSystem', 'vs_numOfStart', 'vs_operatingTimeCurrentMonth',
                 'vs_operatingTimeLastMonth', 'vs_operatingTime']
 
-    def _work_file(self):
+    def work_file(self):
         '''Запись в файл.'''
+        msg = {}
         try:
             root, tree, path = self.path_file(MODBUS, VSs)
 
@@ -258,17 +254,12 @@ class VSMap(BaseMap):
             list_addrr = self._read_address_mb()
 
             if len(list_addrr) != len(self.variable):
-                # self.logsTextEdit.logs_msg(f'''DevStudio. Map {VSs} Ошибка
-                #                            отсутствует адрес из списка
-                #                            {self.variable}''', 2)
-                print(f'''DevStudio. Map {VSs}
-                      Отсутствует адрес из списка
-                      {self.variable}''')
-                raise
+                msg[f'{today} - DevStudio. Map. {VSs} Отсутствует адрес из списка {self.variable}'] = 2
+                return msg
 
             for row in data:
                 for i in range(len(self.prefix)):
-                    name = f'Root{connect.prefix_system}{VSs}VS_{row.id}.{self.prefix[i]}'
+                    name = f'Root{connect.prefix_system}.{VSs}VS_{row.id}.{self.prefix[i]}'
 
                     if 'StateAuxSystem' == self.prefix[i]:
                         address = list_addrr['StateAuxSystem'] + 3 * (row.id - 1)
@@ -283,11 +274,11 @@ class VSMap(BaseMap):
 
                     self.new_element(root, name, address)
             tree.write(path, pretty_print=True)
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {VSs} Заполнено''', 1)
+            msg[f'{today} - DevStudio. Map. {VSs} Заполнено'] = 1
+            return msg
         except Exception:
-            print(1)
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {VSs} Ошибка
-            #                            {traceback.format_exc()}''', 2)
+            msg[f'{today} - DevStudio. Map. {VSs} Ошибка {traceback.format_exc()}'] = 2
+            return msg
 
 
 class ZDMap(BaseMap):
@@ -298,8 +289,9 @@ class ZDMap(BaseMap):
 
     variable = ['StateZD', 'numOfOpenings', 'numOfClosings']
 
-    def _work_file(self):
+    def work_file(self):
         '''Запись в файл.'''
+        msg = {}
         try:
             root, tree, path = self.path_file(MODBUS, ZDs)
 
@@ -307,17 +299,12 @@ class ZDMap(BaseMap):
             list_addrr = self._read_address_mb()
 
             if len(list_addrr) != len(self.variable):
-                # self.logsTextEdit.logs_msg(f'''DevStudio. Map {ZDs} Ошибка
-                #                            отсутствует адрес из списка
-                #                            {self.variable}''', 2)
-                print(f'''DevStudio. Map {ZDs}
-                      Отсутствует адрес из списка
-                      {self.variable}''')
-                raise
+                msg[f'{today} - DevStudio. Map. {ZDs} Отсутствует адрес из списка {self.variable}'] = 2
+                return msg
 
             for row in data:
                 for i in range(len(self.prefix)):
-                    name = f'Root{connect.prefix_system}{ZDs}ZD_{row.id}.{self.prefix[i]}'
+                    name = f'Root{connect.prefix_system}.{ZDs}ZD_{row.id}.{self.prefix[i]}'
 
                     if 'StateValve1' == self.prefix[i]:
                         address = list_addrr['StateZD'] + 5 * (row.id - 1)
@@ -334,11 +321,11 @@ class ZDMap(BaseMap):
 
                     self.new_element(root, name, address)
             tree.write(path, pretty_print=True)
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {ZDs} Заполнено''', 1)
+            msg[f'{today} - DevStudio. Map. {ZDs} Заполнено'] = 1
+            return msg
         except Exception:
-            print(1)
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {ZDs} Ошибка
-            #                            {traceback.format_exc()}''', 2)
+            msg[f'{today} - DevStudio. Map. {ZDs} Ошибка {traceback.format_exc()}'] = 2
+            return msg
 
 
 class PumpsMap(BaseMap):
@@ -371,8 +358,9 @@ class PumpsMap(BaseMap):
                 'operatingTimeLastKvart', 'operatingTimeFromBegin',
                 'operatingTimeED', 'operatingTimeEDSet', 'operatingTimeState']
 
-    def _work_file(self):
+    def work_file(self):
         '''Запись в файл.'''
+        msg = {}
         try:
             root, tree, path = self.path_file(MODBUS, NAs)
 
@@ -380,15 +368,12 @@ class PumpsMap(BaseMap):
             list_addrr = self._read_address_mb()
 
             if len(list_addrr) != len(self.variable):
-                # self.logsTextEdit.logs_msg(f'''DevStudio. Map {NAs} Ошибка
-                #                            отсутствует адрес из списка
-                #                            {self.variable}''', 2)
-                print(f'''DevStudio. Map {NAs} Отсутствует адрес из списка {self.variable}''')
-                raise
+                msg[f'{today} - DevStudio. Map. {NAs} Отсутствует адрес из списка {self.variable}'] = 2
+                return msg
 
             for row in data:
                 for i in range(len(self.prefix)):
-                    name = f'Root{connect.prefix_system}{NAs}NA_{row.id}.{self.prefix[i]}'
+                    name = f'Root{connect.prefix_system}.{NAs}NA_{row.id}.{self.prefix[i]}'
 
                     if 'StateNA' == self.prefix[i]:
                         address = list_addrr['StateNA'] + 11 * (row.id - 1)
@@ -404,9 +389,9 @@ class PumpsMap(BaseMap):
                         address = list_addrr['operatingTimeBeforeOverhaul'] + 42 * (row.id - 1)
                     elif 'operatingTimeBeforeOverhaulSet' == self.prefix[i]:
                         address = list_addrr['operatingTimeBeforeOverhaulSet'] + 42 * (row.id - 1)
-                    elif 'numOfStarts' == self.prefix[i]:
+                    elif 'numOfStart' == self.prefix[i]:
                         address = list_addrr['numOfStarts'] + 42 * (row.id - 1)
-                    elif 'numOfStartsSet' == self.prefix[i]:
+                    elif 'numOfStartSet' == self.prefix[i]:
                         address = list_addrr['numOfStartsSet'] + 42 * (row.id - 1)
                     elif 'dateTimeOfStart' == self.prefix[i]:
                         address = list_addrr['dateTimeOfStart'] + 42 * (row.id - 1)
@@ -438,22 +423,25 @@ class PumpsMap(BaseMap):
                         address = list_addrr['operatingTimeEDSet'] + 42 * (row.id - 1)
                     elif 'operatingTimeState' == self.prefix[i]:
                         address = list_addrr['operatingTimeState'] + 42 * (row.id - 1)
+                    else:
+                        continue
 
                     self.new_element(root, name, address)
             tree.write(path, pretty_print=True)
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {NAs} Заполнено''', 1)
+            msg[f'{today} - DevStudio. Map. {NAs} Заполнено'] = 1
+            return msg
         except Exception:
-            print(traceback.format_exc())
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {NAs} Ошибка
-            #                            {traceback.format_exc()}''', 2)
+            msg[f'{today} - DevStudio. Map. {NAs} Ошибка {traceback.format_exc()}'] = 2
+            return msg
 
 
 class RelaytedSystemMap(BaseMap):
     '''Заполнение ModBus карты адресов.'''
     variable = ['SS']
 
-    def _work_file(self):
+    def work_file(self):
         '''Запись в файл.'''
+        msg = {}
         try:
             root, tree, path = self.path_file(MODBUS, SSs)
 
@@ -461,27 +449,21 @@ class RelaytedSystemMap(BaseMap):
             list_addrr = self._read_address_mb()
 
             if len(list_addrr) != len(self.variable):
-                # self.logsTextEdit.logs_msg(f'''DevStudio. Map {SSs} Ошибка
-                #                            отсутствует адрес из списка
-                #                            {self.variable}''', 2)
-                print(f'''DevStudio. Map {SSs}
-                      Отсутствует адрес из списка
-                      {self.variable}''')
-                raise
+                msg[f'{today} - DevStudio. Map. {SSs} Отсутствует адрес из списка {self.variable}'] = 2
+                return msg
 
             for row in data:
-                name = f'Root{connect.prefix_system}{SSs}SS_{row.id}.StateSS'
+                name = f'Root{connect.prefix_system}.{SSs}SS_{row.id}.StateSS'
 
                 address = list_addrr['SS'] + (row.id - 1)
                 self.new_element(root, name, address)
 
             tree.write(path, pretty_print=True)
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {SSs}
-            #                            Заполнено''', 1)
+            msg[f'{today} - DevStudio. Map. {SSs} Заполнено'] = 1
+            return msg
         except Exception:
-            print(traceback.format_exc())
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {SSs} Ошибка
-            #                            {traceback.format_exc()}''', 2)
+            msg[f'{today} - DevStudio. Map. {SSs} Ошибка {traceback.format_exc()}'] = 2
+            return msg
 
 
 class UtsUptsMap(BaseMap):
@@ -492,129 +474,85 @@ class UtsUptsMap(BaseMap):
         '''Выбор таблицы и подписей в зависимости от системы.'''
         self.model = UPTS if fl_upts else UTS
         self.prefix = self.variable[1] if fl_upts else self.variable[0]
-        self.sign = '.UPTSs.' if fl_upts else '.UTSs.'
+        self.sign = UPTSs if fl_upts else UTS
 
-    def _work_file(self, fl_upts: bool = False):
+    def work_file(self, fl_upts: bool = False):
         '''Запись в файл.'''
+        msg = {}
         self.system_selection(fl_upts)
         try:
             root, tree, path = self.path_file(MODBUS, self.sign)
             list_addrr = self._read_address_mb()
 
             if not len(list_addrr):
-                # self.logsTextEdit.logs_msg(f'''DevStudio. Map {self.sign} Ошибка
-                #                            отсутствует адрес из списка
-                #                            {self.variable}''', 2)
-                print(f'''DevStudio. Map {self.sign}
-                      Отсутствует адрес из списка
-                      {self.variable}''')
-                raise
+                msg[f'{today} - DevStudio. Map. {self.sign} Отсутствует адрес из списка {self.variable}'] = 2
+                return msg
 
             data = self.gen_funct.select_orm(self.model, None, self.model.id)
 
             for row in data:
-                name = f'Root{connect.prefix_system}{self.sign}{row.tag}.{self.prefix}'
+                name = f'Root{connect.prefix_system}.{self.sign}{row.tag}.{self.prefix}'
 
                 address = list_addrr[self.prefix] + (row.id - 1)
                 self.new_element(root, name, address)
 
             tree.write(path, pretty_print=True)
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {self.sign}
-            #                            Заполнено''', 1)
+            msg[f'{today} - DevStudio. Map. {self.sign} Заполнено'] = 1
+            return msg
         except Exception:
-            print(traceback.format_exc())
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {self.sign} Ошибка
-            #                            {traceback.format_exc()}''', 2)
+            msg[f'{today} - DevStudio. Map. {self.sign} Ошибка {traceback.format_exc()}'] = 2
+            return msg
 
 
 class KTPRMap(BaseMap):
     '''Заполнение ModBus карты адресов.'''
     variable = ['stateKTPRx']
 
-    def _work_file(self):
+    def system_selection(self, fl_ktprp):
+        '''Выбор таблицы и подписей в зависимости от системы.'''
+        self.model = KTPRP if fl_ktprp else KTPR
+
+    def work_file(self, fl_ktprp: bool = False):
         '''Запись в файл.'''
+        msg = {}
+        self.system_selection(fl_ktprp)
         try:
             root, tree, path = self.path_file(MODBUS, KTPRs)
             list_addrr = self._read_address_mb()
 
             if len(list_addrr) != len(self.variable):
-                # self.logsTextEdit.logs_msg(f'''DevStudio. Map {KTPRs} Ошибка
-                #                            отсутствует адрес из списка
-                #                            {self.variable}''', 2)
-                print(f'''DevStudio. Map {KTPRs}
-                      Отсутствует адрес из списка
-                      {self.variable}''')
-                raise
+                msg[f'{today} - DevStudio. Map. {KTPRs} Отсутствует адрес из списка {self.variable}'] = 2
+                return msg
 
-            count_group = math.ceil(self.gen_funct.count_row_orm(KTPR) / 4)
+            count_group = math.ceil(self.gen_funct.count_row_orm(self.model) / 4)
             for group in range(1, count_group + 1):
-                name = f'Root{connect.prefix_system}{KTPRs}Group_{group}.StateKTPRx'
+                name = f'Root{connect.prefix_system}.{KTPRs}Group_{group}.StateKTPRx'
 
                 address = list_addrr['stateKTPRx'] + (group - 1)
                 self.new_element(root, name, address)
 
             tree.write(path, pretty_print=True)
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {KTPRs}
-            #                            Заполнено''', 1)
+            msg[f'{today} - DevStudio. Map. {KTPRs} Заполнено'] = 1
+            return msg
         except Exception:
-            print(traceback.format_exc())
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {KTPRs} Ошибка
-            #                            {traceback.format_exc()}''', 2)
-
-
-class KTPRPMap(BaseMap):
-    '''Заполнение ModBus карты адресов.'''
-    variable = ['stateKTPRx']
-
-    def _work_file(self):
-        '''Запись в файл.'''
-        try:
-            root, tree, path = self.path_file(MODBUS, KTPRs)
-            list_addrr = self._read_address_mb()
-
-            if len(list_addrr) != len(self.variable):
-                # self.logsTextEdit.logs_msg(f'''DevStudio. Map {KTPRPs} Ошибка
-                #                            отсутствует адрес из списка
-                #                            {self.variable}''', 2)
-                print(f'''DevStudio. Map {KTPRPs}
-                      Отсутствует адрес из списка
-                      {self.variable}''')
-                raise
-
-            count_group = math.ceil(self.gen_funct.count_row_orm(KTPRP) / 4)
-            for group in range(1, count_group + 1):
-                name = f'Root{connect.prefix_system}{KTPRs}Group_{group}.StateKTPRx'
-
-                address = list_addrr['stateKTPRx'] + (group - 1)
-                self.new_element(root, name, address)
-
-            tree.write(path, pretty_print=True)
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {KTPRPs}
-            #                            Заполнено''', 1)
-        except Exception:
-            print(traceback.format_exc())
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {KTPRPs} Ошибка
-            #                            {traceback.format_exc()}''', 2)
+            msg[f'{today} - DevStudio. Map. {KTPRs} Ошибка {traceback.format_exc()}'] = 2
+            return msg
 
 
 class KTPRAMap(BaseMap):
     '''Заполнение ModBus карты адресов.'''
     variable = ['stateKTPRA']
 
-    def _work_file(self):
+    def work_file(self):
         '''Запись в файл.'''
+        msg = {}
         try:
             root, tree, path = self.path_file(MODBUS, KTPRAs)
             list_addrr = self._read_address_mb()
 
             if len(list_addrr) != len(self.variable):
-                # self.logsTextEdit.logs_msg(f'''DevStudio. Map {KTPRAs} Ошибка
-                #                            отсутствует адрес из списка
-                #                            {self.variable}''', 2)
-                print(f'''DevStudio. Map {KTPRAs}
-                      Отсутствует адрес из списка
-                      {self.variable}''')
-                raise
+                msg[f'{today} - DevStudio. Map. {KTPRAs} Отсутствует адрес из списка {self.variable}'] = 2
+                return msg
 
             count_na = self.gen_funct.non_repea_names(KTPRA, KTPRA.number_pump_VU, KTPRA.number_pump_VU)
             for na in count_na:
@@ -622,38 +560,33 @@ class KTPRAMap(BaseMap):
                 count_group = math.ceil(max_row / 4)
 
                 for grp in range(1, count_group + 1):
-                    name = f'Root{connect.prefix_system}{KTPRAs}KTPRAs_{na.number_pump_VU}.Group_{grp}.StateKTPRx'
+                    name = f'Root{connect.prefix_system}.{KTPRAs}KTPRAs_{na.number_pump_VU}.Group_{grp}.StateKTPRx'
 
                     address = list_addrr['stateKTPRA'] + (grp - 1) + (na.number_pump_VU - 1) * 48
                     self.new_element(root, name, address)
 
             tree.write(path, pretty_print=True)
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {KTPRAs}
-            #                            Заполнено''', 1)
+            msg[f'{today} - DevStudio. Map. {KTPRAs} Заполнено'] = 1
+            return msg
         except Exception:
-            print(traceback.format_exc())
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {KTPRAs} Ошибка
-            #                            {traceback.format_exc()}''', 2)
+            msg[f'{today} - DevStudio. Map. {KTPRAs} Ошибка {traceback.format_exc()}'] = 2
+            return msg
 
 
 class GMPNAMap(BaseMap):
     '''Заполнение ModBus карты адресов.'''
     variable = ['stateGMPNA']
 
-    def _work_file(self):
+    def work_file(self):
         '''Запись в файл.'''
+        msg = {}
         try:
             root, tree, path = self.path_file(MODBUS, GMPNAs)
             list_addrr = self._read_address_mb()
 
             if len(list_addrr) != len(self.variable):
-                # self.logsTextEdit.logs_msg(f'''DevStudio. Map {GMPNAs} Ошибка
-                #                            отсутствует адрес из списка
-                #                            {self.variable}''', 2)
-                print(f'''DevStudio. Map {GMPNAs}
-                      Отсутствует адрес из списка
-                      {self.variable}''')
-                raise
+                msg[f'{today} - DevStudio. Map. {GMPNAs} Отсутствует адрес из списка {self.variable}'] = 2
+                return msg
 
             count_na = self.gen_funct.non_repea_names(GMPNA, GMPNA.number_pump_VU, GMPNA.number_pump_VU)
             for na in count_na:
@@ -661,15 +594,92 @@ class GMPNAMap(BaseMap):
                 count_group = math.ceil(max_row / 4)
 
                 for grp in range(1, count_group + 1):
-                    name = f'Root{connect.prefix_system}{GMPNAs}GMPNAs_{na.number_pump_VU}.Group_{grp}.StateGMPNA'
+                    name = f'Root{connect.prefix_system}.{GMPNAs}GMPNAs_{na.number_pump_VU}.Group_{grp}.StateGMPNA'
 
                     address = list_addrr['stateGMPNA'] + (grp - 1) + (na.number_pump_VU - 1) * count_group
                     self.new_element(root, name, address)
 
             tree.write(path, pretty_print=True)
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {GMPNAs}
-            #                            Заполнено''', 1)
+            msg[f'{today} - DevStudio. Map. {GMPNAs} Заполнено'] = 1
+            return msg
         except Exception:
-            print(traceback.format_exc())
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Map {GMPNAs} Ошибка
-            #                            {traceback.format_exc()}''', 2)
+            msg[f'{today} - DevStudio. Map. {GMPNAs} Ошибка {traceback.format_exc()}'] = 2
+            return msg
+
+
+class PIMap(BaseMap):
+    '''Заполнение ModBus карты адресов.'''
+    variable = ['SS']
+
+    def work_file(self):
+        '''Запись в файл.'''
+        msg = {}
+        try:
+            root, tree, path = self.path_file(MODBUS, SSs)
+
+            data = self.gen_funct.select_orm(SS, None, SS.id)
+            list_addrr = self._read_address_mb()
+
+            if len(list_addrr) != len(self.variable):
+                msg[f'{today} - DevStudio. Map. {SSs} Отсутствует адрес из списка {self.variable}'] = 2
+                return msg
+
+            for row in data:
+                name = f'Root{connect.prefix_system}.{SSs}SS_{row.id}.StateSS'
+
+                address = list_addrr['SS'] + (row.id - 1)
+                self.new_element(root, name, address)
+
+            tree.write(path, pretty_print=True)
+            msg[f'{today} - DevStudio. Map. {SSs} Заполнено'] = 1
+            return msg
+        except Exception:
+            msg[f'{today} - DevStudio. Map. {SSs} Ошибка {traceback.format_exc()}'] = 2
+            return msg
+
+
+class PZMap(BaseMap):
+    '''Заполнение ModBus карты адресов.'''
+    prefix = ['StateValve1', 'StateValve2',
+              'StateValve3', 'Tm.tmZD',
+              'NumOfOpenings', 'NumOfClosings']
+
+    variable = ['StateZD', 'numOfOpenings', 'numOfClosings']
+
+    def work_file(self):
+        '''Запись в файл.'''
+        msg = {}
+        try:
+            root, tree, path = self.path_file(MODBUS, ZDs)
+
+            data = self.gen_funct.select_orm(ZD, None, ZD.id)
+            list_addrr = self._read_address_mb()
+
+            if len(list_addrr) != len(self.variable):
+                msg[f'{today} - DevStudio. Map. {ZDs} Отсутствует адрес из списка {self.variable}'] = 2
+                return msg
+
+            for row in data:
+                for i in range(len(self.prefix)):
+                    name = f'Root{connect.prefix_system}.{ZDs}ZD_{row.id}.{self.prefix[i]}'
+
+                    if 'StateValve1' == self.prefix[i]:
+                        address = list_addrr['StateZD'] + 5 * (row.id - 1)
+                    elif 'StateValve2' == self.prefix[i]:
+                        address = (list_addrr['StateZD'] + 5 * (row.id - 1) + 1)
+                    elif 'StateValve3' == self.prefix[i]:
+                        address = (list_addrr['StateZD'] + 5 * (row.id - 1) + 2)
+                    elif 'Tm.tmZD' == self.prefix[i]:
+                        address = (list_addrr['StateZD'] + 5 * (row.id - 1) + 4)
+                    elif 'NumOfOpenings' == self.prefix[i]:
+                        address = list_addrr['numOfOpenings'] + 2 * (row.id - 1)
+                    elif 'NumOfClosings' == self.prefix[i]:
+                        address = list_addrr['numOfClosings'] + 2 * (row.id - 1)
+
+                    self.new_element(root, name, address)
+            tree.write(path, pretty_print=True)
+            msg[f'{today} - DevStudio. Map. {ZDs} Заполнено'] = 1
+            return msg
+        except Exception:
+            msg[f'{today} - DevStudio. Map. {ZDs} Ошибка {traceback.format_exc()}'] = 2
+            return msg

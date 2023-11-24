@@ -112,7 +112,7 @@ class DataExel():
 
     def sub_str(self, uso, basket, module, channel):
         '''Добавляем теги к резервам.'''
-        tag = re.sub(r'(МНС)|(ПТ)|(САР)|(РП)|(БРУ)|\)|(c)', '', uso)
+        tag = re.sub(r'(МНС)|(ПТ)|(САР)|(РП)|(с БРУ)|\)', '', uso)
         tag = re.sub(r'(УСО)', 'USO', tag)
         tag = re.sub(r'\(|\.', '_', tag)
         tag = self.dop_func.translate(tag)

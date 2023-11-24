@@ -383,7 +383,7 @@ class General_functions():
                             for el1 in item.iter('{automation.control}object'):
                                 if el1.attrib['name'] == directory:
                                     return 0, el1, tree
-        except:
+        except Exception:
             return 1, 0, 0
     
     def parser_map(self, directory, file_xml):
@@ -2426,102 +2426,103 @@ class Filling_attribute_DevStudio():
                 msg[f'{today} - Карта адресов: адреса Analogs очищены'] = 1
                 continue
             if tabl == 'DI': 
-                self.dop_function.parser_map('.Diskrets.')
+                self.dop_function.parser_map('.Diskrets.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса Diskrets очищены'] = 1
                 continue
             if tabl == 'VS': 
-                self.dop_function.parser_map('.AuxSystems.')
+                self.dop_function.parser_map('.AuxSystems.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса AuxSystems очищены'] = 1
                 continue
             if tabl == 'ZD': 
-                self.dop_function.parser_map('.Valves.')
+                self.dop_function.parser_map('.Valves.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса Valves очищены'] = 1
                 continue
             if tabl == 'NA': 
-                self.dop_function.parser_map('.NAs.')
+                self.dop_function.parser_map('.NAs.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса NAs очищены'] = 1
                 continue
             if tabl == 'PIC': 
-                self.dop_function.parser_map('.Pictures.')
+                self.dop_function.parser_map('.Pictures.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса Pictures очищены'] = 1
                 continue
             if tabl == 'SS': 
-                self.dop_function.parser_map('.SSs.')
+                self.dop_function.parser_map('.SSs.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса SSs очищены'] = 1
                 continue
             if tabl == 'UTS': 
-                self.dop_function.parser_map('.UTSs.')
+                self.dop_function.parser_map('.UTSs.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса UTSs очищены'] = 1
                 continue
             if tabl == 'UPTS': 
-                self.dop_function.parser_map('.UPTSs.')
+                self.dop_function.parser_map('.UPTSs.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса UPTSs очищены'] = 1
                 continue
             if tabl == 'KTPR': 
-                self.dop_function.parser_map('.KTPRs.')
+                self.dop_function.parser_map('.KTPRs.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса KTPRs очищены'] = 1
                 continue
             if tabl == 'KTPRP': 
-                self.dop_function.parser_map('.KTPRs.')
+                self.dop_function.parser_map('.KTPRs.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса KTPRs очищены'] = 1
                 continue
             if tabl == 'KTPRA': 
-                self.dop_function.parser_map('.KTPRAs.')
+                self.dop_function.parser_map('.KTPRAs.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса KTPRAs очищены'] = 1
                 continue
             if tabl == 'GMPNA': 
-                self.dop_function.parser_map('.GMPNAs.')
+                self.dop_function.parser_map('.GMPNAs.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса GMPNAs очищены'] = 1
                 continue
             if tabl == 'PI': 
-                self.dop_function.parser_map('.PIs.')
+                self.dop_function.parser_map('.PIs.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса PIs очищены'] = 1
                 continue
             if tabl == 'PZ': 
-                self.dop_function.parser_map('PZs.')
+                self.dop_function.parser_map('PZs.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса PZs очищены'] = 1
                 continue
             if tabl == 'AI_diag': 
-                self.dop_function.parser_map('.Diag.AIs.')
+                self.dop_function.parser_map('.Diag.AIs.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса Diag.AIs очищены'] = 1
                 continue
             if tabl == 'AO_diag': 
-                self.dop_function.parser_map('.Diag.AOs.')
+                self.dop_function.parser_map('.Diag.AOs.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса Diag.AOs очищены'] = 1
                 continue
             if tabl == 'DI_diag': 
-                self.dop_function.parser_map('.Diag.DIs.')
+                self.dop_function.parser_map('.Diag.DIs.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса Diag.DIs очищены'] = 1
                 continue
             if tabl == 'DO_diag': 
-                self.dop_function.parser_map('.Diag.DOs.')
+                self.dop_function.parser_map('.Diag.DOs.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса Diag.DOs очищены'] = 1
                 continue
             if tabl == 'CPU_diag': 
-                self.dop_function.parser_map('.Diag.CPUs.')
+                self.dop_function.parser_map('.Diag.CPUs.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса Diag.CPUs очищены'] = 1
                 continue
             if tabl == 'CN_diag': 
-                self.dop_function.parser_map('.Diag.CNs.')
+                self.dop_function.parser_map('.Diag.CNs.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса Diag.CNs очищены'] = 1
                 continue
             if tabl == 'MN_diag': 
-                self.dop_function.parser_map('.Diag.MNs.')
+                self.dop_function.parser_map('.Diag.MNs.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса Diag.MNs очищены'] = 1
                 continue
             if tabl == 'PSU_diag': 
-                self.dop_function.parser_map('.Diag.PSUs.')
+                self.dop_function.parser_map('.Diag.PSUs.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса Diag.PSUs очищены'] = 1
                 continue
             if tabl == 'RS_diag': 
-                self.dop_function.parser_map('.Diag.RSs.')
+                self.dop_function.parser_map('.Diag.RSs.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса Diag.RSs очищены'] = 1
                 continue
             if tabl == 'RackStates_diag': 
-                self.dop_function.parser_map('.Diag.RackStates.')
+                self.dop_function.parser_map('.Diag.RackStates.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса Diag.RackStates очищены'] = 1
                 continue
         return msg
+    
     def hardware_data(self, type_modul):
         modul = []
         with db:
@@ -2572,7 +2573,7 @@ class Filling_attribute_DevStudio():
                           'заслон'        : 'Q',
                         }
             try:
-                data_value = self.dop_function.connect_by_sql('ai', f'"id", "tag", "name", "PhysicEgu", "Egu", "IsOilPressure", "AnalogGroupId"')
+                data_value = self.dop_function.connect_by_sql('ai', f'"id", "tag", "tag_eng", "name", "PhysicEgu", "Egu", "IsOilPressure", "AnalogGroupId"')
                 msg_bool, el1, tree = self.dop_function.parser_omx('Analogs')
                 if msg_bool == 1: 
                     msg[f'{today} - Файл omx: ошибка при очистке Analogs'] = 2
@@ -2580,18 +2581,20 @@ class Filling_attribute_DevStudio():
                 for value in data_value:
                     number      = value[0]
                     tag         = value[1]
-                    name        = value[2]
-                    equ_fiz     = value[3]
-                    equ         = value[4]
-                    unit_switch = value[5]
-                    grp_analog  = value[6]
+                    tag_eng     = value[2]
+                    name        = value[3]
+                    equ_fiz     = value[4]
+                    equ         = value[5]
+                    unit_switch = value[6]
+                    grp_analog  = value[7]
                     unit_alt    = 'кгс/см2'
 
                     if equ_fiz     == '': equ_fiz = ''
                     if tag         == '' or tag is None        : continue
+                    if tag_eng     == '' or tag_eng is None    : continue
                     if number      == '' or number is None     : continue
                     if name        == '' or name is None       : continue
-                    if equ         == '' or equ is None        : continue
+                    if equ         == '' or equ is None        : equ = ' '
                     if unit_switch == '' or unit_switch is None: continue
 
                     if grp_analog == 'Уровни' or grp_analog == 'Аналоговые выходы':
@@ -2599,7 +2602,7 @@ class Filling_attribute_DevStudio():
                     else:
                         type = 'unit.Library.PLC_Types.Analog_PLC'
 
-                    tag_translate = self.dop_function.translate(str(tag))
+                    # tag_translate = self.dop_function.translate(str(tag))
                     unit_switch = True if unit_switch == 1 else False
                     # Находим совпадение из словаря с названием сигнала и заполняем подпись на кадре
                     sign = ' '
@@ -2609,7 +2612,7 @@ class Filling_attribute_DevStudio():
                             break
 
                     object = etree.Element("{automation.control}object")
-                    object.attrib['name'] = tag_translate
+                    object.attrib['name'] = tag_eng
                     object.attrib['uuid'] = str(uuid.uuid1())
                     object.attrib['base-type'] = type
                     object.attrib['aspect'] = "unit.Library.PLC_Types.PLC"
@@ -2630,6 +2633,7 @@ class Filling_attribute_DevStudio():
             except Exception:
                 msg[f'{today} - Файл omx: ошибка при добавлении Analogs: {traceback.format_exc()}'] = 2
                 return msg
+    
     def diskret_in_omx(self):
         msg = {}
         dop_discret = {'давлен'        : 'P',
@@ -2640,8 +2644,8 @@ class Filling_attribute_DevStudio():
                        'питание'       : 'U',
                        'питание шкафа' : 'U'}
         try:
-            data_di = self.dop_function.connect_by_sql('di', f'"id", "tag", "name", "pNC_AI"')
-            data_ai = self.dop_function.connect_by_sql('ai', f'"id", "tag"')
+            data_di = self.dop_function.connect_by_sql('di', f'"id", "tag", "name", "pNC_AI", "tag_eng"')
+            data_ai = self.dop_function.connect_by_sql('ai', f'"id", "tag", "tag_eng"')
             msg_bool, el1, tree = self.dop_function.parser_omx('Diskrets')
             if msg_bool == 1: 
                 msg[f'{today} - Файл omx: ошибка при очистке Diskrets'] = 2
@@ -2651,30 +2655,33 @@ class Filling_attribute_DevStudio():
                 tag_di    = value[1]
                 name      = value[2]
                 pNC_AI    = value[3]
+                tag_eng   = value[4]
 
                 if name == '' or name is None: continue
                 if tag_di  == '' or tag_di is None: continue
 
-                tag_di     = self.dop_function.translate(str(tag_di))
                 tag_ai     = ' '
-                tag_ai_ref = ' '
+                tag_ai_eng = ' '
                 try:
                     if pNC_AI is not None: 
                         isdigit = re.findall('\d+', str(pNC_AI))
                         for number in data_ai:
                             number_ai = number[0]
                             tag_ai    = number[1]
+                            tag_ai_eng= number[2]
+
                             if str(number_ai) == str(isdigit[0]):
                                 if tag_ai == '' or tag_ai is None:
                                     msg[f'{today} - Файл omx: Diskrets. Тэг AI сигнала {number_ai} пуст. Поля AI_Ref_KZFKP и AI_Ref не заполнены'] = 3
                                     break
-                                else: 
-                                    tag_ai_ref = tag_ai
-                                    tag_ai     = self.dop_function.translate(tag_ai)
-                                    break
+                                # else: 
+                                #     tag_ai_ref = tag_ai
+                                #     tag_ai     = self.dop_function.translate(tag_ai)
+                                #     break
                 except Exception:
                     msg[f'{today} - Файл omx: Diskrets, ошибка пропускается: {traceback.format_exc()}'] = 2
                     continue
+
                 sign = ' '
                 for key, value in dop_discret.items():
                     if self.dop_function.str_find(str(name).lower(), {key}):
@@ -2682,7 +2689,7 @@ class Filling_attribute_DevStudio():
                         break
 
                 object = etree.Element("{automation.control}object")
-                object.attrib['name'] = str(tag_di)
+                object.attrib['name'] = str(tag_eng)
                 object.attrib['uuid'] = str(uuid.uuid1())
                 object.attrib['base-type'] = "unit.Library.PLC_Types.Diskret_PLC"
                 object.attrib['aspect'] = "unit.Library.PLC_Types.PLC"
@@ -2690,8 +2697,8 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.Library.Attributes.Index", number_di)
                 self.dop_function.new_attr(object, "unit.Library.Attributes.Sign", sign)
                 self.dop_function.new_attr(object, "unit.System.Attributes.Description", name)
-                self.dop_function.new_attr(object, "unit.Library.Attributes.AI_Ref", tag_ai)
-                self.dop_function.new_attr(object, "unit.Library.Attributes.AI_Ref_KZFKP", tag_ai_ref)
+                self.dop_function.new_attr(object, "unit.Library.Attributes.AI_Ref", str(tag_ai_eng))
+                self.dop_function.new_attr(object, "unit.Library.Attributes.AI_Ref_KZFKP", tag_ai)
 
                 el1.append(object)
             tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
@@ -2700,6 +2707,7 @@ class Filling_attribute_DevStudio():
         except Exception:
             msg[f'{today} - Файл omx: ошибка при добавлении Diskrets: {traceback.format_exc()}'] = 2
             return msg
+    
     def picture_omx(self):
             msg = {}
             try:
@@ -2732,6 +2740,7 @@ class Filling_attribute_DevStudio():
             except Exception:
                 msg[f'{today} - Файл omx: ошибка при добавлении Pictures: {traceback.format_exc()}'] = 2
                 return msg
+    
     def auxsystem_omx(self):
         msg = {}
         try:
@@ -2819,6 +2828,7 @@ class Filling_attribute_DevStudio():
         except Exception:
             msg[f'{today} - Файл omx: ошибка при добавлении AuxSystems: {traceback.format_exc()}'] = 2
             return msg
+    
     def valves_omx(self):
         msg = {}
         try:
@@ -2898,6 +2908,7 @@ class Filling_attribute_DevStudio():
         except Exception:
             msg[f'{today} - Файл omx: ошибка при добавлении Valves: {traceback.format_exc()}'] = 2
             return msg
+    
     def pumps_omx(self):
         msg = {}
         try:
@@ -2931,6 +2942,7 @@ class Filling_attribute_DevStudio():
         except Exception:
             msg[f'{today} - Файл omx: ошибка при добавлении NAs: {traceback.format_exc()}'] = 2
             return msg
+    
     def relayted_system_omx(self):
         msg = {}
         try:

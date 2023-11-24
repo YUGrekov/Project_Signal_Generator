@@ -19,6 +19,21 @@ from import_exel_back import Import_in_SQL as KD_import
 from dev_ai import AIParam as SQL_AI
 from dev_di import Diskrets as SQL_DI
 from address_map import AnalogsMap
+from address_map import DiskretsMap
+from address_map import PicturesMap
+from address_map import VSMap
+from address_map import ZDMap
+from address_map import PumpsMap
+from address_map import RelaytedSystemMap
+from address_map import UtsUptsMap
+from address_map import KTPRMap
+from address_map import KTPRAMap
+from address_map import GMPNAMap
+from address_map import PIMap
+from address_map import PZMap
+from address_map_diag import DiagMap
+from address_map_diag import RackStateMap
+
 
 # ГРАФИЧЕСКИЙ ИНТЕРФЕЙС ДЛЯ ЗАПУСКА ГЕНЕРАТОРА
 # Сформировать exe: в терминале добавить: auto-py-to-exe
@@ -2362,96 +2377,139 @@ class Widget(QWidget):
     def omx_list(self):
         msg = self.filing_attrib.write_in_omx(self.list_gen_vu)
         self.logs_msg('default', 1, msg, True)
+    
     def omx_clear(self):
         msg = self.filing_attrib.clear_omx(self.list_gen_vu)
         self.logs_msg('default', 1, msg, True)
+    
     def map_list(self):
         if len(self.list_gen_vu) == 0:             
             msg[f'{today} - Не выбраны выбраны объекты для заполнения карты адресов'] = 2
             return msg
+        diag_map = DiagMap()
 
         for tabl in self.list_gen_vu: 
             if tabl == 'AI': 
-                map_ai = AnalogsMap()
-                msg = map_ai.work_file()
+                map_addrr = AnalogsMap()
+                msg = map_addrr.work_file()
                 self.logs_msg('default', 1, msg, True)
                 continue
-            # if tabl == 'DI': 
-            #     msg.update(self.diskret_maps())
-            #     continue
-            # if tabl == 'VS': 
-            #     msg.update(self.auxsystem_maps())
-            #     continue
-            # if tabl == 'ZD': 
-            #     msg.update(self.valves_maps())
-            #     continue
-            # if tabl == 'NA': 
-            #     msg.update(self.na_maps())
-            #     continue
-            # if tabl == 'PIC': 
-            #     msg.update(self.picturs_maps())
-            #     continue
-            # if tabl == 'SS': 
-            #     msg.update(self.ss_maps())
-            #     continue
-            # if tabl == 'UTS': 
-            #     msg.update(self.uts_maps())
-            #     continue
-            # if tabl == 'UPTS': 
-            #     msg.update(self.upts_maps())
-            #     continue
-            # if tabl == 'KTPR': 
-            #     msg.update(self.ktpr_maps())
-            #     continue
-            # if tabl == 'KTPRP': 
-            #     msg.update(self.ktprp_maps())
-            #     continue
-            # if tabl == 'KTPRA': 
-            #     msg.update(self.ktpra_maps())
-            #     continue
-            # if tabl == 'GMPNA': 
-            #     msg.update(self.gmpna_maps())
-            #     continue
-            # if tabl == 'PI': 
-            #     msg.update(self.pi_maps())
-            #     continue
-            # if tabl == 'PZ': 
-            #     msg.update(self.pz_maps())
-            #     continue
-            # if tabl == 'AO_diag': 
-            #     msg.update(self.mklogic_DIAG_maps_param('AOs', 'MK-514-008', list_param_AI_AO))
-            #     continue
-            # if tabl == 'AI_diag': 
-            #     msg.update(self.mklogic_DIAG_maps_param('AIs', 'MK-516-008A', list_param_AI_AO))
-            #     continue
-            # if tabl == 'DO_diag': 
-            #     msg.update(self.mklogic_DIAG_maps_param('DOs', 'MK-531-032', list_param_DI_DO))
-            #     continue
-            # if tabl == 'DI_diag': 
-            #     msg.update(self.mklogic_DIAG_maps_param('DIs', 'MK-521-032', list_param_DI_DO))
-            #     continue
-            # if tabl == 'CPU_diag': 
-            #     msg.update(self.mklogic_DIAG_maps_param('CPUs', 'MK-504-120', list_param_CPU))
-            #     continue
-            # if tabl == 'CN_diag': 
-            #     msg.update(self.mklogic_DIAG_maps_param('CNs', 'MK-545-010', list_param_CN))
-            #     continue
-            # if tabl == 'MN_diag': 
-            #     msg.update(self.mklogic_DIAG_maps_param('MNs', 'MK-546-010', list_param_MN))
-            #     continue
-            # if tabl == 'PSU_diag': 
-            #     msg.update(self.mklogic_DIAG_maps_param('PSUs', 'MK-550-024', list_param_PSU))
-            #     continue
-            # if tabl == 'RS_diag': 
-            #     msg.update(self.mklogic_DIAG_maps_param('RSs', 'MK-541-002', list_param_RS))
-            #     continue
-            # if tabl == 'RackStates_diag': 
-            #     msg.update(self.mklogic_rackstates_maps(list_param_RackS))
-            #     continue
+            if tabl == 'DI': 
+                map_addrr = DiskretsMap()
+                msg = map_addrr.work_file()
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'VS': 
+                map_addrr = VSMap()
+                msg = map_addrr.work_file()
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'ZD': 
+                map_addrr = ZDMap()
+                msg = map_addrr.work_file()
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'NA': 
+                map_addrr = PumpsMap()
+                msg = map_addrr.work_file()
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'PIC': 
+                map_addrr = PicturesMap()
+                msg = map_addrr.work_file()
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'SS': 
+                map_addrr = RelaytedSystemMap()
+                msg = map_addrr.work_file()
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'UTS': 
+                map_addrr = UtsUptsMap()
+                msg = map_addrr.work_file()
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'UPTS': 
+                map_addrr = UtsUptsMap()
+                msg = map_addrr.work_file(True)
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'KTPR': 
+                map_addrr = KTPRMap()
+                msg = map_addrr.work_file()
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'KTPRP': 
+                map_addrr = KTPRMap()
+                msg = map_addrr.work_file(True)
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'KTPRA': 
+                map_addrr = KTPRAMap()
+                msg = map_addrr.work_file()
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'GMPNA': 
+                map_addrr = GMPNAMap()
+                msg = map_addrr.work_file()
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'PI': 
+                map_addrr = PIMap()
+                msg = map_addrr.work_file()
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'PZ': 
+                map_addrr = PZMap()
+                msg = map_addrr.work_file()
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'AO_diag': 
+                msg = diag_map.work_file('AO')
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'AI_diag': 
+                msg = diag_map.work_file('AI')
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'DO_diag': 
+                msg = diag_map.work_file('DO')
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'DI_diag': 
+                msg = diag_map.work_file('DI')
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'RS_diag': 
+                msg = diag_map.work_file('RS')
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'CPU_diag': 
+                msg = diag_map.work_file('CPU')
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'CN_diag': 
+                msg = diag_map.work_file('CN')
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'MN_diag': 
+                msg = diag_map.work_file('MN')
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'PSU_diag': 
+                msg = diag_map.work_file('PSU')
+                self.logs_msg('default', 1, msg, True)
+                continue
+            if tabl == 'RackStates_diag':
+                map_rack = RackStateMap()
+                msg = map_rack.work_file()
+                self.logs_msg('default', 1, msg, True)
+                continue
 
     def map_clear(self):
         msg = self.filing_attrib.clear_map(self.list_gen_vu)
         self.logs_msg('default', 1, msg, True)
+    
     def hmi_list(self):
         msg = {}
         if len(self.list_gen_hmi) == 0:             
