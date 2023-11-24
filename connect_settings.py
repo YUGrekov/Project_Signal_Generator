@@ -1,13 +1,16 @@
 import configparser
 import os
 
+VERSION = 'gen_prj.exe'
+
 
 class Connect():
-    '''Отдельный вызов чтения конфигурационного файла'''
+    '''Отдельный вызов конфигурационного файла'''
 
     def __init__(self) -> None:
         '''Проверяем существование файла'''
-        path_prj = 'settings\\init_conf.cfg'
+        path_prj = f'{os.path.dirname(os.path.abspath(VERSION))}\\settings\\init_conf.cfg'
+
         if os.path.exists(path_prj):
             self.config = configparser.ConfigParser()
             self.config.read(path_prj, encoding="utf-8")

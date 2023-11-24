@@ -34,7 +34,6 @@ from address_map import PZMap
 from address_map_diag import DiagMap
 from address_map_diag import RackStateMap
 
-
 # ГРАФИЧЕСКИЙ ИНТЕРФЕЙС ДЛЯ ЗАПУСКА ГЕНЕРАТОРА
 # Сформировать exe: в терминале добавить: auto-py-to-exe
 

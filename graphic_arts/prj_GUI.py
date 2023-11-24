@@ -736,6 +736,13 @@ class GenHMIandDev(QWidget):
 
     def gen_hmi(self):
         '''Клик по кнопке собрать Pictures.'''
+        try:
+            reqsql = RequestSQL()
+        except Exception:
+            self.logsTextEdit.logs_msg('''Невозможно создать форму.
+                                       Нет подключения к БД разработки''', 2)
+            return
+
         if self.checkbox_hmi_ktpr.isChecked():
             self.object_defence('KTPR')
         if self.checkbox_hmi_ktprp.isChecked():
