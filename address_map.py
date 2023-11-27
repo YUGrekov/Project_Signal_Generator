@@ -289,9 +289,8 @@ class VSMap(BaseMap):
 
 class ZDMap(BaseMap):
     '''Заполнение ModBus карты адресов.'''
-    prefix = ['StateValve1', 'StateValve2',
-              'StateValve3', 'Tm.tmZD',
-              'NumOfOpenings', 'NumOfClosings']
+    prefix = ['StateValve1', 'StateValve2', 'StateValve3',
+              'Tm.tmZD', 'NumOfOpenings', 'NumOfClosings']
 
     variable = ['StateZD', 'numOfOpenings', 'numOfClosings']
 

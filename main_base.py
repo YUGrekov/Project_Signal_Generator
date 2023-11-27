@@ -322,6 +322,7 @@ class General_functions():
             return msg
         msg[f'{today} - Файл omx: {directory} удалены'] = 1
         return msg
+    
     def clear_diag_objects_omx(self, directory):
         # Чистка объектов
         msg = {}
@@ -333,6 +334,7 @@ class General_functions():
             return msg
         msg[f'{today} - Файл omx: {directory} удалены'] = 1
         return msg
+    
     def clear_objects_attrib(self, directory, map_attrib):
         msg = {}
         try:

@@ -73,3 +73,31 @@ class General_functions():
         tree = etree.parse(path, parser)
         root = tree.getroot()
         return root, tree
+
+    def clear_map(self, path_file, directory, root, tree):
+        """Очистка нужной директории файла карты адресов DevStudio.
+        Args:
+            directory (str): Очищаемый атрибут
+            root (_type_): Рабочий каталог
+        """
+        for item in root.iter('node-path'):
+            if directory in item.text:
+                parent = item.getparent()
+                root.remove(parent)
+        tree.write(path_file, pretty_print=True)
+
+    def clear_omx(self, path_attr, directory,
+                  root, fl_diag: bool = False):
+        '''Очистка нужного объекта DevStudio.'''
+        path = 'Diag' if fl_diag else path_attr
+
+        for el in root.iter('{automation.deployment}application-object'):
+            if el.attrib['name'] == "Application_PLC":
+                for item in el.iter('{automation.control}object'):
+                    if item.attrib['name'] == path:
+                        for el1 in item.iter('{automation.control}object'):
+                            if el1.attrib['name'] == directory:
+                                item.remove(el1)
+                        object = etree.Element("{automation.control}object")
+                        object.attrib['name'] = directory
+                        item.append(object)

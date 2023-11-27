@@ -29,6 +29,19 @@ from request_sql import RequestSQL
 from hmi_defence import DefenceMap
 from hmi_uso import DaignoPicture
 from hmi_siren import Alarm_map
+from map_address import AnalogsMap
+from map_address import DiskretsMap
+from map_address import VSMap
+from map_address import ZDMap
+from map_address import PumpsMap
+from map_address import UtsUptsMap
+from map_address import PicturesMap
+from map_address import KTPRMap
+from map_address import KTPRAMap
+from map_address import GMPNAMap
+from map_address import PIMap
+from map_address import PZMap
+from map_address import RelaytedSystemMap
 
 
 SIZE_WORK_BACK = (1200, 500)
@@ -682,16 +695,38 @@ class GenHMIandDev(QWidget):
         self.parent = parent
         self.dop_function = DopFunction()
 
-        layout_h1 = QHBoxLayout()
         layout_v1 = QVBoxLayout(self)
+        self.layout_v2 = QVBoxLayout()
+        self.layout_v3 = QVBoxLayout()
+        self.layout_v4 = QVBoxLayout()
+        self.layout_v5 = QVBoxLayout()
+        self.layout_v6 = QVBoxLayout()
+        self.layout_v7 = QVBoxLayout()
+        self.layout_h1 = QHBoxLayout()
+        self.layout_h2 = QHBoxLayout()
 
         label_hmi_sign = LabelHMI('HMI')
         label_devstudio_sign = LabelHMI('DevStudio')
+
+        self.object_hmi()
+        self.object_devstudio()
+
+        layout_v1.addWidget(label_hmi_sign)
+        layout_v1.addLayout(self.layout_h1)
+        layout_v1.addWidget(label_devstudio_sign)
+        layout_v1.addLayout(self.layout_h2)
+        layout_v1.addStretch()
+
+    def object_hmi(self):
+        '''Добавляем объекты для генерация HMI.'''
         self.select_row = LineEdit(placeholderText='Номер МА',
                                    clearButtonEnabled=True)
         self.select_row.setMaximumSize(135, 100)
         self.select_row.setValidator(QIntValidator())
         self.select_row.setToolTip('''Если необходимо собрать\nзашиты или готовности по конкретному МА,\nто укажи номер''')
+
+        self.button_gen_hmi = GenFormButton('\t\t\t\tСобрать Pictures\t\t\t\t')
+        self.button_gen_hmi.clicked.connect(self.click_hmi)
 
         self.checkbox_hmi_ktpr = CheckBox('KTPR')
         self.checkbox_hmi_ktpra = CheckBox('KTPRA')
@@ -701,23 +736,107 @@ class GenHMIandDev(QWidget):
         self.checkbox_hmi_uts = CheckBox('UTS')
         self.checkbox_hmi_upts = CheckBox('UPTS')
 
-        self.button_gen_hmi = GenFormButton('\t\t\t\tСобрать Pictures\t\t\t\t')
-        self.button_gen_hmi.clicked.connect(self.gen_hmi)
+        self.layout_hmi()
 
-        layout_h1.addWidget(self.select_row)
-        layout_h1.addWidget(self.checkbox_hmi_ktpra)
-        layout_h1.addWidget(self.checkbox_hmi_gmpna)
-        layout_h1.addWidget(self.checkbox_hmi_ktpr)
-        layout_h1.addWidget(self.checkbox_hmi_ktprp)
-        layout_h1.addWidget(self.checkbox_hmi_uso)
-        layout_h1.addWidget(self.checkbox_hmi_uts)
-        layout_h1.addWidget(self.checkbox_hmi_upts)
-        layout_h1.addWidget(self.button_gen_hmi)
+    def layout_hmi(self):
+        '''Собираем в один слой атрибуты HMI.'''
+        self.layout_h1.addWidget(self.select_row)
+        self.layout_h1.addWidget(self.checkbox_hmi_ktpra)
+        self.layout_h1.addWidget(self.checkbox_hmi_gmpna)
+        self.layout_h1.addWidget(self.checkbox_hmi_ktpr)
+        self.layout_h1.addWidget(self.checkbox_hmi_ktprp)
+        self.layout_h1.addWidget(self.checkbox_hmi_uso)
+        self.layout_h1.addWidget(self.checkbox_hmi_uts)
+        self.layout_h1.addWidget(self.checkbox_hmi_upts)
+        self.layout_h1.addWidget(self.button_gen_hmi)
 
-        layout_v1.addWidget(label_hmi_sign)
-        layout_v1.addLayout(layout_h1)
-        layout_v1.addWidget(label_devstudio_sign)
-        layout_v1.addStretch()
+    def object_devstudio(self):
+        '''Добавляем объекты для генерация DevStudio.'''
+        self.checkbox_dev_analogs = CheckBox('Analogs')
+        self.checkbox_dev_diskrets = CheckBox('Diskrets')
+        self.checkbox_dev_vs = CheckBox('VS')
+        self.checkbox_dev_zd = CheckBox('ZD')
+        self.checkbox_dev_na = CheckBox('NA')
+        self.checkbox_dev_uts = CheckBox('UTS')
+        self.checkbox_dev_pic = CheckBox('Pic')
+        self.checkbox_dev_ktpr = CheckBox('KTPR')
+        self.checkbox_dev_ktpra = CheckBox('KTPRA')
+        self.checkbox_dev_gmpna = CheckBox('GMPNA')
+        self.checkbox_dev_upts = CheckBox('UPTS')
+        self.checkbox_dev_pi = CheckBox('PI')
+        self.checkbox_dev_pz = CheckBox('PZ')
+        self.checkbox_dev_ktprp = CheckBox('KTPRP')
+        self.checkbox_dev_sss = CheckBox('SSs')
+        self.checkbox_dev_ais = CheckBox('AIs')
+        self.checkbox_dev_aos = CheckBox('AOs')
+        self.checkbox_dev_dis = CheckBox('DIs')
+        self.checkbox_dev_dos = CheckBox('DOs')
+        self.checkbox_dev_rss = CheckBox('RSs')
+        self.checkbox_dev_psus = CheckBox('PSUs')
+        self.checkbox_dev_cpus = CheckBox('CPUs')
+        self.checkbox_dev_mns = CheckBox('MNs')
+        self.checkbox_dev_cns = CheckBox('CNs')
+        self.checkbox_dev_rackstate = CheckBox('Rackstates')
+        self.checkbox_dev_colorDI = CheckBox('ColorScheme')
+        self.checkbox_dev_anForm = CheckBox('AnalogsFormats')
+        self.checkbox_dev_mapEGU = CheckBox('MapEGU')
+
+        self.layout_devstudio()
+
+    def layout_devstudio(self):
+        '''Собираем в один слой атрибуты DevStudio.'''
+        self.layout_v2.addWidget(self.checkbox_dev_analogs)
+        self.layout_v2.addWidget(self.checkbox_dev_diskrets)
+        self.layout_v2.addWidget(self.checkbox_dev_vs)
+        self.layout_v2.addWidget(self.checkbox_dev_zd)
+        self.layout_v2.addWidget(self.checkbox_dev_na)
+        self.layout_v2.addWidget(self.checkbox_dev_uts)
+        self.layout_v3.addWidget(self.checkbox_dev_pic)
+        self.layout_v3.addWidget(self.checkbox_dev_ktpr)
+        self.layout_v3.addWidget(self.checkbox_dev_ktpra)
+        self.layout_v3.addWidget(self.checkbox_dev_gmpna)
+        self.layout_v3.addWidget(self.checkbox_dev_upts)
+        self.layout_v3.addWidget(self.checkbox_dev_pi)
+        self.layout_v4.addWidget(self.checkbox_dev_pz)
+        self.layout_v4.addWidget(self.checkbox_dev_ktprp)
+        self.layout_v4.addWidget(self.checkbox_dev_sss)
+        self.layout_v4.addWidget(self.checkbox_dev_ais)
+        self.layout_v4.addWidget(self.checkbox_dev_aos)
+        self.layout_v4.addWidget(self.checkbox_dev_dis)
+        self.layout_v5.addWidget(self.checkbox_dev_dos)
+        self.layout_v5.addWidget(self.checkbox_dev_rss)
+        self.layout_v5.addWidget(self.checkbox_dev_psus)
+        self.layout_v5.addWidget(self.checkbox_dev_cpus)
+        self.layout_v5.addWidget(self.checkbox_dev_mns)
+        self.layout_v5.addWidget(self.checkbox_dev_cns)
+        self.layout_v6.addWidget(self.checkbox_dev_rackstate)
+        self.layout_v6.addWidget(self.checkbox_dev_colorDI)
+        self.layout_v6.addWidget(self.checkbox_dev_anForm)
+        self.layout_v6.addWidget(self.checkbox_dev_mapEGU)
+        self.layout_v6.addSpacing(60)
+
+        button_gen_omx = GenFormButton('\t\t\t\tЗаполнить структуру\t\t\t\t')
+        button_gen_omx.clicked.connect(self.click_fill_omx)
+        button_clear_omx = GenFormButton('\t\t\t\tОчистить структуру\t\t\t\t')
+        button_clear_omx.clicked.connect(self.click_clear_omx)
+        button_gen_map = GenFormButton('\t\t\t\tЗаполнить карту\t\t\t\t')
+        button_gen_map.clicked.connect(self.click_fill_map)
+        button_clear_map = GenFormButton('\t\t\t\tОчистить карту\t\t\t\t')
+        button_clear_map.clicked.connect(self.click_clear_map)
+
+        self.layout_v7.addWidget(button_gen_omx)
+        self.layout_v7.addWidget(button_clear_omx)
+        self.layout_v7.addSpacing(25)
+        self.layout_v7.addWidget(button_gen_map)
+        self.layout_v7.addWidget(button_clear_map)
+
+        self.layout_h2.addLayout(self.layout_v2)
+        self.layout_h2.addLayout(self.layout_v3)
+        self.layout_h2.addLayout(self.layout_v4)
+        self.layout_h2.addLayout(self.layout_v5)
+        self.layout_h2.addLayout(self.layout_v6)
+        self.layout_h2.addSpacing(50)
+        self.layout_h2.addLayout(self.layout_v7)
 
     def object_uso(self):
         '''Объект класса генерация усо.'''
@@ -734,7 +853,7 @@ class GenHMIandDev(QWidget):
         self.siren = Alarm_map(table, self.logsTextEdit)
         self.siren.filling_template()
 
-    def gen_hmi(self):
+    def click_hmi(self):
         '''Клик по кнопке собрать Pictures.'''
         try:
             reqsql = RequestSQL()
@@ -765,6 +884,86 @@ class GenHMIandDev(QWidget):
             self.object_siren('UTS')
         if self.checkbox_hmi_upts.isChecked():
             self.object_siren('UPTS')
+
+    def check_devstudio_attr(self):
+        list_param = []
+        list_help = {self.checkbox_dev_analogs: ['Analogs', AnalogsMap],
+                     self.checkbox_dev_diskrets: ['Diskrets', DiskretsMap],
+                     self.checkbox_dev_vs: ['AuxSystems', VSMap],
+                     self.checkbox_dev_zd: ['Valves', ZDMap],
+                     self.checkbox_dev_na: ['NAs', PumpsMap],
+                     self.checkbox_dev_uts: ['UTSs', UtsUptsMap],
+                     self.checkbox_dev_pic: ['Pictures', PicturesMap],
+                     self.checkbox_dev_ktpr: ['KTPRs', KTPRMap],
+                     self.checkbox_dev_ktpra: ['KTPRAs', KTPRAMap],
+                     self.checkbox_dev_gmpna: ['GMPNAs', GMPNAMap],
+                     self.checkbox_dev_upts: ['UPTSs', UtsUptsMap],
+                     self.checkbox_dev_pi: ['PIs', PIMap],
+                     self.checkbox_dev_pz: ['PZs', PZMap],
+                     self.checkbox_dev_ktprp: ['KTPRPs', KTPRMap],
+                     self.checkbox_dev_sss: ['SSs', RelaytedSystemMap],
+                     self.checkbox_dev_ais: ['Diag.AIs'],
+                     self.checkbox_dev_aos: ['Diag.AOs'],
+                     self.checkbox_dev_dis: ['Diag.DIs'],
+                     self.checkbox_dev_dos: ['Diag.DOs'],
+                     self.checkbox_dev_rss: ['Diag.RSs'],
+                    #  self.checkbox_dev_psus: ['Diag.PSUs'],
+                    #  self.checkbox_dev_cpus: ['Diag.CPUs'],
+                    #  self.checkbox_dev_mns: ['Diag.MNs'],
+                    #  self.checkbox_dev_cns: ['Diag.CNs'],
+                    #  self.checkbox_dev_rackstate: ['Diag.RackStates']
+                     }
+        for param, value in list_help.items():
+            if param.isChecked():
+                list_param.append(value)
+        return list_param
+
+    def click_fill_omx(self):
+        pass
+
+    def click_clear_omx(self):
+        '''Очистка объектов DevStudio.'''
+        for param in self.check_devstudio_attr():
+            if 'Diag.' in param[0]:
+                text = param[0].replace('Diag.', '')
+                fl_diag = True
+            elif 'KTPRPs' in param[0]:
+                fl_diag = False
+                text = 'KTPRs'
+            else:
+                fl_diag = False
+                text = param[0]
+
+            path_file = connect.path_to_devstudio_omx
+            path_attr = f'Root{connect.prefix_system}'
+
+            root, tree = self.dop_function.xmlParser(path_file)
+            self.dop_function.clear_omx(path_attr, text, root, fl_diag)
+            tree.write(path_file, pretty_print=True)
+
+    def click_fill_map(self):
+        '''Заполнение карты адресов DevStudio.'''
+        for param in self.check_devstudio_attr():
+            try:
+                obj = param[1](self.logsTextEdit)
+            except Exception:
+                self.logsTextEdit.logs_msg('''Невозможно заполнить карту адресов DevStudio.
+                                           Нет подключения к БД разработки''', 2)
+                return
+
+            obj.work_file(True) if param[0] in ('UPTSs', 'KTPRPs') else obj.work_file()
+
+    def click_clear_map(self):
+        '''Очистка карты адресов DevStudio.'''
+        for param in self.check_devstudio_attr():
+            driver_file = 'Modbus503' if 'Analogs' in param[0] else 'Modbus'
+            text = 'KTPRs' if param[0] in 'KTPRPs' else param[0]
+
+            path_file = f'{connect.path_to_devstudio}\\{driver_file}.xml'
+            path_attr = f'Root{connect.prefix_system}.{text}.'
+
+            root, tree = self.dop_function.xmlParser(path_file)
+            self.dop_function.clear_map(path_file, path_attr, root, tree)
 
 
 class MainWindow(QMainWindow):
