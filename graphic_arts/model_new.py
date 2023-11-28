@@ -8,12 +8,12 @@ from peewee import DoubleField
 from playhouse.migrate import PostgresqlMigrator
 
 connect = Connect()
-db = PostgresqlDatabase(None)
-# db = PostgresqlDatabase(connect.database,
-#                         user=connect.user,
-#                         password=connect.password,
-#                         host=connect.host,
-#                         port=connect.port)
+# db = PostgresqlDatabase(None)
+db = PostgresqlDatabase(connect.database,
+                        user=connect.user,
+                        password=connect.password,
+                        host=connect.host,
+                        port=connect.port)
 db_prj = PostgresqlDatabase(None)
 migrator = PostgresqlMigrator(db)
 

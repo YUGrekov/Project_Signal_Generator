@@ -366,6 +366,7 @@ class General_functions():
                                     return 0, el1, tree
         except:
             return 1, 0, 0
+    
     def parser_diag_omx(self, directory):
         parser = etree.XMLParser(remove_blank_text=True)
         tree = etree.parse(f'{connect.path_to_devstudio_omx}', parser)
@@ -2550,7 +2551,7 @@ class Filling_attribute_DevStudio():
                                           number_modul=number_modul,
                                           modPosition=modPosition))
         return modul
-    # Заполнение omx и атрибутов
+
     def analogs_omx(self):
             msg = {}
             dop_analog = {'объем'         : 'V',
@@ -2978,6 +2979,7 @@ class Filling_attribute_DevStudio():
         except Exception:
             msg[f'{today} - Файл omx: ошибка при добавлении SSs: {traceback.format_exc()}'] = 2
             return msg
+    
     def uts_omx(self):
         msg = {}
         try:
@@ -3020,6 +3022,7 @@ class Filling_attribute_DevStudio():
         except Exception:
             msg[f'{today} - Файл omx: ошибка при добавлении UTSs: {traceback.format_exc()}'] = 2
             return msg
+    
     def upts_omx(self):
         msg = {}
         try:
@@ -3060,6 +3063,7 @@ class Filling_attribute_DevStudio():
         except Exception:
             msg[f'{today} - Файл omx: ошибка при добавлении UPTSs: {traceback.format_exc()}'] = 2
             return msg
+    
     def ktpr_omx(self):
         msg = {}
         try:
@@ -3089,6 +3093,7 @@ class Filling_attribute_DevStudio():
         except Exception:
             msg[f'{today} - Файл omx: ошибка при добавлении KTPRs: {traceback.format_exc()}'] = 2
             return msg
+    
     def ktprp_omx(self):
         msg = {}
         try:
@@ -3118,6 +3123,7 @@ class Filling_attribute_DevStudio():
         except Exception:
             msg[f'{today} - Файл omx: ошибка при добавлении KTPRPs: {traceback.format_exc()}'] = 2
             return msg
+    
     def ktpra_omx(self):
         msg = {}
         try:
@@ -3160,6 +3166,7 @@ class Filling_attribute_DevStudio():
         except Exception:
             msg[f'{today} - Файл omx: ошибка при добавлении KTPRAs: {traceback.format_exc()}'] = 2
             return msg
+    
     def gmpna_omx(self):
         msg = {}
         try:
@@ -3202,6 +3209,7 @@ class Filling_attribute_DevStudio():
         except Exception:
             msg[f'{today} - Файл omx: ошибка при добавлении GMPNAs: {traceback.format_exc()}'] = 2
             return msg
+    
     def pi_omx(self):
         msg = {}
         try:
@@ -3244,6 +3252,7 @@ class Filling_attribute_DevStudio():
         except Exception:
             msg[f'{today} - Файл omx: ошибка при добавлении PIs: {traceback.format_exc()}'] = 2
             return msg
+    
     def pz_omx(self):
         msg = {}
         try:
@@ -3337,6 +3346,7 @@ class Filling_attribute_DevStudio():
         except Exception:
             msg[f'{today} - Ошибка при добавлении значений атрибутов Diag.{variable_mod}: {traceback.format_exc()}'] = 2
             return msg
+    
     def mklogic_DI_DO_atrib(self, variable_mod, type_mod):
 
         link_path = [f'{connect.path_to_devstudio}\\AttributesMapKlk.xml', 
@@ -3392,6 +3402,7 @@ class Filling_attribute_DevStudio():
         except Exception:
             msg[f'{today} - Ошибка при добавлении значений атрибутов Diag.{variable_mod}: {traceback.format_exc()}'] = 2
             return msg
+    
     def mklogic_DIAG_omx(self, variable_mod, type_mod, base_type):
         msg = {}
         try:
@@ -3440,6 +3451,7 @@ class Filling_attribute_DevStudio():
         except Exception:
             msg[f'{today} - Файл omx: ошибка при добавлении Diag.{variable_mod}: {traceback.format_exc()}'] = 2   
             return msg
+    
     def rackstate_omx(self):
             msg = {}
             try:
@@ -3467,6 +3479,7 @@ class Filling_attribute_DevStudio():
             except Exception:
                 msg[f'{today} - Файл omx: ошибка при добавлении Diag.RackStates: {traceback.format_exc()}'] = 2   
                 return msg     
+    
     def colorscheme_di(self):
         link_path = f'{connect.path_to_devstudio}\\AttributesMapColorScheme.xml'
         dop_color = {"01":"1",
@@ -3518,6 +3531,7 @@ class Filling_attribute_DevStudio():
         except Exception:
             msg[f'{today} - Ошибка при добавлении значений в карту атрибутов AttributesMapColorScheme: {traceback.format_exc()}'] = 2
             return msg
+    
     def analogformat_map(self):
         link_path = f'{connect.path_to_devstudio}\\AttributesAnalogsFormats.xml'
         msg = {}
@@ -3552,6 +3566,7 @@ class Filling_attribute_DevStudio():
         except Exception:
             msg[f'{today} - Ошибка при добавлении значений в карту атрибутов AttributesAnalogsFormats: {traceback.format_exc()}'] = 2
             return msg
+    
     def egu_map(self):
         link_path = f'{connect.path_to_devstudio}\\AttributesMapEGU.xml'
         msg = {}
@@ -3577,6 +3592,7 @@ class Filling_attribute_DevStudio():
         except Exception:
             msg[f'{today} - Ошибка при добавлении значений в карту атрибутов AttributesMapEGU: {traceback.format_exc()}'] = 2
             return msg
+
 
 class Filling_CodeSys():     
     def __init__(self):

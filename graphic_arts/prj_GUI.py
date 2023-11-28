@@ -42,6 +42,8 @@ from map_address import GMPNAMap
 from map_address import PIMap
 from map_address import PZMap
 from map_address import RelaytedSystemMap
+from map_address_diag import DiagMap
+from map_address_diag import RackStateMap
 
 
 SIZE_WORK_BACK = (1200, 500)
@@ -902,16 +904,16 @@ class GenHMIandDev(QWidget):
                      self.checkbox_dev_pz: ['PZs', PZMap],
                      self.checkbox_dev_ktprp: ['KTPRPs', KTPRMap],
                      self.checkbox_dev_sss: ['SSs', RelaytedSystemMap],
-                     self.checkbox_dev_ais: ['Diag.AIs'],
-                     self.checkbox_dev_aos: ['Diag.AOs'],
-                     self.checkbox_dev_dis: ['Diag.DIs'],
-                     self.checkbox_dev_dos: ['Diag.DOs'],
-                     self.checkbox_dev_rss: ['Diag.RSs'],
-                    #  self.checkbox_dev_psus: ['Diag.PSUs'],
-                    #  self.checkbox_dev_cpus: ['Diag.CPUs'],
-                    #  self.checkbox_dev_mns: ['Diag.MNs'],
-                    #  self.checkbox_dev_cns: ['Diag.CNs'],
-                    #  self.checkbox_dev_rackstate: ['Diag.RackStates']
+                     self.checkbox_dev_ais: ['Diag.AIs', DiagMap],
+                     self.checkbox_dev_aos: ['Diag.AOs', DiagMap],
+                     self.checkbox_dev_dis: ['Diag.DIs', DiagMap],
+                     self.checkbox_dev_dos: ['Diag.DOs', DiagMap],
+                     self.checkbox_dev_rss: ['Diag.RSs', DiagMap],
+                     self.checkbox_dev_psus: ['Diag.PSUs', DiagMap],
+                     self.checkbox_dev_cpus: ['Diag.CPUs', DiagMap],
+                     self.checkbox_dev_mns: ['Diag.MNs', DiagMap],
+                     self.checkbox_dev_cns: ['Diag.CNs', DiagMap],
+                     self.checkbox_dev_rackstate: ['Diag.RackStates', RackStateMap]
                      }
         for param, value in list_help.items():
             if param.isChecked():
@@ -939,7 +941,10 @@ class GenHMIandDev(QWidget):
 
             root, tree = self.dop_function.xmlParser(path_file)
             self.dop_function.clear_omx(path_attr, text, root, fl_diag)
+
             tree.write(path_file, pretty_print=True)
+
+            self.logsTextEdit.logs_msg(f'''DevStudio. Object. {text}. Объекты очищены''', 3)
 
     def click_fill_map(self):
         '''Заполнение карты адресов DevStudio.'''
@@ -950,8 +955,14 @@ class GenHMIandDev(QWidget):
                 self.logsTextEdit.logs_msg('''Невозможно заполнить карту адресов DevStudio.
                                            Нет подключения к БД разработки''', 2)
                 return
-
-            obj.work_file(True) if param[0] in ('UPTSs', 'KTPRPs') else obj.work_file()
+            if 'Diag' in param[0]:
+                if 'RackStates' in param[0]:
+                    obj.work_file()
+                else:
+                    module = param[0].replace('Diag.', '')
+                    obj.work_file(module)
+            else:
+                obj.work_file(True) if param[0] in ('UPTSs', 'KTPRPs') else obj.work_file()
 
     def click_clear_map(self):
         '''Очистка карты адресов DevStudio.'''
@@ -964,6 +975,7 @@ class GenHMIandDev(QWidget):
 
             root, tree = self.dop_function.xmlParser(path_file)
             self.dop_function.clear_map(path_file, path_attr, root, tree)
+            self.logsTextEdit.logs_msg(f'''DevStudio. Map. {text}. Карта адресов очищена''', 3)
 
 
 class MainWindow(QMainWindow):

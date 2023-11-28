@@ -469,7 +469,7 @@ class UtsUptsMap(BaseMap):
         '''Выбор таблицы и подписей в зависимости от системы.'''
         self.model = UPTS if fl_upts else UTS
         self.prefix = self.variable[1] if fl_upts else self.variable[0]
-        self.sign = UPTSs if fl_upts else UTS
+        self.sign = 'UPTSs.' if fl_upts else 'UTSs.'
 
     def work_file(self, fl_upts: bool = False):
         '''Запись в файл.'''
@@ -519,7 +519,7 @@ class KTPRMap(BaseMap):
                                            {self.variable}''', 2)
                 return
 
-            count_group = math.ceil(self.gen_funct.count_row_orm(self.model) / 4)
+            count_group = math.ceil(self.request.count_row_orm(self.model) / 4)
             for group in range(1, count_group + 1):
                 name = f'Root{connect.prefix_system}.{KTPRs}Group_{group}.StateKTPRx'
 
@@ -607,7 +607,7 @@ class PIMap(BaseMap):
         try:
             root, tree, path = self.path_file(MODBUS, PIs)
 
-            data = self.gen_funct.select_orm(PI, None, PI.id)
+            data = self.request.select_orm(PI, None, PI.id)
             list_addrr = self._read_address_mb()
 
             if len(list_addrr) != len(self.variable):
@@ -639,7 +639,7 @@ class PZMap(BaseMap):
         try:
             root, tree, path = self.path_file(MODBUS, PZs)
 
-            data = self.gen_funct.select_orm(PZ, None, PZ.id)
+            data = self.request.select_orm(PZ, None, PZ.id)
             list_addrr = self._read_address_mb()
 
             if len(list_addrr) != len(self.variable):
@@ -655,6 +655,6 @@ class PZMap(BaseMap):
 
                     self.new_element(root, name, address)
             tree.write(path, pretty_print=True)
-            self.logsTextEdit.logs_msg(f'''DevStudio. Map. {PIs} Заполнено''', 1)
+            self.logsTextEdit.logs_msg(f'''DevStudio. Map. {PZs} Заполнено''', 1)
         except Exception:
-            self.logsTextEdit.logs_msg(f'''DevStudio. Map. {PIs} Ошибка {traceback.format_exc()}''', 2)
+            self.logsTextEdit.logs_msg(f'''DevStudio. Map. {PZs} Ошибка {traceback.format_exc()}''', 2)

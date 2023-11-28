@@ -14,7 +14,7 @@ class RequestSQL():
                                       table_name = '{table}'""")
         return self.cursor.fetchall()
 
-    def where_select(self,  table: str,
+    def where_select(self, table: str,
                      column: str, condit: int, order):
         '''Запрос на выборку данных с условием и сортировкой.'''
         self.cursor.execute(f"""SELECT {column}
