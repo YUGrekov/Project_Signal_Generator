@@ -44,6 +44,7 @@ from map_address import PZMap
 from map_address import RelaytedSystemMap
 from map_address_diag import DiagMap
 from map_address_diag import RackStateMap
+from omx_object import AnalogsOmx
 
 
 SIZE_WORK_BACK = (1200, 500)
@@ -889,7 +890,7 @@ class GenHMIandDev(QWidget):
 
     def check_devstudio_attr(self):
         list_param = []
-        list_help = {self.checkbox_dev_analogs: ['Analogs', AnalogsMap],
+        list_help = {self.checkbox_dev_analogs: ['Analogs', AnalogsMap, AnalogsOmx],
                      self.checkbox_dev_diskrets: ['Diskrets', DiskretsMap],
                      self.checkbox_dev_vs: ['AuxSystems', VSMap],
                      self.checkbox_dev_zd: ['Valves', ZDMap],
@@ -921,7 +922,15 @@ class GenHMIandDev(QWidget):
         return list_param
 
     def click_fill_omx(self):
-        pass
+        for param in self.check_devstudio_attr():
+            try:
+                obj = param[2](self.logsTextEdit)
+            except Exception:
+                self.logsTextEdit.logs_msg('''Невозможно заполнить карту адресов DevStudio.
+                                           Нет подключения к БД разработки''', 2)
+                return
+
+            obj.write_in_omx()
 
     def click_clear_omx(self):
         '''Очистка объектов DevStudio.'''

@@ -101,3 +101,7 @@ class General_functions():
                         object = etree.Element("{automation.control}object")
                         object.attrib['name'] = directory
                         item.append(object)
+
+                        for el1 in item.iter('{automation.control}object'):
+                            if el1.attrib['name'] == directory:
+                                return el1
