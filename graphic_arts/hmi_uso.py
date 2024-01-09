@@ -615,7 +615,7 @@ class Line(BaseFunction, BaseUSO):
     def in_out_name(self):
         '''Корректировка названий на входе и выходе корзин'''
         def sign_path(uso: str):
-            if uso.find('KC_A1') > -1 or uso.find('KC_A2') > -1:
+            if 'KC' in uso:
                 return f'Diag.MNs.{uso}_01'
             else:
                 return f'Diag.CNs.{uso}_01'

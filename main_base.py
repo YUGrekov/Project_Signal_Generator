@@ -713,7 +713,7 @@ class Generate_database_SQL():
             connect = psycopg2.connect(f"dbname={dbname} user={user} host={host} password={password} port={port} connect_timeout=1 ")
             connect.close()
             return True
-        except:
+        except Exception:
             return False
     def define_number_msg(self, cursor, tag):
         kod_msg     = 0
@@ -876,6 +876,9 @@ class Generate_database_SQL():
                 if tabl == 'AI_tabl': 
                     msg.update(self.gen_table_AI(flag_write_db))
                     continue
+                if tabl == 'AIGRP_tabl': 
+                    msg.update(self.gen_table_AIGRP(flag_write_db))
+                    continue
                 if tabl == 'ZD_tabl': 
                     msg.update(self.gen_table_general(flag_write_db, 'zd_tm', 'TblValveTimeSetpoints'))
                     continue
@@ -997,13 +1000,14 @@ class Generate_database_SQL():
             if not flag_write_db:
                 msg.update(self.write_file(gen_list, 'AI', 'PostgreSQL_Messages-AI'))
                 msg[f'{today} - Сообщения ai: файл скрипта создан'] = 1
-                return(msg)
+                return msg
             
         except Exception:
             msg[f'{today} - Сообщения ai: ошибка генерации: {traceback.format_exc()}'] = 2
 
         msg[f'{today} - Сообщения ai: генерация завершена'] = 1
-        return(msg) 
+        return msg
+
     def gen_msg_di(self, flag_write_db, tabl, sign, script_file):
         msg = {}
         gen_list = []
@@ -1553,8 +1557,18 @@ class Generate_database_SQL():
             msg[f'{today} - Сообщения {tabl}: ошибка генерации: {traceback.format_exc()}'] = 2
         msg[f'{today} - Сообщения {tabl}: генерация завершена!'] = 1
         return(msg)
+
     # tabl
+
     def gen_table_AI(self, flag_write_db):
+        def select_ust(num_ust, num, ctrl_list):
+            if num_ust is None:
+                num_ust = 'NULL'
+            else:
+                num_ust = num_ust
+                ctrl_list[num] = '1'
+            return num_ust, ctrl_list
+
         cursor = db.cursor()
         cursor_prj = db_prj.cursor()
     
@@ -1565,8 +1579,8 @@ class Generate_database_SQL():
                         '\t\tSystemIndex INT NOT NULL,\n'
                         '\t\tTag VARCHAR(1024),\n'
                         '\t\tName VARCHAR(1024),\n'
-                       '\t\tAnalogGroupId INT,\n'
-                       '\t\tSetpointGroupId INT,\n'
+                        '\t\tAnalogGroupId INT,\n'
+                        '\t\tSetpointGroupId INT,\n'
                         '\t\tEgu VARCHAR(1024),\n'
                         '\t\tPhysicEgu VARCHAR(1024),\n'
                         '\t\tIsOilPressure BOOLEAN NOT NULL,\n'
@@ -1607,6 +1621,7 @@ class Generate_database_SQL():
                         '\t\tTimeFilter DOUBLE PRECISION,\n'
                         '\t\tIsBackup BOOLEAN NOT NULL,\n'
                         '\t\tRuleName VARCHAR(1024),\n'
+                        '\t\tTrendingCollector VARCHAR(1024),\n'
                         '\t\tCONSTRAINT TblAnalogs_pkey PRIMARY KEY (Id,SystemIndex)\n'
                     '\t);\n'
                     '\tDELETE FROM objects.TblAnalogs  WHERE SystemIndex = 0;\n')
@@ -1644,17 +1659,22 @@ class Generate_database_SQL():
                 SystemIndex = 0
                 # AnalogGroupId
                 cursor.execute(f"""SELECT id FROM "ai_grp" WHERE name='{AnalogGroupId}'""")
-                try   : AnalogGroupId = cursor.fetchall()[0][0]
-                except: AnalogGroupId = 'NULL'
+                try:
+                    AnalogGroupId = cursor.fetchall()[0][0]
+                except Exception:
+                    AnalogGroupId = 'NULL'
                 # SetpointGroupId
                 cursor.execute(f"""SELECT id FROM "sp_grp" WHERE name_group='{SetpointGroupId}'""")
-                try   : SetpointGroupId = cursor.fetchall()[0][0]
-                except: SetpointGroupId = 'NULL'
+                try:
+                    SetpointGroupId = cursor.fetchall()[0][0]
+                except Exception:
+                    SetpointGroupId = 'NULL'
                 # IsOilPressure
                 IsOilPressure = False if IsOilPressure is None else IsOilPressure
                 # IsPumpVibration
                 IsPumpVibration = False if IsPumpVibration is None else IsPumpVibration
-                if IsPumpVibration == 1: IsPumpVibration = True
+                if IsPumpVibration == 1:
+                    IsPumpVibration = True
                 # IsInterface
                 IsInterface = False
                 # IsBackup
@@ -1665,60 +1685,26 @@ class Generate_database_SQL():
                 IsTrending = True if IsBackup is False else False
 
                 TrendingGroup = 'NULL' if TrendingGroup is None else TrendingGroup
-                LoLimEng = 'NULL' if HiLimEng is None else HiLimEng
-                LoLim   = 'NULL' if LoLim is None else LoLim
+                LoLimEng = 'NULL' if LoLimEng is None else LoLimEng
+                HiLimEng = 'NULL' if HiLimEng is None else HiLimEng
+                LoLim = 'NULL' if LoLim is None else LoLim
                 HiLim = 'NULL' if HiLim is None else HiLim
 
                 # Ctrl
-                Ctrl_list = ['0000', '0', '0','0','0','0','0','0','0','0','0','0','0']
-                if Min6 is None: Min6 = 'NULL'
-                else: 
-                    Min6 = Min6
-                    Ctrl_list[12] = '1'
-                if Min5 is None: Min5 = 'NULL'
-                else: 
-                    Min5 = Min5
-                    Ctrl_list[11] = '1'
-                if Min4 is None: Min4 = 'NULL'
-                else: 
-                    Min4 = Min4
-                    Ctrl_list[10] = '1'
-                if Min3 is None: Min3 = 'NULL'
-                else: 
-                    Min3 = Min3
-                    Ctrl_list[9] = '1'
-                if Min2 is None: Min2 = 'NULL'
-                else: 
-                    Min2 = Min2
-                    Ctrl_list[8] = '1'
-                if Min1 is None: Min1 = 'NULL'
-                else: 
-                    Min1 = Min1
-                    Ctrl_list[7] = '1'            
-                if Max1 is None: Max1 = 'NULL'
-                else: 
-                    Max1 = Max1
-                    Ctrl_list[6] = '1'
-                if Max2 is None: Max2 = 'NULL'
-                else: 
-                    Max2 = Max2
-                    Ctrl_list[5] = '1'
-                if Max3 is None: Max3 = 'NULL'
-                else: 
-                    Max3 = Max3
-                    Ctrl_list[4] = '1'
-                if Max4 is None: Max4 = 'NULL'
-                else: 
-                    Max4 = Max4
-                    Ctrl_list[3] = '1'
-                if Max5 is None: Max5 = 'NULL'
-                else: 
-                    Max5 = Max5
-                    Ctrl_list[2] = '1'
-                if Max6 is None: Max6 = 'NULL'
-                else: 
-                    Max6 = Max6
-                    Ctrl_list[1] = '1'
+                Ctrl_list = ['0000', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
+                Min6, Ctrl_list = select_ust(Min6, 12, Ctrl_list)
+                Min5, Ctrl_list = select_ust(Min5, 11, Ctrl_list)
+                Min4, Ctrl_list = select_ust(Min4, 10, Ctrl_list)
+                Min3, Ctrl_list = select_ust(Min3, 9, Ctrl_list)
+                Min2, Ctrl_list = select_ust(Min2, 8, Ctrl_list)
+                Min1, Ctrl_list = select_ust(Min1, 7, Ctrl_list)
+                Max1, Ctrl_list = select_ust(Max1, 6, Ctrl_list)
+                Max2, Ctrl_list = select_ust(Max2, 5, Ctrl_list)
+                Max3, Ctrl_list = select_ust(Max3, 4, Ctrl_list)
+                Max4, Ctrl_list = select_ust(Max4, 3, Ctrl_list)
+                Max5, Ctrl_list = select_ust(Max5, 2, Ctrl_list)
+                Max6, Ctrl_list = select_ust(Max6, 1, Ctrl_list)
+
                 Ctrl = int(''.join(Ctrl_list), 2)
                 # LoLimField
                 LoLimField = 'NULL' if LoLimField is None else LoLimField
@@ -1746,17 +1732,20 @@ class Generate_database_SQL():
                 CtrlMask = int(str(CtrlMask).replace('_', ''), 2)
                 # RuleName
                 cursor.execute(f"""SELECT rule_name FROM "sp_rules" WHERE name_rules='{RuleName}'""")
-                try   : RuleName = cursor.fetchall()[0][0]
-                except: RuleName = 'NULL'
+                try:
+                    RuleName = cursor.fetchall()[0][0]
+                except Exception:
+                    RuleName = 'NULL'
+
             except Exception:
                 msg[f'{today} - TblAnalogs: ошибка добавления строки, пропускается: {traceback.format_exc()}'] = 2
                 continue
             
-            ins_row_tabl = f"INSERT INTO objects.TblAnalogs (Id, Prefix, SystemIndex, Tag, Name, AnalogGroupId, SetpointGroupId, Egu, PhysicEgu, IsOilPressure, IsInterface, IsPhysic, IsPumpVibration, Precision, IsTrending, TrendingSettings, TrendingGroup, LoLimField, HiLimField, LoLimEng, HiLimEng, LoLim, HiLim, Min6, Min5, Min4, Min3, Min2, Min1, Max1, Max2, Max3, Max4, Max5, Max6, Histeresis, DeltaHi, DeltaLo, DeltaT, SmoothFactor, Ctrl, MsgMask, SigMask, CtrlMask, TimeFilter, IsBackup, RuleName) VALUES({Id}, {Prefix}, {SystemIndex}, '{Tag}','{Name}', {AnalogGroupId}, {SetpointGroupId}, '{Egu}', '{PhysicEgu}', {IsOilPressure}, {IsInterface}, {IsPhysic}, {IsPumpVibration}, {Precision}, {IsTrending}, 'Historian(Collector = NA_ModbusServer, sourceaddress = %MF{999 + 2 * Id}, InputScaling = 0)', {TrendingGroup}, {LoLimField}, {HiLimField}, {LoLimEng}, {HiLimEng}, {LoLim}, {HiLim}, {Min6}, {Min5}, {Min4}, {Min3}, {Min2}, {Min1}, {Max1}, {Max2}, {Max3}, {Max4}, {Max5}, {Max6}, {Histeresis}, {DeltaHi}, {DeltaLo}, {DeltaT}, {SmoothFactor}, {Ctrl}, {MsgMask}, {SigMask}, {CtrlMask}, {TimeFilter}, {IsBackup}, {RuleName});\n"
+            ins_row_tabl = f"INSERT INTO objects.TblAnalogs (Id, Prefix, SystemIndex, Tag, Name, AnalogGroupId, SetpointGroupId, Egu, PhysicEgu, IsOilPressure, IsInterface, IsPhysic, IsPumpVibration, Precision, IsTrending, TrendingSettings, TrendingGroup, LoLimField, HiLimField, LoLimEng, HiLimEng, LoLim, HiLim, Min6, Min5, Min4, Min3, Min2, Min1, Max1, Max2, Max3, Max4, Max5, Max6, Histeresis, DeltaHi, DeltaLo, DeltaT, SmoothFactor, Ctrl, MsgMask, SigMask, CtrlMask, TimeFilter, IsBackup, RuleName, TrendingCollector) VALUES({Id}, {Prefix}, {SystemIndex}, '{Tag}','{Name}', {AnalogGroupId}, {SetpointGroupId}, '{Egu}', '{PhysicEgu}', {IsOilPressure}, {IsInterface}, {IsPhysic}, {IsPumpVibration}, {Precision}, {IsTrending}, 'address = {48999 + 2 * Id}, addresstype=4x, datatype=float', {TrendingGroup}, {LoLimField}, {HiLimField}, {LoLimEng}, {HiLimEng}, {LoLim}, {HiLim}, {Min6}, {Min5}, {Min4}, {Min3}, {Min2}, {Min1}, {Max1}, {Max2}, {Max3}, {Max4}, {Max5}, {Max6}, {Histeresis}, {DeltaHi}, {DeltaLo}, {DeltaT}, {SmoothFactor}, {Ctrl}, {MsgMask}, {SigMask}, {CtrlMask}, {TimeFilter}, {IsBackup}, {RuleName}, 'MBTCP');\n"
             
             if flag_write_db:
                 try:
-                    if flag_del_tabl is False :
+                    if flag_del_tabl is False:
                         cursor_prj.execute(text_start)
                         flag_del_tabl = True
                     cursor_prj.execute(ins_row_tabl)
@@ -1775,21 +1764,141 @@ class Generate_database_SQL():
                 else:
                     os.remove(path_request)
                     file = codecs.open(path_request, 'w', 'utf-8')
+
                 if connect.path_location_file == '' or connect.path_location_file is None or len(connect.path_location_file) == 0:
                     msg[f'{today} - TblAnalogs: не указана конечная папка'] = 2
                     return msg
                 file.write(text_start)
                 for insert in gen_list:
                     file.write(insert)
-                file.write(f'COMMIT;')
+                file.write('COMMIT;')
                 file.close()
                 msg[f'{today} - TblAnalogs: файл скрипта создан'] = 1
-                return(msg)
+                return msg
             except Exception:
                 msg[f'{today} - TblAnalogs: ошибка записи в файл: {traceback.format_exc()}'] = 2
 
         msg[f'{today} - TblAnalogs: генерация завершена!'] = 1
-        return(msg)
+        return msg
+
+    def gen_table_AIGRP(self, flag_write_db):
+        def choise_ust(ust):
+            if ust is None:
+                ust = ''
+            return ust
+
+        cursor = db.cursor()
+        cursor_prj = db_prj.cursor()
+    
+        text_start = ('\tCREATE SCHEMA IF NOT EXISTS objects;\n'
+                      '\tCREATE TABLE IF NOT EXISTS objects.TblAnalogGroups(\n'
+                      '\t\tId INT NOT NULL,\n'
+                      '\t\tName VARCHAR(1024),\n'
+                      '\t\tMin6Name VARCHAR(1024),\n'
+                      '\t\tMin5Name VARCHAR(1024),\n'
+                      '\t\tMin4Name VARCHAR(1024),\n'
+                      '\t\tMin3Name VARCHAR(1024),\n'
+                      '\t\tMin2Name VARCHAR(1024),\n'
+                      '\t\tMin1Name VARCHAR(1024),\n'
+                      '\t\tMax1Name VARCHAR(1024),\n'
+                      '\t\tMax2Name VARCHAR(1024),\n'
+                      '\t\tMax3Name VARCHAR(1024),\n'
+                      '\t\tMax4Name VARCHAR(1024),\n'
+                      '\t\tMax5Name VARCHAR(1024),\n'
+                      '\t\tMax6Name VARCHAR(1024),\n'
+                      '\t\tMessageTable VARCHAR(1024),\n'
+                      '\t\tCONSTRAINT TblAnalogGroups_pkey PRIMARY KEY (Id)\n'
+                      '\t);\n'
+                      '\tDELETE FROM objects.TblAnalogGroups;\n')
+        
+        msg = {}
+        gen_list = []
+        flag_del_tabl = False
+        try:
+            cursor.execute(f"""SELECT "id", "name", "tabl_msg",
+                                      "min6", "min5", "min4", "min3", "min2", "min1", 
+                                      "max1", "max2", "max3", "max4", "max5", "max6"
+                                FROM "ai_grp" ORDER BY Id""")
+            list_signal = cursor.fetchall()
+        except Exception:
+            msg[f'{today} - TblAnalogGroups: ошибка генерации: {traceback.format_exc()}'] = 2
+            return msg
+
+        for signal in list_signal:
+            try:
+                id_ = signal[0]
+                name = signal[1]
+                tabl_msg = signal[2]
+                ust_min6 = signal[3]
+                ust_min5 = signal[4]
+                ust_min4 = signal[5]
+                ust_min3 = signal[6]
+                ust_min2 = signal[7]
+                ust_min1 = signal[8]
+                ust_max1 = signal[9]
+                ust_max2 = signal[10]
+                ust_max3 = signal[11]
+                ust_max4 = signal[12]
+                ust_max5 = signal[13]
+                ust_max6 = signal[14]
+
+                # Выбор уставок
+                ust_min6 = choise_ust(ust_min6)
+                ust_min5 = choise_ust(ust_min5)
+                ust_min4 = choise_ust(ust_min4)
+                ust_min3 = choise_ust(ust_min3)
+                ust_min2 = choise_ust(ust_min2)
+                ust_min1 = choise_ust(ust_min1)
+                ust_max1 = choise_ust(ust_max1)
+                ust_max2 = choise_ust(ust_max2)
+                ust_max3 = choise_ust(ust_max3)
+                ust_max4 = choise_ust(ust_max4)
+                ust_max5 = choise_ust(ust_max5)
+                ust_max6 = choise_ust(ust_max6)
+            except Exception:
+                msg[f'{today} - TblAnalogGroups: ошибка добавления строки, пропускается: {traceback.format_exc()}'] = 2
+                continue
+            
+            ins_row_tabl = f"INSERT INTO objects.TblAnalogGroups (Id, Name, Min6Name, Min5Name, Min4Name, Min3Name, Min2Name, Min1Name, Max1Name, Max2Name, Max3Name, Max4Name, Max5Name, Max6Name, MessageTable) VALUES({id_}, '{name}', '{ust_min6}', '{ust_min5}', '{ust_min4}', '{ust_min3}', '{ust_min2}', '{ust_min1}', '{ust_max1}', '{ust_max2}', '{ust_max3}', '{ust_max4}', '{ust_max5}', '{ust_max6}', '{tabl_msg}');\n"
+            
+            if flag_write_db:
+                try:
+                    if flag_del_tabl is False:
+                        cursor_prj.execute(text_start)
+                        flag_del_tabl = True
+                    cursor_prj.execute(ins_row_tabl)
+                except Exception:
+                    msg[f'{today} - TblAnalogGroups: ошибка добавления строки, пропускается: {traceback.format_exc()}'] = 2
+                    continue
+            else:
+                gen_list.append(ins_row_tabl)
+    
+        if not flag_write_db:
+            try:
+                # Создаём файл запроса
+                path_request = f'{connect.path_location_file}\\PostgreSQL-TblAnalogsGroup.sql'
+                if not os.path.exists(path_request):
+                    file = codecs.open(path_request, 'w', 'utf-8')
+                else:
+                    os.remove(path_request)
+                    file = codecs.open(path_request, 'w', 'utf-8')
+
+                if connect.path_location_file == '' or connect.path_location_file is None or len(connect.path_location_file) == 0:
+                    msg[f'{today} - TblAnalogGroups: не указана конечная папка'] = 2
+                    return msg
+                file.write(text_start)
+                for insert in gen_list:
+                    file.write(insert)
+                file.write('COMMIT;')
+                file.close()
+                msg[f'{today} - TblAnalogGroups: файл скрипта создан'] = 1
+                return msg
+            except Exception:
+                msg[f'{today} - TblAnalogGroups: ошибка записи в файл: {traceback.format_exc()}'] = 2
+
+        msg[f'{today} - TblAnalogGroups: генерация завершена!'] = 1
+        return msg
+
     def gen_table_general(self, flag_write_db, tabl_sql, sign):
         cursor = db.cursor()
         cursor_prj = db_prj.cursor()
@@ -2011,7 +2120,8 @@ class Generate_database_SQL():
         gen_list = []
         flag_del_tabl = False
         try:
-            cursor.execute(f"""SELECT id, variable, tag, name, "NA", "value_ust", "group_ust", "rule_map_ust", "number_pump_VU"
+            cursor.execute(f"""SELECT id, variable, tag, name, "NA", "value_ust",
+                                     "group_ust", "rule_map_ust", "number_pump_VU", "id_num"
                                FROM "{tabl_sql}" ORDER BY Id, "NA" """)
             list_signal = cursor.fetchall()
         except Exception:
@@ -2022,8 +2132,7 @@ class Generate_database_SQL():
             try:
                 Id, variable, tag, name, PumpName = signal[0], signal[1], signal[2], signal[3], signal[4]
                 time_ust, group_ust, rule_map_ust = signal[5], signal[6], signal[7]
-
-                if time_ust == '' or time_ust is None: continue
+                number_pump_VU, id_num = signal[8], signal[9]
 
                 # Prefix
                 Prefix = 'NULL' if connect.prefix_system == '' or connect.prefix_system is None else str(connect.prefix_system)
@@ -2033,24 +2142,35 @@ class Generate_database_SQL():
                 PumpName = '' if PumpName == '' or PumpName is None else str(PumpName)
                 # tag
                 tag = '' if tag == '' or tag is None else str(tag)
+                # time_ust
+                time_ust = 'NULL' if time_ust is None else str(time_ust)
                 # SetpointGroupId
                 cursor.execute(f"""SELECT id FROM "sp_grp" WHERE name_group='{group_ust}'""")
-                try   : SetpointGroupId = cursor.fetchall()[0][0]
-                except: SetpointGroupId = 'NULL'
+                try:
+                    SetpointGroupId = cursor.fetchall()[0][0]
+                except Exception:
+                    SetpointGroupId = 'NULL'
                 # RuleName
                 cursor.execute(f"""SELECT rule_name FROM "sp_rules" WHERE name_rules='{rule_map_ust}'""")
-                try   : RuleName = cursor.fetchall()[0][0]
-                except: RuleName = 'NULL'
+                try:
+                    RuleName = cursor.fetchall()[0][0]
+                except Exception:
+                    RuleName = 'NULL'
+
+                if sign == 'TblPumpDefencesSetpoints':
+                    source = 5031 + (192 * (number_pump_VU - 1)) + id_num
+                else:
+                    source = 8103 + (64 * (number_pump_VU - 1)) + id_num
 
             except Exception:
                 msg[f'{today} - {sign}: ошибка добавления строки, пропускается: {traceback.format_exc()}'] = 2
                 continue
             
-            ins_row_tabl = f"INSERT INTO objects.{sign} (Id, Prefix, Tag, Name, Source, Value, Egu, SetpointGroupId, RuleName) VALUES({Id}, {Prefix}, '{tag}', '{name}', 'tm{variable}', {time_ust}, 'c', {SetpointGroupId}, '{RuleName}');\n"
+            ins_row_tabl = f"INSERT INTO objects.{sign} (Id, Prefix, Tag, Name, Source, Value, Egu, SetpointGroupId, RuleName) VALUES({Id}, {Prefix}, '{tag}', '{name}', {source}, {time_ust}, 'c', {SetpointGroupId}, '{RuleName}');\n"
 
             if flag_write_db:
                 try:
-                    if flag_del_tabl is False :
+                    if flag_del_tabl is False:
                         cursor_prj.execute(text_start)
                         flag_del_tabl = True
                     cursor_prj.execute(ins_row_tabl)
@@ -2664,7 +2784,7 @@ class Filling_attribute_DevStudio():
                 if tag_di  == '' or tag_di is None: continue
 
                 tag_ai     = ' '
-                tag_ai_eng = ' '
+                tag_ai_ref = ' '
                 try:
                     if pNC_AI is not None: 
                         isdigit = re.findall('\d+', str(pNC_AI))
@@ -2677,10 +2797,9 @@ class Filling_attribute_DevStudio():
                                 if tag_ai == '' or tag_ai is None:
                                     msg[f'{today} - Файл omx: Diskrets. Тэг AI сигнала {number_ai} пуст. Поля AI_Ref_KZFKP и AI_Ref не заполнены'] = 3
                                     break
-                                # else: 
-                                #     tag_ai_ref = tag_ai
-                                #     tag_ai     = self.dop_function.translate(tag_ai)
-                                #     break
+                                else: 
+                                    tag_ai_ref = tag_ai_eng
+                                    break
                 except Exception:
                     msg[f'{today} - Файл omx: Diskrets, ошибка пропускается: {traceback.format_exc()}'] = 2
                     continue
@@ -2700,7 +2819,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.Library.Attributes.Index", number_di)
                 self.dop_function.new_attr(object, "unit.Library.Attributes.Sign", sign)
                 self.dop_function.new_attr(object, "unit.System.Attributes.Description", name)
-                self.dop_function.new_attr(object, "unit.Library.Attributes.AI_Ref", str(tag_ai_eng))
+                self.dop_function.new_attr(object, "unit.Library.Attributes.AI_Ref", str(tag_ai_ref))
                 self.dop_function.new_attr(object, "unit.Library.Attributes.AI_Ref_KZFKP", tag_ai)
 
                 el1.append(object)

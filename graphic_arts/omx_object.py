@@ -41,8 +41,8 @@ PZs = 'PZs'
 
 class BaseMethod():
     '''Базовые методы заполнения.'''
-    def __init__(self) -> None:
-        # self.logsTextEdit = logtext
+    def __init__(self, logtext) -> None:
+        self.logsTextEdit = logtext
         self.request = RequestSQL()
         self.dop_function = General_functions()
 
@@ -141,7 +141,7 @@ class AnalogsOmx(BaseMethod):
 
 class DiskretsOmx(BaseMethod):
     '''Заполнение объектов файла omx DevStudio.'''
-    t_di = '"unit.Library.PLC_Types.Diskret_PLC"'
+    t_di = 'unit.Library.PLC_Types.Diskret_PLC'
 
     sign_vu = {'давлен': 'P',
                'напряж': 'U',
@@ -158,10 +158,12 @@ class DiskretsOmx(BaseMethod):
         ai_id = re.findall('\d+', str(pNC_AI))
         if len(ai_id):
             data_ai = self.request.select_orm(AI, (AI.id == int(ai_id[0])), AI.id)
-            
-        for row in data_ai:
-            ai_tag = row.tag
-            ai_tag_eng = row.tag_eng
+            for row in data_ai:
+                ai_tag = row.tag
+                ai_tag_eng = row.tag_eng
+        else:
+            ai_tag = ' '
+            ai_tag_eng = ' '
 
         return sign, ai_tag, ai_tag_eng
 
@@ -174,7 +176,7 @@ class DiskretsOmx(BaseMethod):
             for row in data:
                 sign, ai_tag, ai_tag_eng = self.choice_param(row.name, row.pNC_AI)
 
-                if row.tag_eng is None or row.tag_eng == ' ':
+                if row.tag_eng is None or row.tag_eng == '':
                     continue
 
                 object = self.create_object(row.tag_eng, self.t_di)
@@ -187,11 +189,56 @@ class DiskretsOmx(BaseMethod):
                 el1.append(object)
 
             tree.write(tx.path_to_devstudio_omx, pretty_print=True)
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Object. {DISCRETs}. Заполнено''', 1)
+            self.logsTextEdit.logs_msg(f'''DevStudio. Object. {DISCRETs}. Заполнено''', 1)
         except Exception:
-            print(traceback.format_exc())
-            # self.logsTextEdit.logs_msg(f'''DevStudio. Object. {DISCRETs}. Ошибка {traceback.format_exc()}''', 2)
+            self.logsTextEdit.logs_msg(f'''DevStudio. Object. {DISCRETs}. Ошибка {traceback.format_exc()}''', 2)
 
 
-a = DiskretsOmx()
-a.write_in_omx()
+class VSOmx(BaseMethod):
+    '''Заполнение объектов файла omx DevStudio.'''
+    t_vs = 'unit.Library.PLC_Types.AuxSystem_PLC'
+
+    def choice_param(self, name, pNC_AI):
+        '''Выбор параметров для заполнения.'''
+        number = re.findall('\d+', str(pNC_AI))
+        if len(number):
+            data_ai = self.request.select_orm(AI, (AI.id == int(number[0])), AI.id)
+            for row in data_ai:
+                ai_tag = row.tag
+                ai_tag_eng = row.tag_eng
+        else:
+            ai_tag = ' '
+            ai_tag_eng = ' '
+
+        return sign, ai_tag, ai_tag_eng
+
+    def write_in_omx(self):
+        '''Заполнение объектами.'''
+        try:
+            el1, tree = self.path_file(VSs)
+            data = self.request.select_orm(VS, None, VS.id)
+
+            for row in data:
+                sensor = self.choice_param(row.name, row.Pressure_is_True)
+                voltage = self.choice_param(row.name, row.Voltage)
+                close = self.choice_param(row.name, row.OTKL)
+
+                object = self.create_object(f'VS_{row.id}', self.t_vs)
+                self.new_attribute(object, "unit.Library.Attributes.Index", row.id)
+                self.new_attribute(object, "unit.Library.Attributes.Sign", row.short_name)
+                self.new_attribute(object, "unit.System.Attributes.Description", row.name)
+                self.new_attribute(object, "unit.Library.Attributes.PC_Use", pc_use)
+                self.new_attribute(object, "unit.Library.Attributes.PC_Ref", sensor)
+                self.new_attribute(object, "unit.Library.Attributes.DI_ref", voltage)
+                self.new_attribute(object, "unit.Library.Attributes.DO_ref", close)
+
+                el1.append(object)
+
+            tree.write(tx.path_to_devstudio_omx, pretty_print=True)
+            self.logsTextEdit.logs_msg(f'''DevStudio. Object. {VSs}. Заполнено''', 1)
+        except Exception:
+            self.logsTextEdit.logs_msg(f'''DevStudio. Object. {VSs}. Ошибка {traceback.format_exc()}''', 2)
+
+
+# a = VSOmx()
+# a.write_in_omx()

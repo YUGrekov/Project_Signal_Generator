@@ -45,6 +45,7 @@ from map_address import RelaytedSystemMap
 from map_address_diag import DiagMap
 from map_address_diag import RackStateMap
 from omx_object import AnalogsOmx
+from omx_object import DiskretsOmx
 
 
 SIZE_WORK_BACK = (1200, 500)
@@ -891,7 +892,7 @@ class GenHMIandDev(QWidget):
     def check_devstudio_attr(self):
         list_param = []
         list_help = {self.checkbox_dev_analogs: ['Analogs', AnalogsMap, AnalogsOmx],
-                     self.checkbox_dev_diskrets: ['Diskrets', DiskretsMap],
+                     self.checkbox_dev_diskrets: ['Diskrets', DiskretsMap, DiskretsOmx],
                      self.checkbox_dev_vs: ['AuxSystems', VSMap],
                      self.checkbox_dev_zd: ['Valves', ZDMap],
                      self.checkbox_dev_na: ['NAs', PumpsMap],

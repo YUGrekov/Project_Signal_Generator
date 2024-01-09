@@ -401,8 +401,8 @@ class ParserFile(BaseUSO):
 
     def in_out_name(self, root, data_value: dict, fl_not_link: bool):
         '''Корректировка названий на входе и выходе корзин'''
-        def sign_path(fl_CPU: bool, uso: str):
-            if fl_CPU:
+        def sign_path(uso: str):
+            if 'KC' in uso:
                 return f'Diag.MNs.{uso}_01'
             else:
                 return f'Diag.CNs.{uso}_01'
@@ -424,8 +424,7 @@ class ParserFile(BaseUSO):
 
                     for lvl_2 in lvl_1.iter(NumName.INIT.value):
                         self.update_string(lvl_2.attrib, NumName.VALUE_ATR.value, NumName.IN_PATH.value,
-                                           sign_path(data_value[0]['net'][0][2],
-                                                     data_value[0]['net'][0][5].split(';')[0]))
+                                           sign_path(data_value[0]['net'][0][5].split(';')[0]))
 
                 if self.search_string(lvl_1.attrib, NumName.NAME_ATR.value, 't_output_link'):
 
@@ -442,8 +441,7 @@ class ParserFile(BaseUSO):
                         self.update_string(lvl_2.attrib,
                                            NumName.VALUE_ATR.value,
                                            NumName.OUT_PATH.value,
-                                           sign_path(data_value[len_data - 1]['net'][len_data - 1][2],
-                                                     data_value[len_data - 1]['net'][len_data - 1][6].split(';')[0]))
+                                           sign_path(data_value[len_data - 1]['net'][len_data - 1][6].split(';')[0]))
 
     def service_signals(self, root, signals):
         '''Добавляем служебные сигналы.'''
