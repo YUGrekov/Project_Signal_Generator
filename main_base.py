@@ -2120,7 +2120,7 @@ class Generate_database_SQL():
         gen_list = []
         flag_del_tabl = False
         try:
-            cursor.execute(f"""SELECT id, variable, tag, name, "NA", "value_ust",
+            cursor.execute(f"""SELECT id, tag, name, "NA", "value_ust",
                                      "group_ust", "rule_map_ust", "number_pump_VU", "id_num"
                                FROM "{tabl_sql}" ORDER BY Id, "NA" """)
             list_signal = cursor.fetchall()
@@ -2130,9 +2130,9 @@ class Generate_database_SQL():
 
         for signal in list_signal:
             try:
-                Id, variable, tag, name, PumpName = signal[0], signal[1], signal[2], signal[3], signal[4]
-                time_ust, group_ust, rule_map_ust = signal[5], signal[6], signal[7]
-                number_pump_VU, id_num = signal[8], signal[9]
+                Id, tag, name, PumpName = signal[0], signal[1], signal[2], signal[3]
+                time_ust, group_ust, rule_map_ust = signal[4], signal[5], signal[6]
+                number_pump_VU, id_num = signal[7], signal[8]
 
                 # Prefix
                 Prefix = 'NULL' if connect.prefix_system == '' or connect.prefix_system is None else str(connect.prefix_system)
@@ -2601,7 +2601,7 @@ class Filling_attribute_DevStudio():
                 msg[f'{today} - Карта адресов: адреса PIs очищены'] = 1
                 continue
             if tabl == 'PZ': 
-                self.dop_function.parser_map('PZs.', 'Modbus')
+                self.dop_function.parser_map('.PZs.', 'Modbus')
                 msg[f'{today} - Карта адресов: адреса PZs очищены'] = 1
                 continue
             if tabl == 'AI_diag': 
@@ -3162,6 +3162,9 @@ class Filling_attribute_DevStudio():
                 if tag == '' or tag is None: continue
                 if description == '' or description is None: continue
 
+                if shortdesc == '' or shortdesc is None: shortdesc = ' '
+                if place == '' or place is None: place = ' '
+
                 tag = self.dop_function.translate(str(tag))
 
                 object = etree.Element("{automation.control}object")
@@ -3349,7 +3352,7 @@ class Filling_attribute_DevStudio():
                 if tag == '' or tag is None: continue
                 if shortdesc == '' or shortdesc is None: continue
                 if description == '' or description is None: continue
-                if place == '' or place is None: place = ''
+                if place == '' or place is None: place = ' '
 
                 tag = self.dop_function.translate(str(tag))
 
