@@ -3458,7 +3458,7 @@ class Filling_attribute_DevStudio():
                         if path == f'{connect.path_to_devstudio}\\AttributesMapSignalName.xml': 
                             if not name is None or name == '': object.attrib['value'] = str(name)
                         if path == f'{connect.path_to_devstudio}\\AttributesMapTagName.xml': 
-                            if not tag is None or tag == '': object.attrib['value'] = str(tag)
+                            if not tag is None or tag == '': object.attrib['value'] = str(str_tag)
 
                         msg[f'{today} - Значения атрибутов Diag.{variable_mod} файл заполнен: {path}'] = 1
                         root.append(object)
@@ -3548,7 +3548,10 @@ class Filling_attribute_DevStudio():
                 object.attrib['base-type'] = f"unit.Library.PLC_Types.modules.{base_type}"
                 object.attrib['aspect'] = "unit.Library.PLC_Types.PLC"
 
-                self.dop_function.new_attr(object, "unit.Library.Attributes.ModNumber", number_modul)
+                # Модуль PSU занимает 2 слота корзины, остальные смещаются +1
+                mod_num = int(number_modul) if variable_mod == 'PSUs' else int(number_modul) + 1
+
+                self.dop_function.new_attr(object, "unit.Library.Attributes.ModNumber", mod_num)
                 self.dop_function.new_attr(object, "unit.Library.Attributes.RackNumber", id_)
                 self.dop_function.new_attr(object, "unit.Library.Attributes.ModPosition", modPosition)
                 self.dop_function.new_attr(object, "unit.Library.Attributes.ModUSO", uso)
@@ -6818,10 +6821,11 @@ class Filling_USO():
                     list_diag['id']       = f'{count_USO}'
                     list_diag['variable'] = f'USO[{count_USO}]'
                     list_diag['name']     = f'{uso[0]}'
-
+                    # AI температура
                     self.cursor.execute(f"""SELECT variable, "name"
                                             FROM ai
-                                            WHERE "name" LIKE '%{uso[0]}%'""")
+                                            WHERE "name" LIKE '%{uso[0]}%' AND
+                                                  (name LIKE '%Темпер%' OR name LIKE '%темпер%')""")
                     current_ai = self.cursor.fetchall()
                     try:
                         if len(current_ai) == 0: raise
@@ -6831,7 +6835,7 @@ class Filling_USO():
                     except:
                         list_diag['temperature']  = ''
                         msg[f'{today} - Таблица: uso. Температура в шкафу {uso[0]} не найдена!'] = 2
-
+                    # DI дверь
                     self.cursor.execute(f"""SELECT variable, name
                                             FROM di
                                             WHERE name LIKE '%{uso[0]}%' AND 
@@ -6845,10 +6849,13 @@ class Filling_USO():
                     except:
                         list_diag['temperature']  = ''
                         msg[f'{today} - Таблица: uso. Сигнал открытой двери шкафа {uso[0]} не найден!'] = 2
+                    # DI без двери
                     self.cursor.execute(f"""SELECT variable, name
                                             FROM di
                                             WHERE name LIKE '%{uso[0]}%' AND 
-                                                 (name NOT LIKE '%двер%') AND (name NOT LIKE '%Двер%') 
+                                                 (name NOT LIKE '%двер%') AND 
+                                                 (name NOT LIKE '%Двер%') AND 
+                                                 (tag_eng LIKE '%CSC%')
                                             ORDER BY name""")
                     current_di = self.cursor.fetchall()
                     try:

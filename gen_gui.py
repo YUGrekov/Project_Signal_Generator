@@ -2544,7 +2544,7 @@ class Widget(QWidget):
                 msg.update(alarm_map.filling_template('upts'))
                 continue
             if tabl == 'HMI_USO': 
-                uso_form.filling_pic_uso()
+                msg.update(uso_form.filling_pic_uso())
                 msg[f'{today} - HMI USO: генерация завершена!'] = 1
                 continue
         self.logs_msg('default', 1, msg, True)

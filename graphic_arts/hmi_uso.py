@@ -601,7 +601,8 @@ class Basket(BaseFunction, BaseUSO):
                               NumName.VAL_ATTR_2.value,
                               NumName.VAL_ATTR_3.value)
         except Exception:
-            print({traceback.format_exc()})
+            self.logsTextEdit.logs_msg(f'''HMI. USO. Ошибка
+                                       {traceback.format_exc()}''', 2)
 
 
 class Line(BaseFunction, BaseUSO):
@@ -690,7 +691,7 @@ class Line(BaseFunction, BaseUSO):
                     out_basket = net[6].split(';')
                     line = in_basket if flag_in else out_basket
                     sign_in_out = 'MNs' if 'KC' in line[0] else 'CNs'
-                    sign_current = 'MNs' if uso_eng.find('KC') > -1 else 'CNs'
+                    sign_current = 'MNs' if 'KC' in uso_eng else 'CNs'
                     if flag_in:
                         if attr_number == 5:
                             value_attr = f'Diag.{sign_in_out}.{line[0]}_01.ch_CN_02.ePNotLink'

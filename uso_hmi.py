@@ -452,6 +452,9 @@ class ParserFile(BaseUSO):
                     for type_ss in (DIss, AIss):
                         data = signals[0] if type_ss is DIss else signals[1]
 
+                        if data == 0:
+                            continue
+
                         for i in range(1, len(data) + 1):
                             if len(data) > 1:
                                 name = f'{type_ss.NAME_SS.value}_{i}'
@@ -638,7 +641,7 @@ class ParserFile(BaseUSO):
                     out_basket = net[6].split(';')
                     line = in_basket if flag_in else out_basket
                     sign_in_out = 'MNs' if 'KC' in line[0] else 'CNs'
-                    sign_current = 'MNs' if 'KC' in line[0] else 'CNs'
+                    sign_current = 'MNs' if 'KC' in uso_eng else 'CNs'
                     if flag_in:
                         if attr_number == 5:
                             value_attr = f'Diag.{sign_in_out}.{line[0]}_01.ch_CN_02.ePNotLink'
@@ -753,7 +756,11 @@ class DaignoPicture():
             if len(value) == 0:
                 continue
             data_DI.append(value[0][0])
-        return data_DI, data_AI[0]
+        try:
+            data_AI[0]
+            return data_DI, data_AI[0]
+        except Exception:
+            return data_DI, 0
 
     def request_basket(self, uso_rus: str):
         '''Собираем данные по каждому шкафу.'''

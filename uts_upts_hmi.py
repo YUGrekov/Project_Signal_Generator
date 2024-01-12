@@ -428,7 +428,8 @@ class Alarm_map():
                                 active_list_uts = item[1]
                                 position_on_list = item[2]
 
-                                if (active_list_uts or position_on_list) is None:
+                                if (active_list_uts or position_on_list) is None or \
+                                   (active_list_uts or position_on_list) == '':
                                     continue
 
                                 if int(active_list_uts) == (number_list + 1):
