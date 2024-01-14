@@ -1,4 +1,6 @@
 import psycopg2
+import os
+import codecs
 from lxml import etree
 
 
@@ -105,3 +107,14 @@ class General_functions():
                         for el1 in item.iter('{automation.control}object'):
                             if el1.attrib['name'] == directory:
                                 return el1
+
+    def check_file_txt(self, path):
+        """Проверка файла txt на существование."""
+        if not os.path.exists(path):
+            text_file = codecs.open(path, 'w', 'utf-8')
+            text_file.write('<?xml version="1.0" encoding="UTF-8"?>\n<Source Type="NaftaPostgres">\n</Source>')
+        else:
+            os.remove(path)
+            text_file = codecs.open(path, 'w', 'utf-8')
+            text_file.write('<?xml version="1.0" encoding="UTF-8"?>\n<Source Type="NaftaPostgres">\n</Source>')
+        text_file.close()

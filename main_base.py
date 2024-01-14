@@ -414,7 +414,7 @@ class General_functions():
                 root.remove(item)
         tree.write(path_map, pretty_print=True)
         return root, tree
-
+    
     ##############################
     def get_tabl(self):
         '''Сбор таблиц базы'''
@@ -494,15 +494,21 @@ class General_functions():
         '''Обновление записей базы через ORM peewee.'''
         models.update(update).where(where).execute()
 
-    def select_orm(self, models, where, order):
-        '''Запрос Select через ORM.'''
-        query = models.select().where(where).order_by(order)
-        return query.execute()
-
     def non_repea_names(self, models, dist, order):
         '''Нахождение неповторяющихся сигналов в таблице.'''
         query = models.select().order_by(order).distinct(dist)
         return query.execute()
+
+    def check_file_txt(self, path):
+        """Проверка файла txt на существование."""
+        if not os.path.exists(path):
+            text_file = codecs.open(path, 'w', 'utf-8')
+            text_file.write('<?xml version="1.0" encoding="UTF-8"?>\n<Source Type="NaftaPostgres">\n</Source>')
+        else:
+            os.remove(path)
+            text_file = codecs.open(path, 'w', 'utf-8')
+            text_file.write('<?xml version="1.0" encoding="UTF-8"?>\n<Source Type="NaftaPostgres">\n</Source>')
+        text_file.close()
 
 
 class Editing_table_SQL():

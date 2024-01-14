@@ -29,6 +29,7 @@ from request_sql import RequestSQL
 from hmi_defence import DefenceMap
 from hmi_uso import DaignoPicture
 from hmi_siren import Alarm_map
+from txt_trends import TreeTrends
 from map_address import AnalogsMap
 from map_address import DiskretsMap
 from map_address import VSMap
@@ -189,7 +190,7 @@ class LabelHMI(QLabel):
         super(LabelHMI, self).__init__(*args, **kwargs)
         self.setStyleSheet('''border-radius: 4;
                               padding: 0px;
-                              font: 18px consolas;''')
+                              font: 16px consolas;''')
         self.setAlignment(Qt.AlignCenter)
 
 
@@ -708,17 +709,22 @@ class GenHMIandDev(QWidget):
         self.layout_v7 = QVBoxLayout()
         self.layout_h1 = QHBoxLayout()
         self.layout_h2 = QHBoxLayout()
+        self.layout_h3 = QHBoxLayout()
 
         label_hmi_sign = LabelHMI('HMI')
         label_devstudio_sign = LabelHMI('DevStudio')
+        label_textfile = LabelHMI('TextFile')
 
         self.object_hmi()
         self.object_devstudio()
+        self.object_textfile()
 
         layout_v1.addWidget(label_hmi_sign)
         layout_v1.addLayout(self.layout_h1)
         layout_v1.addWidget(label_devstudio_sign)
         layout_v1.addLayout(self.layout_h2)
+        layout_v1.addWidget(label_textfile)
+        layout_v1.addLayout(self.layout_h3)
         layout_v1.addStretch()
 
     def object_hmi(self):
@@ -841,6 +847,18 @@ class GenHMIandDev(QWidget):
         self.layout_h2.addLayout(self.layout_v6)
         self.layout_h2.addSpacing(50)
         self.layout_h2.addLayout(self.layout_v7)
+
+    def object_textfile(self):
+        '''Добавляем объекты для генерация текстовых файлов.'''
+        self.button_trends = GenFormButton('\t\t\t\tДерево трендов\t\t\t\t')
+        self.button_trends.clicked.connect(self.click_tree_trends)
+
+        self.layout_textfile()
+
+    def layout_textfile(self):
+        '''Собираем в один слой генерацию текстовых файлов.'''
+        self.layout_h3.addWidget(self.button_trends)
+        self.layout_h3.addSpacing(600)
 
     def object_uso(self):
         '''Объект класса генерация усо.'''
@@ -986,6 +1004,11 @@ class GenHMIandDev(QWidget):
             root, tree = self.dop_function.xmlParser(path_file)
             self.dop_function.clear_map(path_file, path_attr, root, tree)
             self.logsTextEdit.logs_msg(f'''DevStudio. Map. {text}. Карта адресов очищена''', 3)
+
+    def click_tree_trends(self):
+        '''Формирование дерева трендов.'''
+        trends = TreeTrends(self.logsTextEdit)
+        trends.fill_tree_trends()
 
 
 class MainWindow(QMainWindow):

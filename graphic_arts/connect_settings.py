@@ -27,6 +27,7 @@ class Connect():
         self.path_to_devstudio = self.exist_check('Scada', 'path_to_devstudio_folder')
         self.path_hmi = self.exist_check('Scada', 'path_hmi')
         self.path_hmi_sample = self.exist_check('Scada', 'path_hmi_sample')
+        self.path_file_txt = self.exist_check('Scada', 'path_txt')
         self.database = self.exist_check('SQL', 'database')
         self.user = self.exist_check('SQL', 'user')
         self.password = self.exist_check('SQL', 'password')

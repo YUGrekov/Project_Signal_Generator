@@ -33,6 +33,7 @@ from address_map import PIMap
 from address_map import PZMap
 from address_map_diag import DiagMap
 from address_map_diag import RackStateMap
+from trends import TreeTrends
 
 # ГРАФИЧЕСКИЙ ИНТЕРФЕЙС ДЛЯ ЗАПУСКА ГЕНЕРАТОРА
 # Сформировать exe: в терминале добавить: auto-py-to-exe
@@ -1268,6 +1269,14 @@ class Widget(QWidget):
         self.q_check_hmi_uso = QCheckBox('HMI_USO', tab_6)
         self.q_check_hmi_uso.move(410, 110)
         self.q_check_hmi_uso.stateChanged.connect(self.check_hmi_uso)
+
+        # Дерево трендов 
+        b_trends = QPushButton('Дерево трендов', tab_6)
+        b_trends.setStyleSheet("background: #93e5dc; border: 1px solid; border-radius: 3px;")
+        b_trends.resize(130, 25)
+        b_trends.move(550, 20) 
+        b_trends.clicked.connect(self.click_trends)
+
         # Установить все
         check_all_omx = QCheckBox('Установить/Снять', tab_6)
         check_all_omx.setToolTip('Установить или снять все флаги для заполнения атрибутов omx')
@@ -2548,6 +2557,13 @@ class Widget(QWidget):
                 msg[f'{today} - HMI USO: генерация завершена!'] = 1
                 continue
         self.logs_msg('default', 1, msg, True)
+    
+    # Trends
+    def click_trends(self):
+        trends = TreeTrends()
+        msg = trends.fill_tree_trends()
+        self.logs_msg('default', 1, msg, True)
+
     # ------------------------СУ-------------------------
     def check_all_su(self, checked):
         if checked: 
