@@ -443,7 +443,7 @@ class General_functions():
         root = tree.getroot()
         return root, tree
 
-    def where_select(self,  table: str,
+    def where_select(self, table: str,
                      column: str, condit: int, order):
         '''Запрос на выборку данных с условием и сортировкой.'''
         cursor = db.cursor()
@@ -721,6 +721,7 @@ class Generate_database_SQL():
             return True
         except Exception:
             return False
+    
     def define_number_msg(self, cursor, tag):
         kod_msg     = 0
         addr_offset = 0
@@ -734,6 +735,7 @@ class Generate_database_SQL():
         except Exception:
             return kod_msg, addr_offset
         return kod_msg, addr_offset
+    
     def exist_table(self):
         cursor = db_prj.cursor()
         cursor.execute('CREATE SCHEMA IF NOT EXISTS messages;')
@@ -748,7 +750,65 @@ class Generate_database_SQL():
                        Priority INT NOT NULL,
                        IsAlert BOOLEAN NOT NULL,
                        CONSTRAINT OPMessages_pkey PRIMARY KEY (Category));''')
-        
+    
+    def drop_table(self, list_tabl):
+        '''Удаление таблиц.'''
+        def delete_table(table: str):
+            cursor_prj = db_prj.cursor()
+            try:
+                cursor_prj.execute(f'DROP TABLE objects.{table}')
+                msg[f'{today} - {table}: Таблица удалена'] = 1
+                return msg
+            except Exception:
+                msg[f'{today} - {table}: Таблица отсутствует'] = 2
+                return msg
+
+        msg = {}
+        if len(list_tabl) == 0:
+            return
+
+        for tabl in list_tabl:
+            if tabl == 'AI_tabl': 
+                msg.update(delete_table('TblAnalogs'))
+                continue
+            if tabl == 'AIGRP_tabl': 
+                msg.update(delete_table('TblAnaloggroups'))
+                continue
+            if tabl == 'ZD_tabl': 
+                msg.update(delete_table('TblValveTimeSetpoints'))
+                continue
+            if tabl == 'VS_tabl': 
+                msg.update(delete_table('TblAuxSysTimeSetpoints'))
+                continue
+            if tabl == 'VSGRP_tabl': 
+                msg.update(delete_table('TblAuxsysgrouptimeSetpoints'))
+                continue
+            if tabl == 'Pump_tabl': 
+                msg.update(delete_table('TblPumptimeSetpoints'))
+                continue
+            if tabl == 'UTS_tabl': 
+                msg.update(delete_table('TblSignalingdevicetimeSetpoints'))
+                continue
+            if tabl == 'Prj_tabl': 
+                msg.update(delete_table('TblProjecttimeSetpoints'))
+                continue
+            if tabl == 'PZ_tabl': 
+                msg.update(delete_table('TblFirezonetimeSetpoints'))
+                continue
+            if tabl == 'PumpTime_tabl': 
+                msg.update(delete_table('TblOpTimeSetpoints'))
+                continue
+            if tabl == 'KTPR_tabl': 
+                msg.update(delete_table('TblStationDefencesSetpoints'))
+                continue
+            if tabl == 'KTPRA_tabl': 
+                msg.update(delete_table('TblPumpDefencesSetpoints'))
+                continue
+            if tabl == 'GMPNA_tabl': 
+                msg.update(delete_table('TblPumpReadinesesSetpoints'))
+                continue
+        return msg
+
     def write_file(self, list_str, tabl, name_file):
         msg = {}
         # Создаём файл запроса
@@ -793,6 +853,7 @@ class Generate_database_SQL():
         file.write(f'COMMIT;')
         file.close()
         return msg
+
     def write_in_sql(self, list_tabl, flag_write_db):
         msg = {}
         if len(list_tabl) == 0: return
@@ -875,50 +936,52 @@ class Generate_database_SQL():
                 msg.update(self.gen_msg_defence(flag_write_db, 'tm_dp', 'DiagTM_DP', 'PostgreSQL_Messages-TMDP', 'TblD_TM_DP'))
                 continue
         return msg
+    
     def write_in_sql_tabl(self, list_tabl, flag_write_db):
-            msg = {}
-            if len(list_tabl) == 0: return
-            for tabl in list_tabl: 
-                if tabl == 'AI_tabl': 
-                    msg.update(self.gen_table_AI(flag_write_db))
-                    continue
-                if tabl == 'AIGRP_tabl': 
-                    msg.update(self.gen_table_AIGRP(flag_write_db))
-                    continue
-                if tabl == 'ZD_tabl': 
-                    msg.update(self.gen_table_general(flag_write_db, 'zd_tm', 'TblValveTimeSetpoints'))
-                    continue
-                if tabl == 'VS_tabl': 
-                    msg.update(self.gen_table_general(flag_write_db, 'vs_tm', 'TblAuxSysTimeSetpoints'))
-                    continue
-                if tabl == 'VSGRP_tabl': 
-                    msg.update(self.gen_table_general(flag_write_db, 'vsgrp_tm', 'TblAuxsysgrouptimeSetpoints'))
-                    continue
-                if tabl == 'Pump_tabl': 
-                    msg.update(self.gen_table_general(flag_write_db, 'umpna_tm', 'TblPumptimeSetpoints'))
-                    continue
-                if tabl == 'UTS_tabl': 
-                    msg.update(self.gen_table_general(flag_write_db, 'uts_tm', 'TblSignalingdevicetimeSetpoints'))
-                    continue
-                if tabl == 'Prj_tabl': 
-                    msg.update(self.gen_table_general(flag_write_db, 'prj_tm', 'TblProjecttimeSetpoints'))
-                    continue
-                if tabl == 'PZ_tabl': 
-                    msg.update(self.gen_table_general(flag_write_db, 'pz_tm', 'TblFirezonetimeSetpoints'))
-                    continue
-                if tabl == 'PumpTime_tabl': 
-                    msg.update(self.gen_table_general(flag_write_db, 'umpna_narab_tm', 'TblOpTimeSetpoints'))
-                    continue
-                if tabl == 'KTPR_tabl': 
-                    msg.update(self.gen_table_ktpr(flag_write_db))
-                    continue
-                if tabl == 'KTPRA_tabl': 
-                    msg.update(self.gen_table_pumps(flag_write_db, 'ktpra', 'TblPumpDefencesSetpoints'))
-                    continue
-                if tabl == 'GMPNA_tabl': 
-                    msg.update(self.gen_table_pumps(flag_write_db, 'gmpna', 'TblPumpReadinesesSetpoints'))
-                    continue
-            return msg
+        msg = {}
+        if len(list_tabl) == 0: return
+        for tabl in list_tabl: 
+            if tabl == 'AI_tabl': 
+                msg.update(self.gen_table_AI(flag_write_db))
+                continue
+            if tabl == 'AIGRP_tabl': 
+                msg.update(self.gen_table_AIGRP(flag_write_db))
+                continue
+            if tabl == 'ZD_tabl': 
+                msg.update(self.gen_table_general(flag_write_db, 'zd_tm', 'TblValveTimeSetpoints'))
+                continue
+            if tabl == 'VS_tabl': 
+                msg.update(self.gen_table_general(flag_write_db, 'vs_tm', 'TblAuxSysTimeSetpoints'))
+                continue
+            if tabl == 'VSGRP_tabl': 
+                msg.update(self.gen_table_general(flag_write_db, 'vsgrp_tm', 'TblAuxsysgrouptimeSetpoints'))
+                continue
+            if tabl == 'Pump_tabl': 
+                msg.update(self.gen_table_general(flag_write_db, 'umpna_tm', 'TblPumptimeSetpoints'))
+                continue
+            if tabl == 'UTS_tabl': 
+                msg.update(self.gen_table_general(flag_write_db, 'uts_tm', 'TblSignalingdevicetimeSetpoints'))
+                continue
+            if tabl == 'Prj_tabl': 
+                msg.update(self.gen_table_general(flag_write_db, 'prj_tm', 'TblProjecttimeSetpoints'))
+                continue
+            if tabl == 'PZ_tabl': 
+                msg.update(self.gen_table_general(flag_write_db, 'pz_tm', 'TblFirezonetimeSetpoints'))
+                continue
+            if tabl == 'PumpTime_tabl': 
+                msg.update(self.gen_table_general(flag_write_db, 'umpna_narab_tm', 'TblOpTimeSetpoints'))
+                continue
+            if tabl == 'KTPR_tabl': 
+                msg.update(self.gen_table_ktpr(flag_write_db))
+                continue
+            if tabl == 'KTPRA_tabl': 
+                msg.update(self.gen_table_pumps(flag_write_db, 'ktpra', 'TblPumpDefencesSetpoints'))
+                continue
+            if tabl == 'GMPNA_tabl': 
+                msg.update(self.gen_table_pumps(flag_write_db, 'gmpna', 'TblPumpReadinesesSetpoints'))
+                continue
+        return msg
+
     def synh_in_sql(self, list_tabl):
             msg = {}
             if len(list_tabl) == 0: return
@@ -1565,7 +1628,6 @@ class Generate_database_SQL():
         return(msg)
 
     # tabl
-
     def gen_table_AI(self, flag_write_db):
         def select_ust(num_ust, num, ctrl_list):
             if num_ust is None:
@@ -1579,58 +1641,60 @@ class Generate_database_SQL():
         cursor_prj = db_prj.cursor()
     
         text_start = ('\tCREATE SCHEMA IF NOT EXISTS objects;\n'
-                        '\tCREATE TABLE IF NOT EXISTS objects.TblAnalogs(\n'
-                        '\t\tId INT NOT NULL,\n'
-                        '\t\tPrefix VARCHAR(1024),\n'
-                        '\t\tSystemIndex INT NOT NULL,\n'
-                        '\t\tTag VARCHAR(1024),\n'
-                        '\t\tName VARCHAR(1024),\n'
-                        '\t\tAnalogGroupId INT,\n'
-                        '\t\tSetpointGroupId INT,\n'
-                        '\t\tEgu VARCHAR(1024),\n'
-                        '\t\tPhysicEgu VARCHAR(1024),\n'
-                        '\t\tIsOilPressure BOOLEAN NOT NULL,\n'
-                        '\t\tIsInterface BOOLEAN NOT NULL,\n'
-                        '\t\tIsPhysic BOOLEAN NOT NULL,\n'
-                        '\t\tIsPumpVibration BOOLEAN,\n'
-                        '\t\tPrecision INT NOT NULL,\n'
-                        '\t\tIsTrending BOOLEAN NOT NULL,\n'
-                        '\t\tTrendingSettings VARCHAR(1024),\n'
-                        '\t\tTrendingGroup INT,\n'
-                        '\t\tLoLimField DOUBLE PRECISION,\n'
-                        '\t\tHiLimField DOUBLE PRECISION,\n'
-                        '\t\tLoLimEng DOUBLE PRECISION,\n'
-                        '\t\tHiLimEng DOUBLE PRECISION,\n'
-                        '\t\tLoLim DOUBLE PRECISION,\n'
-                        '\t\tHiLim DOUBLE PRECISION,\n'
-                        '\t\tMin6 DOUBLE PRECISION,\n'
-                        '\t\tMin5 DOUBLE PRECISION,\n'
-                        '\t\tMin4 DOUBLE PRECISION,\n'
-                        '\t\tMin3 DOUBLE PRECISION,\n'
-                        '\t\tMin2 DOUBLE PRECISION,\n'
-                        '\t\tMin1 DOUBLE PRECISION,\n'
-                        '\t\tMax1 DOUBLE PRECISION,\n'
-                        '\t\tMax2 DOUBLE PRECISION,\n'
-                        '\t\tMax3 DOUBLE PRECISION,\n'
-                        '\t\tMax4 DOUBLE PRECISION,\n'
-                        '\t\tMax5 DOUBLE PRECISION,\n'
-                        '\t\tMax6 DOUBLE PRECISION,\n'
-                        '\t\tHisteresis DOUBLE PRECISION,\n'
-                        '\t\tDeltaHi DOUBLE PRECISION,\n'
-                        '\t\tDeltaLo DOUBLE PRECISION,\n'
-                        '\t\tDeltaT DOUBLE PRECISION,\n'
-                        '\t\tSmoothFactor DOUBLE PRECISION,\n'
-                        '\t\tCtrl SMALLINT,\n'
-                        '\t\tMsgMask INT,\n'
-                        '\t\tSigMask INT,\n'
-                        '\t\tCtrlMask SMALLINT,\n'
-                        '\t\tTimeFilter DOUBLE PRECISION,\n'
-                        '\t\tIsBackup BOOLEAN NOT NULL,\n'
-                        '\t\tRuleName VARCHAR(1024),\n'
-                        '\t\tTrendingCollector VARCHAR(1024),\n'
-                        '\t\tCONSTRAINT TblAnalogs_pkey PRIMARY KEY (Id,SystemIndex)\n'
-                    '\t);\n'
-                    '\tDELETE FROM objects.TblAnalogs  WHERE SystemIndex = 0;\n')
+                      '\tCREATE TABLE IF NOT EXISTS objects.TblAnalogs(\n'
+                      '\t\tId INT NOT NULL,\n'
+                      '\t\tPrefix VARCHAR(1024),\n'
+                      '\t\tSystemIndex INT NOT NULL,\n'
+                      '\t\tTag VARCHAR(1024),\n'
+                      '\t\tName VARCHAR(1024),\n'
+                      '\t\tAnalogGroupId INT,\n'
+                      '\t\tSetpointGroupId INT,\n'
+                      '\t\tEgu VARCHAR(1024),\n'
+                      '\t\tPhysicEgu VARCHAR(1024),\n'
+                      '\t\tIsOilPressure BOOLEAN NOT NULL,\n'
+                      '\t\tIsInterface BOOLEAN NOT NULL,\n'
+                      '\t\tIsPhysic BOOLEAN NOT NULL,\n'
+                      '\t\tIsPumpVibration BOOLEAN,\n'
+                      '\t\tPrecision INT NOT NULL,\n'
+                      '\t\tIsTrending BOOLEAN NOT NULL,\n'
+                      '\t\tTrendingSettings VARCHAR(1024),\n'
+                      '\t\tTrendingGroup INT,\n'
+                      '\t\tLoLimField DOUBLE PRECISION,\n'
+                      '\t\tHiLimField DOUBLE PRECISION,\n'
+                      '\t\tLoLimEng DOUBLE PRECISION,\n'
+                      '\t\tHiLimEng DOUBLE PRECISION,\n'
+                      '\t\tLoLim DOUBLE PRECISION,\n'
+                      '\t\tHiLim DOUBLE PRECISION,\n'
+                      '\t\tMin6 DOUBLE PRECISION,\n'
+                      '\t\tMin5 DOUBLE PRECISION,\n'
+                      '\t\tMin4 DOUBLE PRECISION,\n'
+                      '\t\tMin3 DOUBLE PRECISION,\n'
+                      '\t\tMin2 DOUBLE PRECISION,\n'
+                      '\t\tMin1 DOUBLE PRECISION,\n'
+                      '\t\tMax1 DOUBLE PRECISION,\n'
+                      '\t\tMax2 DOUBLE PRECISION,\n'
+                      '\t\tMax3 DOUBLE PRECISION,\n'
+                      '\t\tMax4 DOUBLE PRECISION,\n'
+                      '\t\tMax5 DOUBLE PRECISION,\n'
+                      '\t\tMax6 DOUBLE PRECISION,\n'
+                      '\t\tHisteresis DOUBLE PRECISION,\n'
+                      '\t\tDeltaHi DOUBLE PRECISION,\n'
+                      '\t\tDeltaLo DOUBLE PRECISION,\n'
+                      '\t\tDeltaT DOUBLE PRECISION,\n'
+                      '\t\tSmoothFactor DOUBLE PRECISION,\n'
+                      '\t\tCtrl SMALLINT,\n'
+                      '\t\tMsgMask INT,\n'
+                      '\t\tSigMask INT,\n'
+                      '\t\tCtrlMask SMALLINT,\n'
+                      '\t\tTimeFilter DOUBLE PRECISION,\n'
+                      '\t\tIsBackup BOOLEAN NOT NULL,\n'
+                      '\t\tRuleName VARCHAR(1024),\n'
+                      '\t\tTrendingCollector VARCHAR(1024),\n'
+                      '\t\ttmrndv INT DEFAULT 1,\n'
+                      '\t\ttmrlvl INT DEFAULT 1,\n'
+                      '\t\tCONSTRAINT TblAnalogs_pkey PRIMARY KEY (Id,SystemIndex)\n'
+                      '\t);\n'
+                      '\tDELETE FROM objects.TblAnalogs  WHERE SystemIndex = 0;\n')
         
         msg = {}
         gen_list = []
@@ -1661,6 +1725,8 @@ class Generate_database_SQL():
 
                 # Prefix
                 Prefix = 'NULL' if connect.prefix_system == '' or connect.prefix_system is None else str(connect.prefix_system)
+                # Tag
+                Tag = '' if Tag is None or Tag == '' else Tag
                 # SystemIndex
                 SystemIndex = 0
                 # AnalogGroupId
@@ -1747,7 +1813,7 @@ class Generate_database_SQL():
                 msg[f'{today} - TblAnalogs: ошибка добавления строки, пропускается: {traceback.format_exc()}'] = 2
                 continue
             
-            ins_row_tabl = f"INSERT INTO objects.TblAnalogs (Id, Prefix, SystemIndex, Tag, Name, AnalogGroupId, SetpointGroupId, Egu, PhysicEgu, IsOilPressure, IsInterface, IsPhysic, IsPumpVibration, Precision, IsTrending, TrendingSettings, TrendingGroup, LoLimField, HiLimField, LoLimEng, HiLimEng, LoLim, HiLim, Min6, Min5, Min4, Min3, Min2, Min1, Max1, Max2, Max3, Max4, Max5, Max6, Histeresis, DeltaHi, DeltaLo, DeltaT, SmoothFactor, Ctrl, MsgMask, SigMask, CtrlMask, TimeFilter, IsBackup, RuleName, TrendingCollector) VALUES({Id}, {Prefix}, {SystemIndex}, '{Tag}','{Name}', {AnalogGroupId}, {SetpointGroupId}, '{Egu}', '{PhysicEgu}', {IsOilPressure}, {IsInterface}, {IsPhysic}, {IsPumpVibration}, {Precision}, {IsTrending}, 'address = {48999 + 2 * Id}, addresstype=4x, datatype=float', {TrendingGroup}, {LoLimField}, {HiLimField}, {LoLimEng}, {HiLimEng}, {LoLim}, {HiLim}, {Min6}, {Min5}, {Min4}, {Min3}, {Min2}, {Min1}, {Max1}, {Max2}, {Max3}, {Max4}, {Max5}, {Max6}, {Histeresis}, {DeltaHi}, {DeltaLo}, {DeltaT}, {SmoothFactor}, {Ctrl}, {MsgMask}, {SigMask}, {CtrlMask}, {TimeFilter}, {IsBackup}, {RuleName}, 'MBTCP');\n"
+            ins_row_tabl = f"INSERT INTO objects.TblAnalogs (Id, Prefix, SystemIndex, Tag, Name, AnalogGroupId, SetpointGroupId, Egu, PhysicEgu, IsOilPressure, IsInterface, IsPhysic, IsPumpVibration, Precision, IsTrending, TrendingSettings, TrendingGroup, LoLimField, HiLimField, LoLimEng, HiLimEng, LoLim, HiLim, Min6, Min5, Min4, Min3, Min2, Min1, Max1, Max2, Max3, Max4, Max5, Max6, Histeresis, DeltaHi, DeltaLo, DeltaT, SmoothFactor, Ctrl, MsgMask, SigMask, CtrlMask, TimeFilter, IsBackup, RuleName, TrendingCollector) VALUES({Id}, {Prefix}, {SystemIndex}, '{Tag}', '{Name}', {AnalogGroupId}, {SetpointGroupId}, '{Egu}', '{PhysicEgu}', {IsOilPressure}, {IsInterface}, {IsPhysic}, {IsPumpVibration}, {Precision}, {IsTrending}, 'address = {48999 + 2 * Id}, addresstype=4x, datatype=float', {TrendingGroup}, {LoLimField}, {HiLimField}, {LoLimEng}, {HiLimEng}, {LoLim}, {HiLim}, {Min6}, {Min5}, {Min4}, {Min3}, {Min2}, {Min1}, {Max1}, {Max2}, {Max3}, {Max4}, {Max5}, {Max6}, {Histeresis}, {DeltaHi}, {DeltaLo}, {DeltaT}, {SmoothFactor}, {Ctrl}, {MsgMask}, {SigMask}, {CtrlMask}, {TimeFilter}, {IsBackup}, {RuleName}, 'MBTCP');\n"
             
             if flag_write_db:
                 try:
@@ -2015,6 +2081,7 @@ class Generate_database_SQL():
                 msg[f'{today} - {sign}: ошибка записи в файл: {traceback.format_exc()}'] = 2
         msg[f'{today} - {sign}: генерация завершена!'] = 1
         return(msg)
+    
     def gen_table_ktpr(self, flag_write_db):
         cursor = db.cursor()
         cursor_prj = db_prj.cursor()
@@ -2104,6 +2171,7 @@ class Generate_database_SQL():
                 msg[f'{today} - TblStationDefencesSetpoints: ошибка записи в файл: {traceback.format_exc()}'] = 2
         msg[f'{today} - TblStationDefencesSetpoints: генерация завершена!'] = 1
         return(msg)
+    
     def gen_table_pumps(self, flag_write_db, tabl_sql, sign):
         cursor = db.cursor()
         cursor_prj = db_prj.cursor()
@@ -2209,6 +2277,7 @@ class Generate_database_SQL():
                 msg[f'{today} - {sign}: ошибка записи в файл: {traceback.format_exc()}'] = 2
         msg[f'{today} - {sign}: генерация завершена!'] = 1
         return(msg)
+    
     # synh_tabl
     def synh_tabl_ai(self):
         def notation(value):
@@ -2292,6 +2361,7 @@ class Generate_database_SQL():
         
         msg[f'{today} - TblAnalogs: синхронизация завершена!'] = 1
         return(msg)
+    
     def synh_tabl(self, tbl_prj, tbl_dev, sign):
         msg = {}
         msg[f'{today} - {sign}: синхронизация базы проекта с базой разработки'] = 1
@@ -2726,7 +2796,7 @@ class Filling_attribute_DevStudio():
                     if equ         == '' or equ is None        : equ = ' '
                     if unit_switch == '' or unit_switch is None: continue
 
-                    if grp_analog == 'Уровни' or grp_analog == 'Аналоговые выходы':
+                    if 'Уровни' in grp_analog or 'Аналоговые выходы' in grp_analog:
                         type = 'unit.Library.PLC_Types.lv_Analog_PLC'
                     else:
                         type = 'unit.Library.PLC_Types.Analog_PLC'

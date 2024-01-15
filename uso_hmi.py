@@ -93,6 +93,13 @@ class RSs(Enum):
     B_T_ID = 'dc2b3d53-089e-4f3f-9ecd-4098cdfa823c'
 
 
+class Emptys(Enum):
+    NAME = 'Emptys'
+    TYPE = 'type_MK_500_001(empty)'
+    B_T = 'type_MK_500_001(empty)'
+    B_T_ID = '15726dc3-881e-4d8d-b0fa-a8f8237f08ca'
+
+
 class InputLine(Enum):
     NAME = 'l_input_to_A'
     TYPE = 'l_input_to_A'
@@ -199,7 +206,8 @@ class BaseUSO():
                      'MK-531-032': DOs,
                      'MK-545-010': CNs,
                      'MK-550-024': PSUs,
-                     'MK-541-002': RSs}
+                     'MK-541-002': RSs,
+                     'MK-500-001': Emptys}
 
     attr_ss = {'1': DesignedParamsThree(target='X', value='5'),
                '2': DesignedParamsThree(target='Y', value=''),
@@ -510,15 +518,13 @@ class ParserFile(BaseUSO):
                     count_DOs = 0
                     count_PSUs = 0
                     count_RSs = 0
+                    count_Empts = 0
                     m_number = 0
 
                     b_number = basket['basket']
                     if self.search_string(lvl_1.attrib, NumName.NAME_ATR.value, f'r_basket_{b_number}'):
 
                         for modul in basket['data']:
-                            if modul == '' and modul is None:
-                                continue
-
                             try:
                                 name = self.params_module[modul]
                                 new_name = name.TYPE.value
@@ -540,6 +546,9 @@ class ParserFile(BaseUSO):
                                 elif name == RSs:
                                     count_RSs += 1
                                     new_name = f'{name.TYPE.value}_{count_RSs}'
+                                elif name == Emptys:
+                                    count_Empts += 1
+                                    new_name = f'{name.TYPE.value}_{count_Empts}'
 
                                 object = self.new_row_obj(lvl_1, new_name, name)
 
@@ -775,6 +784,13 @@ class DaignoPicture():
                 basket = column['basket']
 
                 data_b = [column[f'type_{modul_column}'] for modul_column in range(0, 33, 1)]
+
+                for i in range(len(data_b), 0, -1):
+                    if data_b[i - 1] is None:
+                        data_b.pop(i - 1)
+                    else:
+                        break
+
                 data.append(dict(tag=tag,
                                  basket=basket,
                                  data=data_b,

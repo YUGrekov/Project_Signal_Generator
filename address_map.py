@@ -142,13 +142,15 @@ class AnalogsMap(BaseMap):
                 return msg
 
             for row in data:
+                if not len(row.tag):
+                    continue
+
                 for i in range(len(self.prefix)):
                     name = f'Root{connect.prefix_system}.{ANALOGs}{row.tag_eng}.{self.prefix[i]}'
 
                     # Для уровней другой набор префиксов
-                    if 'Уровни' != str(row.AnalogGroupId):
-                        if i > 4:
-                            break
+                    if 'Уровни' not in row.AnalogGroupId and i > 4:
+                        break
 
                     if 'AIVisualValue' == self.prefix[i]:
                         address = list_addrr['AIVisualValue'] + 2 * (row.id - 1)

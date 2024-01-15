@@ -58,21 +58,20 @@ class AttribRS():
 class AttribCPU():
     '''Атрибуты для заполнения карты адресов модуля CPU.'''
     prefix = ['mod_State', 'mod_State_ext', 'mod_State_Err', 'CPUMemFree',
-              'CPULoad', 'ClcCurr', 'ClcMax', 'RsrCRC32', 'DiskFreeSpace']
+              'CPULoad', 'RsrCRC32', 'DiskFreeSpace']
     variable = ['diagCPU']
     sign = 'Diag.CPUs.'
     design_modul = 'MK-504-120'
-    shift_two = ['CPULoad', 'RsrCRC32', 'ClcCurr', 'ClcMax', 'DiskFreeSpace']
+    shift_two = ['CPULoad', 'RsrCRC32', 'DiskFreeSpace']
 
 
 class AttribPSU():
     '''Атрибуты для заполнения карты адресов модуля PSU.'''
-    prefix = ['mod_State', 'mod_State_ext', 'SupplyVoltage',
-              'CanBusSpeed', 'Can1ErrorCounter', 'Can2ErrorCounter']
-    variable = ['diagCPU']
+    prefix = ['mod_State', 'mod_State_ext', 'SupplyVoltage', 'CanBusSpeed']
+    variable = ['diagPSU']
     sign = 'Diag.PSUs.'
     design_modul = 'MK-550-024'
-    shift_two = ['SupplyVoltage', 'Can2ErrorCounter']
+    shift_two = ['SupplyVoltage', 'CanBusSpeed']
 
 
 class AttribCN():

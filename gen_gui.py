@@ -1134,23 +1134,29 @@ class Widget(QWidget):
         b_export_sql.move(150, 180) 
         b_export_sql.clicked.connect(self.write_in_sql)
         # Подтверждение tabl
+        b_export_drop_tabl = QPushButton('Удалить таблицу', tab_4)
+        b_export_drop_tabl.setStyleSheet("border: 1px solid; border-radius: 3px;")
+        b_export_drop_tabl.setToolTip('''Создается отдельный файл таблиц для ручной генерации базы данных PostgreSQL''')
+        b_export_drop_tabl.resize(120, 23)
+        b_export_drop_tabl.move(530, 115) 
+        b_export_drop_tabl.clicked.connect(self.export_drop_tabl)
         b_export_list_tabl = QPushButton('Файл импорта', tab_4)
         b_export_list_tabl.setStyleSheet("border: 1px solid; border-radius: 3px;")
         b_export_list_tabl.setToolTip('''Создается отдельный файл таблиц для ручной генерации базы данных PostgreSQL''')
         b_export_list_tabl.resize(120, 23)
-        b_export_list_tabl.move(580, 115) 
+        b_export_list_tabl.move(670, 115) 
         b_export_list_tabl.clicked.connect(self.export_list_tabl)
         b_export_sql_tabl = QPushButton('Генерировать в базу', tab_4)
         b_export_sql_tabl.setStyleSheet("border: 1px solid; border-radius: 3px;")
         b_export_sql_tabl.setToolTip('''Схема: objects\nСуществующая таблица чиститься, если нет, создается новая и заполняется''')
         b_export_sql_tabl.resize(120, 23)
-        b_export_sql_tabl.move(730, 115) 
+        b_export_sql_tabl.move(810, 115) 
         b_export_sql_tabl.clicked.connect(self.write_in_sql_tabl)
         b_synh_sql_tabl = QPushButton('Синхронизация', tab_4)
         b_synh_sql_tabl.setStyleSheet("border: 1px solid; border-radius: 3px;")
         b_synh_sql_tabl.setToolTip('''Схема: objects\nСинхронизация данных базы проекта с базой разработкой''')
-        b_synh_sql_tabl.resize(120,23)
-        b_synh_sql_tabl.move(880, 115) 
+        b_synh_sql_tabl.resize(120, 23)
+        b_synh_sql_tabl.move(950, 115) 
         b_synh_sql_tabl.clicked.connect(self.synh_in_sql)
 
         # ------------------ВУ------------------
@@ -2194,13 +2200,20 @@ class Widget(QWidget):
     def write_in_sql(self):
         msg = self.gen_sql.write_in_sql(self.list_gen_msg, True)
         self.logs_msg('default', 1, msg, True)
+    
     # Button tabl
+    def export_drop_tabl(self):
+        msg = self.gen_sql.drop_table(self.list_gen_tabl)
+        self.logs_msg('default', 1, msg, True)
+
     def export_list_tabl(self):
         msg = self.gen_sql.write_in_sql_tabl(self.list_gen_tabl, False)
         self.logs_msg('default', 1, msg, True)
+    
     def write_in_sql_tabl(self):
         msg = self.gen_sql.write_in_sql_tabl(self.list_gen_tabl, True)
         self.logs_msg('default', 1, msg, True)
+    
     def synh_in_sql(self):
         msg = self.gen_sql.synh_in_sql(self.list_gen_tabl)
         self.logs_msg('default', 1, msg, True)
