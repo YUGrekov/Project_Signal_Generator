@@ -616,6 +616,8 @@ class GMPNAMap(BaseMap):
 
 class PIMap(BaseMap):
     '''Заполнение ModBus карты адресов.'''
+    prefix = ['StatePI', 'StatePIEx']
+
     variable = ['StatePI']
 
     def work_file(self):
@@ -632,10 +634,11 @@ class PIMap(BaseMap):
                 return msg
 
             for row in data:
-                name = f'Root{connect.prefix_system}.{PIs}{row.tag}.StatePI'
+                for i in range(len(self.prefix)):
+                    name = f'Root{connect.prefix_system}.{PIs}{row.tag}.{self.prefix[i]}'
+                    address = list_addrr['StatePI'] + i + (len(self.prefix) * (row.id - 1))
 
-                address = list_addrr['StatePI'] + (row.id - 1)
-                self.new_element(root, name, address)
+                    self.new_element(root, name, address)
 
             tree.write(path, pretty_print=True)
             msg[f'{today} - DevStudio. Map. {PIs} Заполнено'] = 1

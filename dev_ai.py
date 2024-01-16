@@ -568,15 +568,59 @@ class AIParamLevel(AIParam):
         pass
 
 
+class AIParamVolume(AIParam):
+    """Параметры для аналогового объема."""
+    AnalogGroupId = 'Объемы'
+    SetpointGroupId = 'Объемы'
+    Sign = 'V'
+    EGU = 'м3'
+    Histeresis = 5
+    DeltaT = 1
+    RuleName = 'Аналоги'
+
+    def prepare(self):
+        pass
+
+
+class AIParamUPTS(AIParam):
+    """Параметры для аналогового обрыва или КЗ
+    соединительных линий сирены или табло."""
+    AnalogGroupId = 'Сигнализаторы'
+    SetpointGroupId = 'Табло и сирены'
+    Sign = ''
+    EGU = 'мА'
+    Histeresis = 5
+    DeltaT = 1
+    RuleName = 'Табло и сирены'
+
+    def prepare(self):
+        pass
+
+
+class AIParamIzv(AIParam):
+    """Параметры для аналоговых извещателей."""
+    AnalogGroupId = 'Извещатели дымовые/тепловые'
+    SetpointGroupId = 'Дымовые извещатели'
+    Sign = 'м3'
+    EGU = 'мА'
+    Histeresis = 5
+    DeltaT = 1
+    RuleName = 'Сигналы с контролем цепи (два датчика)'
+
+    def prepare(self):
+        pass
+
+
 TYPE_ANALOG = {'температур': AIParamTemp,
+               'объем': AIParamVolume,
                'вибрац': AIParamVibr,
                'перепад': AIParamDeltaPres,
                'давлен': AIParamPres,
                'сила тока': AIParamEDAmper,
                'загазован': AIParamGAS,
+               'уровень': AIParamLevel,
                'пожар': AIParamNC,
                'аварийн': AIParamNC,
                'затопл': AIParamNC,
                'осев': AIParamMoving,
-               'уровень': AIParamLevel
                }

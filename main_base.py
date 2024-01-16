@@ -90,6 +90,7 @@ class General_functions():
         cursor.execute(f'''SELECT COUNT (*) FROM "{table_used}"''')
         empty = cursor.fetchall()
         return True if int(empty[0][0]) == 0  else False
+    
     def clear_tabl(self, table_used, table_name, list_tabl):
         msg = {}
         cursor = db.cursor()
@@ -104,6 +105,7 @@ class General_functions():
         cursor.execute(f'DELETE FROM "{table_used}"')
         msg[f'{today} - Таблица: {table_used} полностью очищена'] = 1
         return msg
+    
     def search_signal(self, tabl_used_cl, tabl_used_str, tag):
         exists_tag = tabl_used_cl.select().where(tabl_used_cl.tag == tag)
         if bool(exists_tag):
@@ -117,6 +119,7 @@ class General_functions():
                 if tabl_used_str == 'ai': return (f'AI[{id_}].Norm')
         else:
             return ''
+    
     def update_signal(self, tabl_used_cl, tabl_used_str, tag, number_NA, column_update_cl, column_update_str):
         msg = {}
         exist_value  = tabl_used_cl.select().where(tabl_used_cl.id == number_NA,
@@ -129,6 +132,7 @@ class General_functions():
             msg[f'{today} - Таблица: umpna, NA[{number_NA}] обновлено {column_update_str} = {tag}'] = 3
             return msg
         return msg
+    
     def update_signal_dop(self, tabl_used_cl, tabl_used_str, name, column_update_cl, column_update_str, value):
         msg = {}
         exist_value  = tabl_used_cl.select().where(tabl_used_cl.name == name,
@@ -206,6 +210,10 @@ class General_functions():
 
             if table == 'NPS' or table == 'KRMPN' or table == 'Global':
                 text_mess = mess
+            elif table == 'AI':
+                text_mess = f'{name[0]}. {mess}'
+                if ('##' in text_mess) and (name[1] is not None):
+                    text_mess = text_mess.replace('##', name[1])
             else:
                 text_mess = f'{name}. {mess}'
             
@@ -233,6 +241,7 @@ class General_functions():
                 list_msg.append(dict(delete=del_row_tabl,
                                      insert=ins_row_tabl))
         return list_msg
+    
     def all_tables(self):
         list_tabl = []
         cursor = db.cursor()
@@ -242,6 +251,7 @@ class General_functions():
         for name in cursor.fetchall():
             list_tabl.append(name[0])
         return list_tabl
+    
     # ВУ
     # Подключение к SQL - база проекта
     def connect_by_sql_prj(self, table_used, column):
@@ -251,6 +261,7 @@ class General_functions():
         except Exception:
             return 
         return cursor.fetchall()
+    
     # Подключение к SQL - база разработки
     def connect_by_sql(self, table_used, column):
         try:
@@ -259,6 +270,7 @@ class General_functions():
         except Exception:
             return 
         return cursor.fetchall()
+    
     def connect_by_sql_order(self, table_used, column, order):
         try:
             cursor = db.cursor()
@@ -266,6 +278,7 @@ class General_functions():
         except Exception:
             return 
         return cursor.fetchall()
+    
     def connect_by_sql_condition(self, table_used, column, condition):
         try:
             cursor = db.cursor()
@@ -276,6 +289,7 @@ class General_functions():
         except Exception:
             return 
         return cursor.fetchall()
+    
     def connect_count_row_sql(self, table_used):
         try:
             cursor = db.cursor()
@@ -283,6 +297,7 @@ class General_functions():
         except Exception:
             return True
         return cursor.fetchall()
+    
     def max_value_column(self, table_used, column, condition, *args):
         try:
             cursor = db.cursor()
@@ -291,6 +306,7 @@ class General_functions():
         except Exception:
             return 
         return cursor.fetchall()[0][0]
+    
     # Обновление строки
     def update_row(self, tabl_used, tag, column_update, id_):
         cursor = db.cursor()
@@ -305,11 +321,13 @@ class General_functions():
          atrb.attrib['type'] = type
          atrb.attrib['value'] = str(value)
          obj.append(atrb)
+    
     # Создание строки карты адресов
     def new_map_str(self, obj, element, value):
         elem = etree.Element(element)
         elem.text = str(value)
         obj.append(elem)
+    
     # Чистка и парсинг
     def clear_objects_omx(self, directory):
         # Чистка объектов
@@ -1023,6 +1041,7 @@ class Generate_database_SQL():
                     msg.update(self.synh_tabl('tblpumpreadinesessetpoints', 'gmpna', 'TblPumpreadinesesSetpoints'))
                     continue
             return msg
+
     # msg
     def gen_msg_ai(self, flag_write_db):
         msg = {}
@@ -1033,7 +1052,7 @@ class Generate_database_SQL():
             if addr_offset == 0 or kod_msg is None or addr_offset is None: 
                 msg[f'{today} - Сообщения ai: ошибка. Адреса из таблицы msg не определены'] = 2
                 return msg
-            cursor.execute(f"""SELECT id, "name", "AnalogGroupId" FROM ai ORDER BY id""")
+            cursor.execute("""SELECT id, "name", "AnalogGroupId", "Egu" FROM ai ORDER BY id""")
             list_ai = cursor.fetchall()
 
             self.exist_table()
@@ -1042,12 +1061,13 @@ class Generate_database_SQL():
                 id_ai = analog[0]
                 name_ai = analog[1]
                 group_ai = analog[2]
+                egu_ai = analog[3]
 
                 start_addr = kod_msg + ((id_ai - 1) * int(addr_offset))
 
                 cursor.execute(f"""SELECT "tabl_msg" 
-                                    FROM ai_grp
-                                    WHERE name='{group_ai}'""")
+                                   FROM ai_grp
+                                   WHERE name='{group_ai}'""")
                 try:
                     list_group = cursor.fetchall()[0][0]
                     
@@ -1056,14 +1076,14 @@ class Generate_database_SQL():
                     if not os.path.isfile(path):
                         msg[f'{today} - Сообщения ai: id = {id_ai}, отсутствует шаблон - {list_group}. Используем по умолчанию: TblAnalogsDefault.xml'] = 2
                         raise
-                    gen_list.append(self.dop_function.parser_sample(path, start_addr, name_ai, flag_write_db, 'AI'))
+                    gen_list.append(self.dop_function.parser_sample(path, start_addr, [name_ai, egu_ai], flag_write_db, 'AI'))
                 
                 except Exception:
                     path = f'{connect.path_sample}\TblAnalogsDefault.xml'
                     if not os.path.isfile(path):
                         msg[f'{today} - Сообщения ai: отсутствует шаблон по умолчанию. Пропускаем сигнал'] = 2
                         continue
-                    gen_list.append(self.dop_function.parser_sample(path, start_addr, name_ai, flag_write_db, 'AI'))
+                    gen_list.append(self.dop_function.parser_sample(path, start_addr, [name_ai, egu_ai], flag_write_db, 'AI'))
                     continue
 
             if not flag_write_db:
@@ -1115,6 +1135,7 @@ class Generate_database_SQL():
             msg[f'{today} - Сообщения {tabl}: ошибка генерации: {traceback.format_exc()}'] = 2
         msg[f'{today} - Сообщения {tabl}: генерация завершена!'] = 1
         return(msg)
+    
     def gen_msg_ktprs(self, flag_write_db, tabl, sign, script_file, table_msg):
         msg = {}
         gen_list = []
@@ -1155,6 +1176,7 @@ class Generate_database_SQL():
             msg[f'{today} - Сообщения {tabl}: ошибка генерации: {traceback.format_exc()}'] = 2
         msg[f'{today} - Сообщения {tabl}: генерация завершена!'] = 1
         return(msg)
+    
     def gen_msg_umpna(self, flag_write_db, tabl, sign, script_file):
         msg = {}
         gen_list = []
@@ -1195,6 +1217,7 @@ class Generate_database_SQL():
             msg[f'{today} - Сообщения {tabl}: ошибка генерации: {traceback.format_exc()}'] = 2
         msg[f'{today} - Сообщения {tabl}: генерация завершена!'] = 1
         return msg
+    
     def gen_msg_uts_upts(self, flag_write_db, tabl, sign, script_file):
         msg = {}
         gen_list = []
@@ -1239,6 +1262,7 @@ class Generate_database_SQL():
             msg[f'{today} - Сообщения {tabl}: ошибка генерации: {traceback.format_exc()}'] = 2
         msg[f'{today} - Сообщения {tabl}: генерация завершена!'] = 1
         return(msg)
+    
     def gen_msg_defence(self, flag_write_db, tabl, sign, script_file, table_msg):
         msg = {}
         gen_list = []
@@ -1280,6 +1304,7 @@ class Generate_database_SQL():
             msg[f'{today} - Сообщения {tabl}: ошибка генерации: {traceback.format_exc()}'] = 2
         msg[f'{today} - Сообщения {tabl}: генерация завершена!'] = 1
         return(msg)
+    
     def gen_msg_general(self, flag_write_db, tabl, sign, script_file):
         msg = {}
         gen_list = []
@@ -1313,6 +1338,7 @@ class Generate_database_SQL():
             msg[f'{today} - Сообщения {tabl}: ошибка генерации: {traceback.format_exc()}'] = 2
         msg[f'{today} - Сообщения {tabl}: генерация завершена!'] = 1
         return(msg)
+    
     def gen_msg_diag(self, flag_write_db):
         msg = {}
         modul_list = []
@@ -1436,6 +1462,7 @@ class Generate_database_SQL():
             msg[f'{today} - Сообщения {tabl}: ошибка генерации: {traceback.format_exc()}'] = 2
         msg[f'{today} - Сообщения {tabl}: генерация завершена!'] = 1
         return(msg)
+    
     def gen_msg_others(self, flag_write_db, tabl, sign, script_file):
         msg = {}
         gen_list = []
@@ -1490,6 +1517,7 @@ class Generate_database_SQL():
 
         msg[f'{today} - Сообщения {tabl}: генерация завершена!'] = 1
         return(msg)
+    
     def gen_msg_nps(self, flag_write_db, tabl, sign, script_file, table_msg):
         msg = {}
         gen_list = []
@@ -1518,6 +1546,7 @@ class Generate_database_SQL():
             msg[f'{today} - Сообщения {tabl}: ошибка генерации: {traceback.format_exc()}'] = 2
         msg[f'{today} - Сообщения {tabl}: генерация завершена!'] = 1
         return(msg)
+    
     def gen_msg_firezone(self, flag_write_db, tabl, script_file):
         msg = {}
         gen_list = []
