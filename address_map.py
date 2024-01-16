@@ -498,7 +498,9 @@ class UtsUptsMap(BaseMap):
             data = self.gen_funct.select_orm(self.model, None, self.model.id)
 
             for row in data:
-                name = f'Root{connect.prefix_system}.{self.sign}{row.tag}.{self.prefix}'
+                tag = self.gen_funct.translate(str(row.tag))
+
+                name = f'Root{connect.prefix_system}.{self.sign}{tag}.{self.prefix}'
 
                 address = list_addrr[self.prefix] + (row.id - 1)
                 self.new_element(root, name, address)
@@ -634,8 +636,10 @@ class PIMap(BaseMap):
                 return msg
 
             for row in data:
+                tag = self.gen_funct.translate(str(row.tag))
+
                 for i in range(len(self.prefix)):
-                    name = f'Root{connect.prefix_system}.{PIs}{row.tag}.{self.prefix[i]}'
+                    name = f'Root{connect.prefix_system}.{PIs}{tag}.{self.prefix[i]}'
                     address = list_addrr['StatePI'] + i + (len(self.prefix) * (row.id - 1))
 
                     self.new_element(root, name, address)
