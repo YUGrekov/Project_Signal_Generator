@@ -115,7 +115,7 @@ class AIParam():
                        variable=f'AI[{self.count_row}]',
                        tag=signal.tag,
                        name=signal.description,
-                       pValue=f'mAI8[{num_through}, {signal.module}]',
+                       pValue=f'mAI8[{num_through}, {signal.channel}]',
                        pHealth=f'mAI8_HEALTH[{num_through}]',
                        AnalogGroupId=cls_param.AnalogGroupId,
                        SetpointGroupId=cls_param.SetpointGroupId,

@@ -4987,6 +4987,7 @@ class Filling_CodeSys():
         except Exception:
             msg[f'{today} - Файл СУ: ошибка при заполнении cfg_ao: {traceback.format_exc()}'] = 2
             return msg  
+    
     def cfg_ai(self):
         msg = {}
         try:
@@ -5042,6 +5043,7 @@ class Filling_CodeSys():
         except Exception:
             msg[f'{today} - Файл СУ: ошибка при заполнении cfg_ai: {traceback.format_exc()}'] = 2
             return msg  
+    
     def cfg_dps(self):
         msg = {}
         try:
