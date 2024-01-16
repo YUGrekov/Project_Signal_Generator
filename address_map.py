@@ -163,9 +163,9 @@ class AnalogsMap(BaseMap):
                     elif 'StateAI' == self.prefix[i]:
                         address = list_addrr['StateAI'] + 2 * (row.id - 1)
                     elif 'Range_Bottom' == self.prefix[i]:
-                        address = list_addrr['AIParam'] + 4 + 46 * (row.id - 1)
+                        address = list_addrr['AIParam'] + 2 + 48 * (row.id - 1)
                     elif 'Range_Top' == self.prefix[i]:
-                        address = list_addrr['AIParam'] + 2 + 46 * (row.id - 1)
+                        address = list_addrr['AIParam'] + 4 + 48 * (row.id - 1)
 
                     self.new_element(root, name, address)
             tree.write(path, pretty_print=True)
