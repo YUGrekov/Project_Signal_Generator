@@ -487,7 +487,10 @@ class Alarm_map():
                                                  NumName.NUM_LIST_VU.value)
         max_siren = self.request.max_value_column(self.table,
                                                   NumName.NUM_SIREN_VU.value)
-        return int(max_page), int(max_siren)
+        if (max_page is None or max_page == '') or (max_siren is None or max_siren == ''):
+            max_page = None
+            max_siren = None
+        return max_page, max_siren
 
     def filling_template(self):
         """Заполнение шаблона табло и сирен."""
@@ -505,6 +508,10 @@ class Alarm_map():
                                             страниц переключений
                                             или сирен''', 2)
                 return
+
+            max_page = int(max_page)
+            max_siren = int(max_siren)
+
             self.click = True if max_page > 1 else False
 
             # На основе шаблона -> новая форма

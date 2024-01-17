@@ -301,8 +301,10 @@ class General_functions():
     def max_value_column(self, table_used, column, condition, *args):
         try:
             cursor = db.cursor()
-            if condition is False: cursor.execute(f'''SELECT MAX("{column}") FROM "{table_used}"''')
-            else                 : cursor.execute(f'''SELECT MAX("{column}") FROM "{table_used}" WHERE "{args[0]}"={args[1]}''')
+            if condition is False:
+                cursor.execute(f'''SELECT MAX("{column}") FROM "{table_used}"''')
+            else:
+                cursor.execute(f'''SELECT MAX("{column}") FROM "{table_used}" WHERE "{args[0]}"={args[1]}''')
         except Exception:
             return 
         return cursor.fetchall()[0][0]
@@ -3079,7 +3081,6 @@ class Filling_attribute_DevStudio():
                 kvo_in_zd = value[8]
                 open_in_zd= value[9]
 
-                if number == '' or number is None: continue
                 if name == '' or name   is None: continue
 
                 try:
@@ -3106,7 +3107,7 @@ class Filling_attribute_DevStudio():
                 # Наличие мутфа, авария
                 isBUR = True if (vmmo is None or vmmo == '') or (vmmz is None or vmmz == '') else False
                 # Наличие ключа М/Д смотри по двум полям физика или интерфейс
-                isDist = True if (not dist_i is None or dist_i == '') or (not dist_f is None or dist_f == '') else False
+                isDist = True if (dist_i is None or dist_i != '') or (dist_f is None or dist_f != '') else False
                 # Наличие интерфейса
                 isRS = True if rs == 1 else False
 
@@ -3728,7 +3729,7 @@ class Filling_attribute_DevStudio():
                      "11":"1"}
         msg = {}
         try:
-            data_di = self.dop_function.connect_by_sql('di', f'"tag", "name", "priority_0", "priority_1"')
+            data_di = self.dop_function.connect_by_sql('di', f'"tag_eng", "name", "priority_0", "priority_1"')
             root, tree = self.dop_function.parser_diag_map(f'.Diskrets.', link_path)
 
             for data in data_di:
@@ -3745,9 +3746,11 @@ class Filling_attribute_DevStudio():
 
                 color_shema = str(dop_color[priority_0 + priority_1])
 
-                if name is None: continue
-                if tag  is None: continue
-                tag = self.dop_function.translate(str(tag))
+                if name is None:
+                    continue
+                if tag is None or tag == '':
+                    continue
+                # tag = self.dop_function.translate(str(tag))
 
                 object = etree.Element('item')
                 object.attrib['id'] = f'Root.Diskrets.{tag}.s_Config'
@@ -8055,6 +8058,8 @@ class Filling_ZD():
                         'AlphaHMI_PIC4', 'AlphaHMI_PIC4_Number_kont']
         msg = self.dop_function.column_check(ZD, 'zd', list_default)
         return msg 
+
+
 class Filling_ZD_tm():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -8086,14 +8091,14 @@ class Filling_ZD_tm():
                     msg[f'{today} - Таблицы: zd пустая! Заполни таблицу!'] = 2
                     return msg
                 
-                self.cursor.execute(f'''SELECT name FROM zd''')
+                self.cursor.execute(f'''SELECT name FROM zd ORDER BY id''')
                 for i in self.cursor.fetchall():
                     count_ZD += 1
                     for ust in time_ust:
                         count_row += 1
                         used = '0' if ust[0] == 'Резерв' else '1' 
                         list_zd_tm.append(dict(id = count_row, 
-                                                variable = f'tmZD[{count_ZD}].{ust[1]}',
+                                                variable = f'{47 + count_row}', # f'tmZD[{count_ZD}].{ust[1]}'
                                                 tag  = f'HZD{count_ZD}_{ust[1]}',
                                                 name = f'{i[0]}. {ust[0]}',
                                                 unit = ust[3],
@@ -8116,6 +8121,8 @@ class Filling_ZD_tm():
                         'value_ust', 'minimum', 'maximum', 'group_ust', 'rule_map_ust']
         msg = self.dop_function.column_check(ZD_tm, 'zd_tm', list_default)
         return msg 
+
+
 class Filling_VS():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -8302,6 +8309,8 @@ class Filling_VS():
                         'AlphaHMI_PIC4', 'AlphaHMI_PIC4_Number_kont']
         msg = self.dop_function.column_check(VS, 'vs', list_default)
         return msg 
+
+
 class Filling_VS_tm():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -8334,14 +8343,14 @@ class Filling_VS_tm():
                         count_row += 1
                         used = '0' if ust[0] == 'Резерв' else '1' 
                         list_vs_tm.append(dict(id = count_row, 
-                                                variable = f'tmVS[{count_VS}].{ust[1]}',
+                                                variable = f'{3047 + count_row}', # f'tmVS[{count_VS}].{ust[1]}'
                                                 tag  = f'HVS{count_VS}_{ust[1]}',
                                                 name = f'{i[0]}. {ust[0]}',
                                                 unit = ust[3],
                                                 used = used,
                                                 value_ust = f'{ust[2]}',
-                                                minimum = '0',
-                                                maximum = '65535',
+                                                minimum = 0,
+                                                maximum = 65535,
                                                 group_ust = 'Временные уставки вспомсистем',
                                                 rule_map_ust = 'Временные уставки'))
                             
@@ -8357,6 +8366,8 @@ class Filling_VS_tm():
                         'value_ust', 'minimum', 'maximum', 'group_ust', 'rule_map_ust']
         msg = self.dop_function.column_check(VS_tm, 'vs_tm', list_default)
         return msg 
+
+
 class Filling_VSGRP():
     def __init__(self):
         self.cursor = db.cursor()
@@ -8368,6 +8379,8 @@ class Filling_VSGRP():
         msg = self.dop_function.column_check(VSGRP, 'vsgrp', list_default)
         msg[f'{today} - Таблица: vs_grp подготовлена'] = 1
         return msg 
+
+
 class Filling_VSGRP_tm():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -8413,6 +8426,8 @@ class Filling_VSGRP_tm():
                         'value_ust', 'minimum', 'maximum', 'group_ust', 'rule_map_ust']
         msg = self.dop_function.column_check(VSGRP_tm, 'vsgrp_tm', list_default)
         return msg 
+
+
 class Filling_UTS():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -8559,6 +8574,8 @@ class Filling_UTS():
         else:
             msg = self.dop_function.column_check(UTS, 'uts', list_default)
         return msg 
+
+
 class Filling_UTS_tm():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -8608,6 +8625,8 @@ class Filling_UTS_tm():
                         'value_ust', 'minimum', 'maximum', 'group_ust', 'rule_map_ust']
         msg = self.dop_function.column_check(UTS_tm, 'uts_tm', list_default)
         return msg 
+
+
 class Filling_VV():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -8696,6 +8715,8 @@ class Filling_VV():
         list_default = ['variable', 'name', 'VV_vkl', 'VV_otkl', 'Pic']
         msg = self.dop_function.column_check(VV, 'vv', list_default)
         return msg 
+
+
 class Filling_PI():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -8805,6 +8826,8 @@ class Filling_PI():
                         'Reset_Link', 'Reset_Request', 'Through_loop_number_for_interface', 'location', 'Pic']
         msg = self.dop_function.column_check(PI, 'pi', list_default)
         return msg 
+
+
 class Filling_PT():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -8818,6 +8841,8 @@ class Filling_PT():
         msg = self.dop_function.column_check(PT, 'pt', list_default)
         msg[f'{today} - Таблица: pt подготовлена'] = 1
         return msg 
+
+
 class Filling_PZ_tm():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -8860,7 +8885,7 @@ class Filling_PZ_tm():
                         count += 1
                         used = '0' if ust[0] == 'Резерв' else '1' 
                         list_pz_tm.append(dict(id = count_row, 
-                                                variable = f'tmPZ[{count_PZ}].{ust[1]}',
+                                                variable = f'{7287 + count_row}', # f'tmPZ[{count_PZ}].{ust[1]}'
                                                 tag  = f'HPZ0{count}.{count_PZ}',
                                                 name = f'{i[0]}. {ust[0]}',
                                                 unit = ust[3],
@@ -8868,7 +8893,7 @@ class Filling_PZ_tm():
                                                 value_ust = f'{ust[2]}',
                                                 minimum = '0',
                                                 maximum = '65535',
-                                                group_ust = 'Временные уставки пожарных зон',
+                                                group_ust = 'Защищаемые сооружения',
                                                 rule_map_ust = 'Временные уставки'))
                             
                 # Checking for the existence of a database
@@ -8883,6 +8908,8 @@ class Filling_PZ_tm():
                         'value_ust', 'minimum', 'maximum', 'group_ust', 'rule_map_ust']
         msg = self.dop_function.column_check(PZ_tm, 'pz_tm', list_default)
         return msg 
+
+
 class Filling_DPS():
     def __init__(self):
         self.cursor   = db.cursor()
