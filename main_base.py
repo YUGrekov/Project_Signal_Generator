@@ -309,6 +309,12 @@ class General_functions():
             return 
         return cursor.fetchall()[0][0]
     
+    def max_value_column_not(self, table: str, column: str):
+        '''Нахождение максимального знач-ния в столбце.'''
+        cursor = db.cursor()
+        cursor.execute(f'''SELECT MAX("{column}") FROM "{table.lower()}"''')
+        return cursor.fetchall()[0][0]
+    
     # Обновление строки
     def update_row(self, tabl_used, tag, column_update, id_):
         cursor = db.cursor()

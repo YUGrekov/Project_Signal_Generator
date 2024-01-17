@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import QCheckBox
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QTextEdit
 from hmi_def import DefenceMap
-from uts_upts_hmi import Alarm_map
+from hmi_siren import Alarm_map
 from uso_hmi import DaignoPicture as DiagForm
 from windows_base_editing import MainWindow as WinEditing
 from import_exel_back import Import_in_SQL as KD_import
@@ -2543,7 +2543,6 @@ class Widget(QWidget):
         if len(self.list_gen_hmi) == 0:             
             msg[f'{today} - HMI Pictures: не выбраны атрибуты'] = 2
             return msg
-        alarm_map = Alarm_map()
         uso_form = DiagForm()
         defence = DefenceMap()
         for tabl in self.list_gen_hmi: 
@@ -2559,11 +2558,13 @@ class Widget(QWidget):
             if tabl == 'HMI_GMPNA': 
                 msg.update(defence.fill_pic_new(['GMPNA']))
                 continue
-            if tabl == 'HMI_UTS': 
-                msg.update(alarm_map.filling_template('uts'))
+            if tabl == 'HMI_UTS':
+                alarm_map = Alarm_map('uts')
+                msg.update(alarm_map.filling_template())
                 continue
             if tabl == 'HMI_UPTS': 
-                msg.update(alarm_map.filling_template('upts'))
+                alarm_map = Alarm_map('upts')
+                msg.update(alarm_map.filling_template())
                 continue
             if tabl == 'HMI_USO': 
                 msg.update(uso_form.filling_pic_uso())

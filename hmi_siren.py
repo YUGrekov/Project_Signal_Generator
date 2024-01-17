@@ -5,16 +5,17 @@ import traceback
 from lxml import etree
 from enum import Enum
 from typing import NamedTuple
-from general_functions import General_functions
-from model_new import connect
-from request_sql import RequestSQL
+from main_base import General_functions
+from models import connect
+from datetime import datetime
+today = datetime.now()
 
 
 SIZE_TABLE_FALSE = 58
-SIZE_TABLE_TRUE = 94
+SIZE_TABLE_TRUE = 74
 HEIGHT_ROW = 26
 OFFSET_CLICK_X = 50
-OFFSET_CLICK_Y = 84
+OFFSET_CLICK_Y = 64
 
 
 class NewRowsParams(NamedTuple):
@@ -129,7 +130,7 @@ class BaseAlarmMap():
     attrib_row = 'type_uts_row'
     bt_id_top = '15726dc3-881e-4d8d-b0fa-a8f8237f08ca'
     bt_id_row = '70e32123-f413-4246-a6d8-6eb96bd1f953'
-    width = '910'
+    width = '870'
     req_1 = '"tag"'
     req_2 = '"number_list_VU" = {}'
     order = "number_siren_VU"
@@ -465,8 +466,7 @@ class Button(BaseFunction):
 
 class Alarm_map():
     '''Заполнение карт табло и сирен.'''
-    def __init__(self, table, logtext):
-        self.logsTextEdit = logtext
+    def __init__(self, table):
         self.dop_function = General_functions()
         self.table = table
 
@@ -482,10 +482,9 @@ class Alarm_map():
 
     def max_condition(self):
         '''Вычисляем из БД максимальное кол-во страниц и сирен.'''
-        max_page = self.request.max_value_column(self.table,
-                                                 NumName.NUM_LIST_VU.value)
-        max_siren = self.request.max_value_column(self.table,
-                                                  NumName.NUM_SIREN_VU.value)
+        max_page = self.dop_function.max_value_column_not(self.table, NumName.NUM_LIST_VU.value)
+        max_siren = self.dop_function.max_value_column_not(self.table, NumName.NUM_SIREN_VU.value)
+
         if (max_page is None or max_page == '') or (max_siren is None or max_siren == ''):
             max_page = None
             max_siren = None
@@ -493,20 +492,16 @@ class Alarm_map():
 
     def filling_template(self):
         """Заполнение шаблона табло и сирен."""
+        msg = {}
         try:
             self.kit = UTS() if self.table == 'UTS' else UPTS()
-            self.request = RequestSQL()
-            self.logsTextEdit.logs_msg(f'''HMI. {self.table}.
-                                       Заполнение формы''', 1)
+            msg[f'{today} - HMI. {self.table.upper()}. Заполнение формы'] = 1
 
             # Max кол-во страниц, защит и кнопка переключения на форме
             max_page, max_siren = self.max_condition()
             if max_page is None or max_siren is None:
-                self.logsTextEdit.logs_msg(f'''HMI. {self.table}.
-                                            Не определено количество
-                                            страниц переключений
-                                            или сирен''', 2)
-                return
+                msg[f'{today} - HMI. {self.table.upper()}. Не определено количество страниц переключений или сирен'] = 2
+                return msg
 
             max_page = int(max_page)
             max_siren = int(max_siren)
@@ -518,22 +513,22 @@ class Alarm_map():
             # Чтение шаблона
             root, tree = self.dop_function.xmlParser(new_form)
             # Изменение шаблона
-            template = Template(self.request, self.kit,
+            template = Template(self.dop_function, self.kit,
                                 max_siren, root, self.table)
             template.change_template(self.click)
             # Сборка сирен
-            siren = TopRow(max_page, root, self.kit, self.request,
+            siren = TopRow(max_page, root, self.kit, self.dop_function,
                            self.table, self.click)
             siren.form_assembly()
             # Добавление кнопок переключения
             if self.click:
                 button = Button(max_page, max_siren, root, self.kit,
-                                self.request, self.table)
+                                self.dop_function, self.table)
                 button.form_assembly()
 
             tree.write(new_form, pretty_print=True, encoding='utf-8')
-            self.logsTextEdit.logs_msg(f'''HMI. {self.table}.
-                                       Форма заполнена''', 1)
+            msg[f'{today} - HMI. {self.table.upper()}. Форма заполнена'] = 1
+            return msg
         except Exception:
-            self.logsTextEdit.logs_msg(f'''HMI. {self.table}. Ошибка
-                                      {traceback.format_exc()}''', 2)
+            msg[f'{today} - HMI. {self.table.upper()}. Ошибка {traceback.format_exc()}'] = 2
+            return msg
