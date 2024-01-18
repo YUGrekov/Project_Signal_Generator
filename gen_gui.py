@@ -343,9 +343,11 @@ class Widget(QWidget):
         b_clear_ai = QPushButton('Очистить', tab_3)
         b_clear_ai.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_ai.setToolTip("Очистить таблицу AI")
-        b_clear_ai.resize(80,23)
+        b_clear_ai.resize(80, 23)
         b_clear_ai.move(b_width_two, b_height + 52) 
         b_clear_ai.clicked.connect(self.clear_ai_tabl)
+        self.q_check_flASME = QCheckBox('АСМЭ', tab_3)
+        self.q_check_flASME.move(b_width_one, 230) 
         # AO
         l_ao = QLabel('AO:', tab_3)
         l_ao.move(2, l_height + 78)
@@ -1629,7 +1631,7 @@ class Widget(QWidget):
     # AI
     def filling_ai(self):
         ai_table = SQL_AI()
-        msg = ai_table.add_sql()
+        msg = ai_table.add_sql(self.q_check_flASME.isChecked())
         self.logs_msg('default', 1, msg, True)
     def clear_ai_tabl(self):
         msg = self.dop_function.clear_tabl('ai', 'AI', self.list_tabl)
@@ -2193,10 +2195,12 @@ class Widget(QWidget):
     def check_gmpna_tabl(self, checked):
         if checked: self.list_gen_tabl.append('GMPNA_tabl')
         else      : self.list_gen_tabl.remove('GMPNA_tabl')
+    
     # Button msg
     def export_list(self):
         msg = self.gen_sql.write_in_sql(self.list_gen_msg, False)
         self.logs_msg('default', 1, msg, True)
+    
     def write_in_sql(self):
         msg = self.gen_sql.write_in_sql(self.list_gen_msg, True)
         self.logs_msg('default', 1, msg, True)

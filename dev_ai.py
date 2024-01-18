@@ -182,7 +182,7 @@ class AIParam():
                                               (AI.channel == signal.channel))
             self.msg[f'{today} - SQL. AI. Строка обновлена: {self.msg_id}'] = 1
 
-    def add_sql(self):
+    def add_sql(self, empty_ASME: bool):
         '''Заполнение таблицы.'''
         self.dop_function = General_functions()
         self.msg = {}
@@ -202,8 +202,8 @@ class AIParam():
                 AIParam.tag = signal.tag
 
                 exist = self.check_signal(signal)
-
-                if exist:
+                # empty_ASME - Заглушка для АСМЭ, временно!!!
+                if exist and not empty_ASME:
                     self.update_table(signal)
                 else:
                     self.count_row += 1

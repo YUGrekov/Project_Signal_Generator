@@ -749,7 +749,7 @@ class Generate_database_SQL():
             return False
     
     def define_number_msg(self, cursor, tag):
-        kod_msg     = 0
+        kod_msg = 0
         addr_offset = 0
         try:
             cursor.execute(f"""SELECT index, count 
@@ -861,7 +861,7 @@ class Generate_database_SQL():
                  '\t\tIsAlert BOOLEAN NOT NULL,\n'
                  '\t\tCONSTRAINT OPMessages_pkey PRIMARY KEY (Category)\n'
                  '\t);\n'
-                'BEGIN TRANSACTION;\n')
+                 'BEGIN TRANSACTION;\n')
         file.write(begin)
         if tabl == 'Others':
             for i in list_str:
@@ -876,7 +876,7 @@ class Generate_database_SQL():
                     file.write(delete)
                     insert = j['insert']
                     file.write(insert)
-        file.write(f'COMMIT;')
+        file.write('COMMIT;')
         file.close()
         return msg
 
@@ -1360,19 +1360,19 @@ class Generate_database_SQL():
 
             for column in HardWare.select().dicts():
                 id_basket = column['id']
-                uso       = column['uso']
-                basket    = column['basket']
+                uso = column['uso']
+                basket = column['basket']
                 for five_column in range(0, 33, 1):
                     if column[f'type_{five_column}'] != '' and column[f'type_{five_column}'] is not None:
                         type_modul = column[f'type_{five_column}']
                         prefix_number = f'0{five_column}' if five_column < 10 else basket
 
                         value = f'Диагностика. {uso}. Модуль А{basket}.{prefix_number} {type_modul}'
-                        modul_list.append(dict(id          = id_basket,
-                                                num_modul  = five_column,
-                                                type_modul = type_modul,
-                                                value      = value,
-                                                basket     = basket))
+                        modul_list.append(dict(id=id_basket,
+                                               num_modul=five_column,
+                                               type_modul=type_modul,
+                                               value=value,
+                                               basket=basket))
             for i in range(2):
                 gen_list = []
                 if i == 0:
@@ -1383,55 +1383,55 @@ class Generate_database_SQL():
 
                     kod_msg, addr_offset = self.define_number_msg(cursor, sign)
                     if addr_offset == 0 or kod_msg is None or addr_offset is None: 
-                        msg[f'{today} - Сообщения {tabl}: адрес {tabl} из таблицы msg не определен'] = 2
+                        msg[f'{today} - Сообщения диагностики: адрес {sign} из таблицы msg не определен'] = 2
                         return msg
                 else:
                     script_file = 'PostgreSQL_Messages-Modul' 
                     tbl_racks = False
                     for j in range(6):
-                        if   j == 0: sign = 'DiagCN'
+                        if j == 0: sign = 'DiagCN'
                         elif j == 1: sign = 'DiagCPU'
                         elif j == 2: sign = 'DiagEthEx'
                         elif j == 3: sign = 'DiagMN'
-                        elif j == 4: sign = 'DiagCPUKC'
+                        elif j == 4: sign = 'DiagPSU'
                         elif j == 5: sign = 'DiagRS'
 
                         kod_msg, addr_offset = self.define_number_msg(cursor, sign)
                         if addr_offset == 0 or kod_msg is None or addr_offset is None: 
-                            msg[f'{today} - Сообщения {tabl}: адрес {tabl} из таблицы msg не определен'] = 2
+                            msg[f'{today} - Сообщения диагностики: адрес {sign} из таблицы msg не определен'] = 2
                             return msg
                         
-                        if   j == 0: 
-                            kod_msg_CN     = kod_msg
+                        if j == 0: 
+                            kod_msg_CN = kod_msg
                             addr_offset_CN = addr_offset
                         elif j == 1: 
-                            kod_msg_CPU     = kod_msg
+                            kod_msg_CPU = kod_msg
                             addr_offset_CPU = addr_offset
                         elif j == 2: 
-                            kod_msg_EthEx     = kod_msg
+                            kod_msg_EthEx = kod_msg
                             addr_offset_EthEx = addr_offset
                         elif j == 3: 
-                            kod_msg_MN     = kod_msg
+                            kod_msg_MN = kod_msg
                             addr_offset_MN = addr_offset
                         elif j == 4: 
-                            kod_msg_PCU     = kod_msg
+                            kod_msg_PCU = kod_msg
                             addr_offset_PCU = addr_offset
                         elif j == 5: 
-                            kod_msg_RS     = kod_msg
+                            kod_msg_RS = kod_msg
                             addr_offset_RS = addr_offset
                     
                 for modul in modul_list:
-                    id_basket    = modul['id']
+                    id_basket = modul['id']
                     number_modul = modul['num_modul']
-                    type_modul   = modul['type_modul']
-                    value_modul  = modul['value']
-                    basket       = modul['basket']
+                    type_modul = modul['type_modul']
+                    value_modul = modul['value']
+                    basket = modul['basket']
 
                     if tbl_racks is True:
                         offset_basket = 32 * 14 * (int(id_basket) - 1)
-                        start_addr = kod_msg + offset_basket + (number_modul* int(addr_offset))
+                        start_addr = kod_msg + offset_basket + (number_modul * int(addr_offset))
                     else:
-                        if   type_modul == 'MK-545-010': 
+                        if type_modul == 'MK-545-010': 
                             start_addr = kod_msg_CN + (count_CN * int(addr_offset_CN)) 
                             table_msg = 'TblD_ModulesCN'
                             count_CN += 1
@@ -1458,18 +1458,18 @@ class Generate_database_SQL():
 
                     path = f'{connect.path_sample}\{table_msg}.xml'
                     if not os.path.isfile(path):
-                        msg[f'{today} - Сообщения {tabl}: в папке отсутствует шаблон - {table_msg}'] = 2
+                        msg[f'{today} - Сообщения диагностики: в папке отсутствует шаблон - {table_msg}'] = 2
                         return msg
 
                     gen_list.append(self.dop_function.parser_sample(path, start_addr, value_modul, flag_write_db, sign))
 
                 if not flag_write_db:
                     msg.update(self.write_file(gen_list, sign, script_file))
-                    msg[f'{today} - Сообщения {tabl}: файл скрипта создан'] = 1
+                    msg[f'{today} - Сообщения диагностики: файл скрипта {script_file} создан'] = 1
         except Exception:
-            msg[f'{today} - Сообщения {tabl}: ошибка генерации: {traceback.format_exc()}'] = 2
-        msg[f'{today} - Сообщения {tabl}: генерация завершена!'] = 1
-        return(msg)
+            msg[f'{today} - Сообщения диагностики: ошибка генерации: {traceback.format_exc()}'] = 2
+        msg[f'{today} - Сообщения диагностики: генерация завершена!'] = 1
+        return (msg)
     
     def gen_msg_others(self, flag_write_db, tabl, sign, script_file):
         msg = {}
@@ -1575,30 +1575,30 @@ class Generate_database_SQL():
                     msg[f'{today} - Сообщения {tabl}: генерация сообщений без: {sign}'] = 2
                     continue 
                 
-                if   j == 0: 
-                    kod_msg_SPZ    = kod_msg
+                if j == 0: 
+                    kod_msg_SPZ = kod_msg
                     addr_offset_SPZ = addr_offset
                 elif j == 1: 
-                    kod_msg_GPZFoam     = kod_msg
+                    kod_msg_GPZFoam = kod_msg
                     addr_offset_GPZFoam = addr_offset
                 elif j == 2: 
-                    kod_msg_GPZWater     = kod_msg
+                    kod_msg_GPZWater = kod_msg
                     addr_offset_GPZWater = addr_offset
                 elif j == 3: 
-                    kod_msg_SUP     = kod_msg
+                    kod_msg_SUP = kod_msg
                     addr_offset_SUP = addr_offset
                 elif j == 4: 
-                    kod_msg_ATP     = kod_msg
+                    kod_msg_ATP = kod_msg
                     addr_offset_ATP = addr_offset
                 elif j == 5: 
-                    kod_msg_GPZWOF     = kod_msg
+                    kod_msg_GPZWOF = kod_msg
                     addr_offset_GPZWOF = addr_offset
                 elif j == 6: 
-                    kod_msg_GPZGas     = kod_msg
+                    kod_msg_GPZGas = kod_msg
                     addr_offset_GPZGas = addr_offset
             
             list_sample = ['TblFireZonesState', 'TblFireZonesGPZFoam', 'TblFireZonesGPZWater', 'TblFireZonesMode',
-                            'TblFireZonesAPT', 'TblFireZonesGPZWithout', 'TblFireZonesGPZGas']
+                           'TblFireZonesAPT', 'TblFireZonesGPZWithout', 'TblFireZonesGPZGas']
             for i in list_sample:
                 path = f'{connect.path_sample}\{i}.xml'
                 if not os.path.isfile(path):
@@ -1610,8 +1610,8 @@ class Generate_database_SQL():
             list_zone = cursor.fetchall()
 
             for zone in list_zone:
-                id_       = zone[0]
-                name      = zone[1]
+                id_ = zone[0]
+                name = zone[1]
                 type_zone = zone[2]
 
                 try:
@@ -1636,7 +1636,7 @@ class Generate_database_SQL():
                             start_addr = kod_msg_ATP + ((int(id_) - 1) * int(addr_offset_ATP)) 
                             table_msg = 'TblFireZonesAPT'
                             text = f'Пожарные зоны. {name}'
-                        elif i == 5 and type_zone == 0:
+                        elif i == 5:
                             start_addr = kod_msg_GPZWOF + ((int(id_) - 1) * int(addr_offset_GPZWOF)) 
                             table_msg = 'TblFireZonesGPZWithout'
                             text = f'Готовности зон. {name}'
@@ -1644,7 +1644,8 @@ class Generate_database_SQL():
                             start_addr = kod_msg_GPZGas + ((int(id_) - 1) * int(addr_offset_GPZGas)) 
                             table_msg = 'TblFireZonesGPZGas'
                             text = f'Готовности зон. {name}'
-                        else: continue
+                        else:
+                            continue
 
                         path = f'{connect.path_sample}\{table_msg}.xml'
                         if not os.path.isfile(path):
@@ -1658,11 +1659,11 @@ class Generate_database_SQL():
             if not flag_write_db:
                 msg.update(self.write_file(gen_list, sign, script_file))
                 msg[f'{today} - Сообщения {tabl}: файл скрипта создан'] = 1
-                return(msg)
+                return (msg)
         except Exception:
             msg[f'{today} - Сообщения {tabl}: ошибка генерации: {traceback.format_exc()}'] = 2
         msg[f'{today} - Сообщения {tabl}: генерация завершена!'] = 1
-        return(msg)
+        return (msg)
 
     # tabl
     def gen_table_AI(self, flag_write_db):
