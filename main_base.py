@@ -1,4 +1,3 @@
-import openpyxl as wb
 import json
 import psycopg2
 import re
@@ -8091,7 +8090,8 @@ class Filling_ZD_tm():
                     ('Время на проверку несправности цепей отключения', 'T12', '2', 'c'),
                     ('Время рассогласования между сигналами по физическому и интерфейсному каналу', 'T13', '2', 'c'),
                     ('Время на задержку при подозрительных переходах', 'T14', '2', 'c'),
-                    ('Резерв', 'T15', '0', 'c')] 
+                    ('Резерв', 'T15', '0', 'c'),
+                    ('Резерв', 'T16', '0', 'c')] 
         with db:
             try:
                 if self.dop_function.empty_table('zd'): 
@@ -8336,7 +8336,9 @@ class Filling_VS_tm():
                     ('Выдержка времени на контроль давления во время работы', 'T5', '5', 'c'),
                     ('Выдержка времени для перевода неработающего агрегата вспомсистемы в режим ремонтный при исчезновении напряжения в схеме управления', 'T6', '40', 'c'),
                     ('Выдержка времени на запаздывание сигналов исчезновения МП и сигнала наличия напряжения от СШ (при кратковременных исчезновениях напряжения на секции шин)', 'T7', '0', 'c'),
-                    ('Выдержка времени на перевод пожарного насоса в ремонтный режим при неисправности цепей включения', 'T8', '40', 'c')] 
+                    ('Выдержка времени на перевод пожарного насоса в ремонтный режим при неисправности цепей включения', 'T8', '40', 'c'),
+                    ('Резерв', 'T9', '0', 'c'),
+                    ('Резерв', 'T10', '0', 'c'),] 
         with db:
             try:
                 if self.dop_function.empty_table('vs'): 
@@ -8609,7 +8611,7 @@ class Filling_UTS_tm():
                         count_row += 1
                         used = '0' if ust[0] == 'Резерв' else '1' 
                         list_uts_tm.append(dict(id = count_row, 
-                                                variable = '',
+                                                variable = f'{4647 + count_row}',
                                                 tag  = f'HUTS[{count_UTS}]_{ust[1]}',
                                                 name = f'{i[0]}. {ust[0]}',
                                                 unit = ust[3],
@@ -8631,6 +8633,58 @@ class Filling_UTS_tm():
         list_default = ['variable', 'tag', 'name', 'unit', 'used', 
                         'value_ust', 'minimum', 'maximum', 'group_ust', 'rule_map_ust']
         msg = self.dop_function.column_check(UTS_tm, 'uts_tm', list_default)
+        return msg 
+
+
+class Filling_UPTS_tm():
+    def __init__(self):
+        self.cursor   = db.cursor()
+        self.dop_function = General_functions()
+
+    def getting_modul(self):
+        msg = {}
+        count_UPTS = 0
+        count_row = 0
+        list_upts_tm = []
+
+        time_ust = [('Задержка на автоматический сброс DDO', 'T1', 1, 'c'),
+                    ('Задержка на возникновение неисправности цепи включения', 'T2', 1, 'c'),
+                    ('Время непрерывной работы сирен' , 'T3', 1, 'с'), 
+                    ('Время паузы в работе сирен', 'T4', 1, 'c')] 
+        with db:
+            try:
+                if self.dop_function.empty_table('upts'): 
+                    msg[f'{today} - Таблицы: upts пустая! Заполни таблицу!'] = 2
+                    return msg
+                
+                self.cursor.execute(f'''SELECT name FROM upts''')
+                for siren in self.cursor.fetchall():
+                    count_UPTS += 1
+                    for ust in time_ust:
+                        count_row += 1
+                        used = False if 'резерв' in ust[0].lower() else True
+                        list_upts_tm.append(dict(id = count_row, 
+                                                 variable = f'{4647 + count_row}',
+                                                 tag  = f'HUPTS[{count_UPTS}]_{ust[1]}',
+                                                 name = f'{siren[0]}. {ust[0]}',
+                                                 unit = ust[3],
+                                                 used = used,
+                                                 value_ust = ust[2],
+                                                 minimum = 0,
+                                                 maximum = 65535,
+                                                 group_ust = 'Временные уставки сирен и табло',
+                                                 rule_map_ust = 'Временные уставки'))
+
+                UPTS_tm.insert_many(list_upts_tm).execute()
+            except Exception:
+                msg[f'{today} - Таблица: upts_tm, ошибка при заполнении: {traceback.format_exc()}'] = 2
+            msg[f'{today} - Таблица: upts_tm, выполнение кода завершено!'] = 1
+        return(msg)
+
+    def column_check(self):
+        list_default = ['variable', 'tag', 'name', 'unit', 'used', 
+                        'value_ust', 'minimum', 'maximum', 'group_ust', 'rule_map_ust']
+        msg = self.dop_function.column_check(UPTS_tm, 'upts_tm', list_default)
         return msg 
 
 
@@ -8869,10 +8923,7 @@ class Filling_PZ_tm():
                     ('Инерционность системы', 'T6', '50', 'c'),
                     ('Задержка включения насосов с момента окончания задержки атаки', 'T7', '0', 'c'),
                     ('Выдержка времения на включение следующего насоса при включении нескольких насосов', 'T8', '10', 'c'),
-                    ('Задержка открытия задвижек с момента окончания задержки атаки', 'T9', '10', 'c'),
-                    ('Резерв', 'T10', '0', 'c'),
-                    ('Резерв', 'T11', '0', 'c'),
-                    ('Резерв', 'T12', '0', 'c')] 
+                    ('Задержка открытия задвижек с момента окончания задержки атаки', 'T9', '10', 'c')] 
         with db:
             try:                
                 try:

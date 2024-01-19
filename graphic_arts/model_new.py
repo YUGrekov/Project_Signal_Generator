@@ -814,6 +814,22 @@ class UTS_tm(BaseModel):
         table_name = 'uts_tm'
 
 
+class UPTS_tm(BaseModel):
+    variable = CharField(null=True)
+    tag = CharField(null=True)
+    name = CharField(null=True)
+    unit = CharField(null=True)
+    used = BooleanField(null=True)
+    value_ust = IntegerField(null=True)
+    minimum = IntegerField(null=True)
+    maximum = IntegerField(null=True)
+    group_ust = CharField(null=True)
+    rule_map_ust = CharField(null=True)
+
+    class Meta:
+        table_name = 'upts_tm'
+
+
 class VV(BaseModel):
     variable = CharField(null=True)
     name = CharField(null=True)

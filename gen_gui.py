@@ -536,7 +536,6 @@ class Widget(QWidget):
         b_clear_rsdata.move(b_width_two + 210, b_height + 182) 
         b_clear_rsdata.clicked.connect(self.clear_rsdata_tabl)
 
-
         # UMPNA
         l_umpna = QLabel('UMPNA:', tab_3)
         l_umpna.move(b_width_one + 378, l_height)
@@ -560,7 +559,7 @@ class Widget(QWidget):
         b_clear_umpna.resize(80, 23)
         b_clear_umpna.move(b_width_two + 420, b_height) 
         b_clear_umpna.clicked.connect(self.clear_umpna_tabl)
-         # ZD
+        # ZD
         l_zd = QLabel('ZD:', tab_3)
         l_zd.move(b_width_one + 378, l_height + 26)
         b_zd_basket = QPushButton('Заполнить', tab_3)
@@ -785,7 +784,7 @@ class Widget(QWidget):
         b_clear_tm_umpna.resize(80, 23)
         b_clear_tm_umpna.move(b_width_two + 647, b_height + 104) 
         b_clear_tm_umpna.clicked.connect(self.clear_tmNA_umpna_narab_tabl)
-         # tmUTS
+        # tmUTS
         l_utstm = QLabel('tmUTS:', tab_3)
         l_utstm.move(b_width_one + 587, l_height + 130)
         b_utstm_basket = QPushButton('Заполнить', tab_3)
@@ -802,39 +801,41 @@ class Widget(QWidget):
         b_clear_utstm.resize(80, 23)
         b_clear_utstm.move(b_width_two + 647, b_height + 130) 
         b_clear_utstm.clicked.connect(self.clear_uts_tm_tabl)
+        # tmUPTS
+        l_uptstm = QLabel('tmUPTS:', tab_3)
+        l_uptstm.move(b_width_one + 587, l_height + 156)
+        b_uptstm_basket = QPushButton('Заполнить', tab_3)
+        b_uptstm_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
+        b_uptstm_basket.setToolTip('''Временные уставки UPTS.
+        Должна быть заполнена таблица UTS, откуда берется название и по умолчанию добавляются уставки.
+        Проверки нет! Для нового заполнения необходимо очистить таблицу, иначе новые записи добавятся в конец таблицы!''')
+        b_uptstm_basket.resize(80, 23)
+        b_uptstm_basket.move(b_width_one + 647, b_height + 156) 
+        b_uptstm_basket.clicked.connect(self.filling_upts_tm)
+        b_clear_uptstm = QPushButton('Очистить', tab_3)
+        b_clear_uptstm.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
+        b_clear_uptstm.setToolTip("Очистить таблицу Временные уставки UPTS")
+        b_clear_uptstm.resize(80, 23)
+        b_clear_uptstm.move(b_width_two + 647, b_height + 156) 
+        b_clear_uptstm.clicked.connect(self.clear_upts_tm_tabl)
         # tmPZ
         l_tmpz = QLabel('PZ_tm:', tab_3)
-        l_tmpz.move(b_width_one + 587, l_height + 156)
+        l_tmpz.move(b_width_one + 587, l_height + 182)
         b_tm_pz_basket = QPushButton('Заполнить', tab_3)
         b_tm_pz_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
         b_tm_pz_basket.setToolTip('''Временные уставки PZ.
         Должна быть заполнена таблица PZ, откуда берется название и по умолчанию добавляются уставки.
         Проверки нет! Для нового заполнения необходимо очистить таблицу, иначе новые записи добавятся в конец таблицы!''')
         b_tm_pz_basket.resize(80, 23)
-        b_tm_pz_basket.move(b_width_one + 647, b_height + 156) 
+        b_tm_pz_basket.move(b_width_one + 647, b_height + 182) 
         b_tm_pz_basket.clicked.connect(self.filling_tmpz)
         b_clear_tm_pz = QPushButton('Очистить', tab_3)
         b_clear_tm_pz.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
         b_clear_tm_pz.setToolTip("Очистить таблицу Временные уставки PZ")
         b_clear_tm_pz.resize(80, 23)
-        b_clear_tm_pz.move(b_width_two + 647, b_height + 156) 
+        b_clear_tm_pz.move(b_width_two + 647, b_height + 182) 
         b_clear_tm_pz.clicked.connect(self.clear_tmpz_tabl)
-        # PT
-        l_pt = QLabel('PT:', tab_3)
-        l_pt.move(b_width_one + 587, l_height + 182)
-        b_pt_basket = QPushButton('Подготовить', tab_3)
-        b_pt_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
-        b_pt_basket.setToolTip('''Общие настройки пожаротушения PT''')
-        b_pt_basket.resize(80, 23)
-        b_pt_basket.move(b_width_one + 647, b_height + 182) 
-        b_pt_basket.clicked.connect(self.filling_pt)
-        b_clear_pt = QPushButton('Очистить', tab_3)
-        b_clear_pt.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
-        b_clear_pt.setToolTip("Очистить таблицу Общие настройки пожаротушения PT")
-        b_clear_pt.resize(80, 23)
-        b_clear_pt.move(b_width_two + 647, b_height + 182) 
-        b_clear_pt.clicked.connect(self.clear_pt_tabl)
-       
+
         # TM_TS
         l_tm_ts = QLabel('TM_TS:', tab_3)
         l_tm_ts.move(b_width_one + 815, l_height)
@@ -940,6 +941,21 @@ class Widget(QWidget):
         b_clear_tm_tr2.resize(80, 23)
         b_clear_tm_tr2.move(b_width_two + 860, b_height + 156) 
         b_clear_tm_tr2.clicked.connect(self.clear_tmtr2_tabl)
+        # PT
+        l_pt = QLabel('PT:', tab_3)
+        l_pt.move(b_width_one + 815, l_height + 182)
+        b_pt_basket = QPushButton('Подготовить', tab_3)
+        b_pt_basket.setStyleSheet("background: #bfd6bf; border: 1px solid; border-radius: 3px;")
+        b_pt_basket.setToolTip('''Общие настройки пожаротушения PT''')
+        b_pt_basket.resize(80, 23)
+        b_pt_basket.move(b_width_one + 860, b_height + 182) 
+        b_pt_basket.clicked.connect(self.filling_pt)
+        b_clear_pt = QPushButton('Очистить', tab_3)
+        b_clear_pt.setStyleSheet("background: #bbbabf; border: 1px solid; border-radius: 3px;")
+        b_clear_pt.setToolTip("Очистить таблицу Общие настройки пожаротушения PT")
+        b_clear_pt.resize(80, 23)
+        b_clear_pt.move(b_width_two + 860, b_height + 182) 
+        b_clear_pt.clicked.connect(self.clear_pt_tabl)
        
         # ------------------Сообщения------------------
         self.list_gen_msg = []
@@ -1867,13 +1883,23 @@ class Widget(QWidget):
         self.logs_msg('default', 1, msg, True)
     # tmUTS
     def filling_uts_tm(self):
-        vs_table = Filling_UTS_tm()
-        msg = vs_table.column_check()
+        uts_table = Filling_UTS_tm()
+        msg = uts_table.column_check()
         self.logs_msg('default', 1, msg, True)
-        msg = vs_table.getting_modul()
+        msg = uts_table.getting_modul()
         self.logs_msg('default', 1, msg, True)
     def clear_uts_tm_tabl(self):
         msg = self.dop_function.clear_tabl('uts_tm', 'UTS_tm', self.list_tabl)
+        self.logs_msg('default', 1, msg, True)
+    # tmUPTS
+    def filling_upts_tm(self):
+        upts_table = Filling_UPTS_tm()
+        msg = upts_table.column_check()
+        self.logs_msg('default', 1, msg, True)
+        msg = upts_table.getting_modul()
+        self.logs_msg('default', 1, msg, True)
+    def clear_upts_tm_tabl(self):
+        msg = self.dop_function.clear_tabl('upts_tm', 'UPTS_tm', self.list_tabl)
         self.logs_msg('default', 1, msg, True)
     # VV
     def filling_vv(self):

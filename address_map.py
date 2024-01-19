@@ -314,13 +314,13 @@ class ZDMap(BaseMap):
                     name = f'Root{connect.prefix_system}.{ZDs}ZD_{row.id}.{self.prefix[i]}'
 
                     if 'StateValve1' == self.prefix[i]:
-                        address = list_addrr['StateZD'] + 5 * (row.id - 1)
+                        address = list_addrr['StateZD'] + 7 * (row.id - 1)
                     elif 'StateValve2' == self.prefix[i]:
-                        address = (list_addrr['StateZD'] + 5 * (row.id - 1) + 1)
+                        address = (list_addrr['StateZD'] + 7 * (row.id - 1) + 1)
                     elif 'StateValve3' == self.prefix[i]:
-                        address = (list_addrr['StateZD'] + 5 * (row.id - 1) + 2)
+                        address = (list_addrr['StateZD'] + 7 * (row.id - 1) + 2)
                     elif 'Tm.tmZD' == self.prefix[i]:
-                        address = (list_addrr['StateZD'] + 5 * (row.id - 1) + 4)
+                        address = (list_addrr['StateZD'] + 7 * (row.id - 1) + 4)
                     elif 'NumOfOpenings' == self.prefix[i]:
                         address = list_addrr['numOfOpenings'] + 2 * (row.id - 1)
                     elif 'NumOfClosings' == self.prefix[i]:
