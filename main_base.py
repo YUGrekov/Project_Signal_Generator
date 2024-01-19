@@ -171,7 +171,7 @@ class General_functions():
                 soundFile = f'{sound}'
                 return isAck, soundFile, isCycle, isSound, isAlert, str(priority)
             
-            elif priority == 3 or priority == 4 or priority_0 == 5:
+            elif priority == 3 or priority == 4 or priority == 5:
                 isAck = False
                 isCycle = False
                 isSound = False
@@ -1137,11 +1137,11 @@ class Generate_database_SQL():
             if not flag_write_db:
                 msg.update(self.write_file(gen_list, sign, script_file))
                 msg[f'{today} - Сообщения {tabl}: файл скрипта создан'] = 1
-                return(msg)
+                return (msg)
         except Exception:
             msg[f'{today} - Сообщения {tabl}: ошибка генерации: {traceback.format_exc()}'] = 2
         msg[f'{today} - Сообщения {tabl}: генерация завершена!'] = 1
-        return(msg)
+        return (msg)
     
     def gen_msg_ktprs(self, flag_write_db, tabl, sign, script_file, table_msg):
         msg = {}
