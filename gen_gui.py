@@ -18,6 +18,7 @@ from windows_base_editing import MainWindow as WinEditing
 from import_exel_back import Import_in_SQL as KD_import
 from dev_ai import AIParam as SQL_AI
 from dev_di import Diskrets as SQL_DI
+from dev_hw import HW as SQL_HW
 from address_map import AnalogsMap
 from address_map import DiskretsMap
 from address_map import PicturesMap
@@ -311,7 +312,7 @@ class Widget(QWidget):
         b_clear_tabl.setToolTip("Очистить таблицу HardWare")
         b_clear_tabl.resize(80, 23)
         b_clear_tabl.move(b_width_two, b_height) 
-        b_clear_tabl.clicked.connect(self.clear_tabl)
+        b_clear_tabl.clicked.connect(self.clear_hardware_tabl)
         c_kk_is_true = QCheckBox('Есть KK?', tab_3)
         c_kk_is_true.setToolTip("Добавить в диагостику проекта коммуникационные контроллеры")
         c_kk_is_true.move(b_width_one, 2) 
@@ -1618,22 +1619,22 @@ class Widget(QWidget):
     def kk_check(self, checked):
         if checked:
             self.kk_is_true = True
-            self.logs_msg(f'Добавить КК - флаг установлен', 3)
+            self.logs_msg('Добавить КК - флаг установлен', 3)
         else:
             self.kk_is_true = False
-            self.logs_msg(f'Добавить КК - флаг cнят', 3)
+            self.logs_msg('Добавить КК - флаг cнят', 3)
+
+    def filling_hardware(self):
+        hw_table = SQL_HW()
+        msg = hw_table.hardware(self.kk_is_true)
+        self.logs_msg('default', 1, msg, True)
     
-    def clear_tabl(self):
+    def clear_hardware_tabl(self):
         msg = self.dop_function.clear_tabl('hardware',
                                            'HardWare',
                                            self.list_tabl)
         self.logs_msg('default', 1, msg, True)
-    def filling_hardware(self):
-        hw_table = Filling_HardWare()
-        msg = hw_table.column_check()
-        self.logs_msg('default', 1, msg, True)
-        msg = hw_table.getting_modul(self.kk_is_true)
-        self.logs_msg('default', 1, msg, True)
+
     # USO
     def filling_uso(self):
         uso_table = Filling_USO()
@@ -2247,16 +2248,19 @@ class Widget(QWidget):
     def synh_in_sql(self):
         msg = self.gen_sql.synh_in_sql(self.list_gen_tabl)
         self.logs_msg('default', 1, msg, True)
+    
     # ------------------Окно редактирования------------------
     # Choose table
     def choose_tabl(self):
         name_table = self.combo.currentText()
         self.ch_tabl = WinEditing(name_table)
         self.ch_tabl.show()
+    
     def choose_tabl_2(self):
         name_table = self.combo_2.currentText()
         self.ch_tabl_2 = WinEditing(name_table)
         self.ch_tabl_2.show()
+    
     # Update table
     def update_tabl(self):
         list_tabl = self.dop_function.all_tables()
@@ -2266,6 +2270,7 @@ class Widget(QWidget):
         for tabl in list_tabl:
            self.combo.addItem(str(tabl))
            self.combo_2.addItem(str(tabl))
+
     # ------------------------ВУ-------------------------
     def check_all_omx(self, checked):
         if checked: 

@@ -88,6 +88,7 @@ class AIParam():
         cls_param = self
 
         for type_s, variable_s in TYPE_ANALOG.items():
+
             if type_s in self.name.lower():
                 cls_param = variable_s()
                 cls_param.prepare()

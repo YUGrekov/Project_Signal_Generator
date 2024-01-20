@@ -6,6 +6,7 @@ import os
 import codecs
 import uuid
 import math
+from backup_file import BackupFile
 from playhouse.migrate import migrate
 from models import *
 from lxml import etree
@@ -389,7 +390,7 @@ class General_functions():
                             for el1 in item.iter('{automation.control}object'):
                                 if el1.attrib['name'] == directory:
                                     return 0, el1, tree
-        except:
+        except Exception:
             return 1, 0, 0
     
     def parser_diag_omx(self, directory):
@@ -522,6 +523,11 @@ class General_functions():
     def non_repea_names(self, models, dist, order):
         '''Нахождение неповторяющихся сигналов в таблице.'''
         query = models.select().order_by(order).distinct(dist)
+        return query.execute()
+
+    def non_repea_cond(self, models, dist, where, order):
+        '''Нахождение неповторяющихся по условию сигналов в таблице.'''
+        query = models.select().distinct(dist).where(where).order_by(order)
         return query.execute()
 
     def check_file_txt(self, path):
@@ -1327,8 +1333,8 @@ class Generate_database_SQL():
             cursor.execute(f"""SELECT id, name, tabl_msg FROM "{tabl}" ORDER BY id""")
             list_signal = cursor.fetchall()
             for signal in list_signal:
-                id_       = signal[0]
-                name      = signal[1]
+                id_ = signal[0]
+                name = signal[1]
                 table_msg = signal[2]
 
                 start_addr = kod_msg + ((id_ - 1) * int(addr_offset))
@@ -1340,11 +1346,11 @@ class Generate_database_SQL():
             if not flag_write_db:
                 msg.update(self.write_file(gen_list, sign, script_file))
                 msg[f'{today} - Сообщения {tabl}: файл скрипта создан'] = 1
-                return(msg)
+                return (msg)
         except Exception:
             msg[f'{today} - Сообщения {tabl}: ошибка генерации: {traceback.format_exc()}'] = 2
         msg[f'{today} - Сообщения {tabl}: генерация завершена!'] = 1
-        return(msg)
+        return (msg)
     
     def gen_msg_diag(self, flag_write_db):
         msg = {}
@@ -2449,9 +2455,15 @@ class Filling_attribute_DevStudio():
     
     def write_in_omx(self, list_tabl):
         msg = {}
+
         if len(list_tabl) == 0:             
             msg[f'{today} - Файл omx: не выбраны атрибуты'] = 2
             return msg
+
+        # Резервная копия редактируемого файла
+        backup = BackupFile()
+        backup.create_file()
+
         for tabl in list_tabl: 
             if tabl == 'AI': 
                 msg.update(self.analogs_omx())
@@ -2557,9 +2569,15 @@ class Filling_attribute_DevStudio():
         path_formatAI = [f'{connect.path_to_devstudio}\\AttributesAnalogsFormats.xml']
         path_egu = [f'{connect.path_to_devstudio}\\AttributesMapEGU.xml']
         msg = {}
+
         if len(list_tabl) == 0: 
             msg[f'{today} - Файл omx: не выбраны атрибуты'] = 2
             return msg
+
+        # Резервная копия редактируемого файла
+        backup = BackupFile()
+        backup.create_file()
+
         for tabl in list_tabl: 
             if tabl == 'AI': 
                 msg.update(self.dop_function.clear_objects_omx('Analogs'))
@@ -2653,9 +2671,15 @@ class Filling_attribute_DevStudio():
     
     def clear_map(self, list_tabl):
         msg = {}
+
         if len(list_tabl) == 0: 
             msg[f'{today} - Карта адресов: не выбраны типы для очистки'] = 2
             return msg
+
+        # Резервная копия редактируемого файла
+        backup = BackupFile()
+        backup.create_file()
+
         for tabl in list_tabl: 
             if tabl == 'AI': 
                 self.dop_function.parser_map('.Analogs.', 'Modbus503')

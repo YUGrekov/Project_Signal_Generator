@@ -1,9 +1,10 @@
 '''Заполнение таблицы разработки HardWare.'''
 import traceback
-from model_new import HardWare
-from model_new import Signals
-from request_sql import RequestSQL
-from general_functions import General_functions
+from datetime import datetime
+from models import HardWare
+from models import Signals
+from main_base import General_functions
+today = datetime.now()
 
 T_SIGNALS = 'signals'
 
@@ -146,18 +147,14 @@ class ConstValues():
 class HW(ConstValues, BaseType):
     '''Заполнение таблицы Hardware.'''
     def __init__(self):
-        # self.logsTextEdit = logtext
-        self.request = RequestSQL()
+        self.msg = {}
         self.dop_function = General_functions()
 
     def check_table(self):
         '''Проверяем таблицу signals на наличие и заполненость.'''
-        result = self.request.check_table(T_SIGNALS)
+        result = self.dop_function.check_table(T_SIGNALS)
         if not result:
-            print('''SQL. Hardware. Таблица signals отсутсвует или не заполнена''')
-            # self.logsTextEdit.logs_msg('''SQL. Hardware. Таблица
-            #                            signals отсутсвует
-            #                            или не заполнена''', 2)
+            self.msg[f'{today} - SQL. HW. Таблица signals отсутсвует или не заполнена'] = 2
             return False
         return True
 
@@ -177,10 +174,8 @@ class HW(ConstValues, BaseType):
 
                     write_array[f'type_{module_s}'] = variable_m.type_m
                     write_array[f'variable_{module_s}'] = f'{variable_m.name_m}'.format(variable_m())
-        self.request.write_base_orm(write_array, HardWare)
-        print(f'SQL. Hardware. Корзина {data.uso}.A{data.basket} добавлена')
-        # self.logsTextEdit.logs_msg(f'''SQL. Hardware. Корзина
-        #                            {data.uso}.A{data.basket} добавлена''', 1)
+        self.dop_function.write_base_orm(write_array, HardWare)
+        self.msg[f'{today} - SQL. HW. Корзина {data.uso}.A{data.basket} добавлена'] = 1
 
     def hardware(self, kk_flag: bool):
         """Заполнение таблицы.
@@ -195,24 +190,22 @@ class HW(ConstValues, BaseType):
             if not self.check_table():
                 raise
             # Находим названия неповторяющихся шкафов
-            all_uso = self.request.non_repea_names(Signals,
-                                                   Signals.uso,
-                                                   Signals.uso)
-            print('SQL. Hardware. Заполнение таблицы')
-            # self.logsTextEdit.logs_msg('''SQL. Hardware.
-            #                            Заполнение таблицы''', 1)
+            all_uso = self.dop_function.non_repea_names(Signals,
+                                                        Signals.uso,
+                                                        Signals.uso)
+            self.msg[f'{today} - SQL. HW. Заполнение таблицы'] = 1
             for name in all_uso:
                 counts_uso += 1
                 # Кол-во корзин в УСО
-                total = self.request.non_repea_cond(Signals, Signals.basket,
-                                                    Signals.uso == name.uso,
-                                                    Signals.basket)
+                total = self.dop_function.non_repea_cond(Signals, Signals.basket,
+                                                         Signals.uso == name.uso,
+                                                         Signals.basket)
                 # Выполняется 1 раз, постоянные строки - КЦ, КК
                 if not t_flag:
                     err_1, err_all, t_flag = self.add_const_sql(kk_flag,
                                                                 name.uso,
                                                                 total,
-                                                                self.request)
+                                                                self.dop_function)
                 if counts_uso <= 2:
                     countsErr = err_1 if counts_uso == 1 else err_all
 
@@ -220,24 +213,18 @@ class HW(ConstValues, BaseType):
                     powerLink_ID += 1
                     countsErr += 1
                     # Сортируем неповторяющиеся сигналы по шкафу и корзине
-                    data_basket = self.request.non_repea_cond(Signals,
-                                                              Signals.module,
-                                                              (Signals.uso == number.uso) & (Signals.basket == number.basket),
-                                                              Signals.module)
+                    data_basket = self.dop_function.non_repea_cond(Signals,
+                                                                   Signals.module,
+                                                                   (Signals.uso == number.uso) & (Signals.basket == number.basket),
+                                                                   Signals.module)
                     # Начальные данные корзины: бп, контролл, усо и тд.
                     write_array = self.assembly_row(countsErr, powerLink_ID,
                                                     number.basket, number.uso)
                     # Формирование корзины и запись в SQL
                     self.write_row(data_basket, write_array)
 
-            print('SQL. Hardware. Таблица заполнена')
-            # self.logsTextEdit.logs_msg('''SQL. Hardware.
-            #                            Таблица заполнена''', 1)
+            self.msg[f'{today} - SQL. HW. Таблица заполнена'] = 1
+            return self.msg
         except Exception:
-            print({traceback.format_exc()})
-            # self.logsTextEdit.logs_msg(f'''SQL. Hardware. Ошибка
-            #                            {traceback.format_exc()}''', 2)
-
-
-a = HW()
-a.hardware(True)
+            self.msg[f'{today} - SQL. HW. Ошибка {traceback.format_exc()}'] = 2
+            return self.msg

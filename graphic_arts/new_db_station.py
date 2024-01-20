@@ -19,7 +19,7 @@ PT_LIST = [m.AI, m.AIFuse, m.AIgrp, m.BD, m.BDGRP, m.Buf, m.BufR, m.DI, m.DO,
            m.KTPRP, m.KTPRS, m.Msg, m.MsgCat, m.MsgOthers, m.Net, m.PI, m.PIC,
            m.PrjTM, m.PT, m.PZ, m.PZ_tm, m.RS, m.RSData, m.RSReq, m.Signals,
            m.SPGrp, m.SPRules, m.SS, m.SSData, m.TrendsGrp, m.USO, m.UPTS,
-           m.UTS_tm, m.VS, m.VS_tm, m.VSGRP, m.VSGRP_tm, m.ZD, m.ZD_tm,
+           m.UPTS_tm, m.VS, m.VS_tm, m.VSGRP, m.VSGRP_tm, m.ZD, m.ZD_tm,
            m.ZDType]
 
 
