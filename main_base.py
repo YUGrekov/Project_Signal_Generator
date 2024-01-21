@@ -3796,34 +3796,39 @@ class Filling_attribute_DevStudio():
             return msg
     
     def analogformat_map(self):
+        def check(grp):
+            return ' ' if grp is None else grp
+
         link_path = f'{connect.path_to_devstudio}\\AttributesAnalogsFormats.xml'
         msg = {}
         try:
-            data_ai = self.dop_function.connect_by_sql('ai', f'"tag", "AnalogGroupId", "Precision"')
+            data_ai = self.dop_function.connect_by_sql('ai', f'"tag_eng", "AnalogGroupId", "Precision"')
             data_aigrp = self.dop_function.connect_by_sql('ai_grp', f'"name", "min6", "min5", "min4", "min3", "min2", "min1", "max1", "max2", "max3", "max4", "max5", "max6"')
             root, tree = self.dop_function.parser_diag_map(f'.Analogs.', link_path)
 
             for data in data_ai:
-                tag          = data[0]
+                tag = data[0]
                 group_analog = data[1]
-                formate      = data[2]
+                formate = data[2]
 
                 if tag == '' or tag is None: continue
-                tag = self.dop_function.translate(str(tag))
 
                 for grp in data_aigrp:
                      if group_analog == grp[0]:
+                        
                         grp_ai = {'Format': formate,
-                                  'UstName.UstMin1': grp[6], 'UstName.UstMin2': grp[5], 'UstName.UstMin3': grp[4],
-                                  'UstName.UstMin4': grp[3], 'UstName.UstMin5': grp[2], 'UstName.UstMin6': grp[1],
-                                  'UstName.UstMax1': grp[7], 'UstName.UstMax2': grp[8], 'UstName.UstMax3': grp[9],
-                                  'UstName.UstMax4': grp[10],'UstName.UstMax5': grp[11],'UstName.UstMax6': grp[12]}
+                                  'UstName.UstMin1': check(grp[6]), 'UstName.UstMin2': check(grp[5]), 'UstName.UstMin3': check(grp[4]),
+                                  'UstName.UstMin4': check(grp[3]), 'UstName.UstMin5': check(grp[2]), 'UstName.UstMin6': check(grp[1]),
+                                  'UstName.UstMax1': check(grp[7]), 'UstName.UstMax2': check(grp[8]), 'UstName.UstMax3': check(grp[9]),
+                                  'UstName.UstMax4': check(grp[10]),'UstName.UstMax5': check(grp[11]),'UstName.UstMax6': check(grp[12])}
+
                         for grp, value in grp_ai.items():
                             object = etree.Element('item')
-                            object.attrib['id']    = f'Root.{connect.prefix_system}Analogs.{tag}.{grp}'
+                            object.attrib['id'] = f'Root.{connect.prefix_system}Analogs.{tag}.{grp}'
                             object.attrib['value'] = str(value)
                             root.append(object)
                 tree.write(link_path, pretty_print=True)
+
             msg[f'{today} - Карта атрибутов AttributesAnalogsFormats заполнена'] = 1
             return msg
         except Exception:
@@ -9181,7 +9186,9 @@ class Filling_TM_TR4():
         list_default = ['variable', 'tag', 'name', 'function_ASDU', 'addr_object', 'variable_change', 'descriptionTR4']
         msg = self.dop_function.column_check(TM_TR4, 'tm_tr4', list_default)
         return msg 
-class Filling_TM_TR2():
+
+
+class Filling_TM_TR2(): 
     def __init__(self):
         self.cursor   = db.cursor()
         self.dop_function = General_functions()
