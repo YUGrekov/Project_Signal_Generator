@@ -61,6 +61,7 @@ class TreeTrends():
             group_trend (dict): список int c неповторяющимеся группами
             root (object): парсинг
         """
+        save_grp = []
         for lvl_one in root.iter('Source'):
 
             # Добавляем название проекта
@@ -71,19 +72,23 @@ class TreeTrends():
                                                       TrendsGrp.id == number,
                                                       TrendsGrp.id)
 
-                search_subgrp = self.dop_function.select_orm(TrendsGrp,
-                                                             TrendsGrp.parent_id == grp_id[0].id,
-                                                             TrendsGrp.id)
-
-                # Если у группы нет подгруппы и значение parent_id=0
-                if (not len(search_subgrp)) and (not grp_id[0].parent_id):
+                # Если у группы нет подгруппы
+                if not grp_id[0].parent_id:
                     group = self.collect_tree(grp_id[0].name_grp, number)
                 else:
-                    if grp_id[0].parent_id:
-                        continue
                     # Родительская группа
-                    group = self.collect_tree(grp_id[0].name_grp, grp_id[0].id)
+                    parent_group = self.dop_function.select_orm(TrendsGrp,
+                                                                TrendsGrp.id == grp_id[0].parent_id,
+                                                                TrendsGrp.id)
+
+                    if parent_group[0].name_grp not in save_grp:
+                        group = self.collect_tree(parent_group[0].name_grp, parent_group[0].id)
+                        save_grp.append(parent_group[0].name_grp)
+
                     # Подгруппа
+                    search_subgrp = self.dop_function.select_orm(TrendsGrp,
+                                                                 TrendsGrp.id == number,
+                                                                 TrendsGrp.id)
                     for sub in search_subgrp:
                         subgroup = self.collect_tree(sub.name_grp, sub.id)
                         group.append(subgroup)

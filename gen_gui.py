@@ -19,6 +19,7 @@ from import_exel_back import Import_in_SQL as KD_import
 from dev_ai import AIParam as SQL_AI
 from dev_di import Diskrets as SQL_DI
 from dev_hw import HW as SQL_HW
+from attrib_pz import ReadyMap as AttrPZ
 from address_map import AnalogsMap
 from address_map import DiskretsMap
 from address_map import PicturesMap
@@ -1272,6 +1273,9 @@ class Widget(QWidget):
         self.q_check_omx_map_egu = QCheckBox('MapEGU', tab_6)
         self.q_check_omx_map_egu.move(250, 110) 
         self.q_check_omx_map_egu.stateChanged.connect(self.check_mapEGU)
+        self.q_check_attr_pz = QCheckBox('Ready PZs', tab_6)
+        self.q_check_attr_pz.move(250, 125) 
+        self.q_check_attr_pz.stateChanged.connect(self.check_attrPZs)
 
         self.q_check_hmi_ktpr = QCheckBox('HMI_KTPR', tab_6)
         self.q_check_hmi_ktpr.move(410, 20) 
@@ -1301,6 +1305,13 @@ class Widget(QWidget):
         b_trends.resize(130, 25)
         b_trends.move(550, 20) 
         b_trends.clicked.connect(self.click_trends)
+
+        # Поиск сигналов
+        b_search_signal = QPushButton('Поиск сигналов', tab_6)
+        b_search_signal.setStyleSheet("background: #73e6fa; border: 1px solid; border-radius: 3px;")
+        b_search_signal.resize(130, 25)
+        b_search_signal.move(550, 55) 
+        b_search_signal.clicked.connect(self.click_search_signal)
 
         # Установить все
         check_all_omx = QCheckBox('Установить/Снять', tab_6)
@@ -2415,6 +2426,9 @@ class Widget(QWidget):
     def check_mapEGU(self, checked):
         if checked: self.list_gen_vu.append('mapEGU')
         else      : self.list_gen_vu.remove('mapEGU')
+    def check_attrPZs(self, checked):
+        if checked: self.list_gen_vu.append('attrPZs')
+        else      : self.list_gen_vu.remove('attrPZs')
     def check_hmi_ktpr(self, checked):
         if checked: self.list_gen_hmi.append('HMI_KTPR')
         else      : self.list_gen_hmi.remove('HMI_KTPR')
@@ -2438,6 +2452,13 @@ class Widget(QWidget):
         else      : self.list_gen_hmi.remove('HMI_USO')
     # Button confirm
     def omx_list(self):
+        for tabl in self.list_gen_vu: 
+            if tabl == 'attrPZs': 
+                readyPZ = AttrPZ()
+                msg = readyPZ.fill_map_ready()
+                self.logs_msg('default', 1, msg, True)
+                break
+
         msg = self.filing_attrib.write_in_omx(self.list_gen_vu)
         self.logs_msg('default', 1, msg, True)
     
@@ -2609,6 +2630,12 @@ class Widget(QWidget):
     
     # Trends
     def click_trends(self):
+        trends = TreeTrends()
+        msg = trends.fill_tree_trends()
+        self.logs_msg('default', 1, msg, True)
+
+    # Поиск сигналов
+    def click_search_signal(self):
         trends = TreeTrends()
         msg = trends.fill_tree_trends()
         self.logs_msg('default', 1, msg, True)

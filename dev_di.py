@@ -168,7 +168,9 @@ class Diskrets():
             if not self.check_table():
                 raise
 
-            self.count_row = self.dop_function.count_row_orm(DI)
+            # self.count_row = self.dop_function.count_row_orm(DI)
+            self.count_row = self.dop_function.max_value_orm(DI, DI.id)
+            self.count_row = 0 if self.count_row is None else self.count_row
 
             self.process_request()
 

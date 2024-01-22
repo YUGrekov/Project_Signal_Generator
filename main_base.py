@@ -6,6 +6,7 @@ import os
 import codecs
 import uuid
 import math
+from peewee import fn
 from backup_file import BackupFile
 from playhouse.migrate import migrate
 from models import *
@@ -469,6 +470,20 @@ class General_functions():
         root = tree.getroot()
         return root, tree
 
+    def clear_map_attrib(self, root, directory):
+        '''Чистка карты атрибутов.'''
+        for item in root.iter('item'):
+            signal = f'Root{connect.prefix_system}{directory}'
+            if signal in item.attrib['id']:
+                root.remove(item)
+
+    def map_new_attrib(self, root, name, value):
+        '''Добавление новых строк в файл.'''
+        object = etree.Element('item')
+        object.attrib['id'] = name
+        object.attrib['value'] = value
+        root.append(object)
+
     def where_select(self, table: str,
                      column: str, condit: int, order):
         '''Запрос на выборку данных с условием и сортировкой.'''
@@ -486,6 +501,10 @@ class General_functions():
                            FROM "{table}"
                            WHERE id = {value_id}""")
         return cursor.fetchone()
+
+    def max_value_orm(self, models, column):
+        '''Запрос Select через ORM на max значение.'''
+        return models.select(fn.Max(models.id)).scalar()
 
     def select_orm(self, models, where, order):
         '''Запрос Select через ORM.'''
@@ -1793,7 +1812,7 @@ class Generate_database_SQL():
                 # IsInterface
                 IsInterface = False
                 # IsBackup
-                IsBackup = True if self.dop_function.str_find(str(Name).lower(), {'резерв'}) else False
+                IsBackup = True if str(Name).lower() == 'резерв' else False
                 # IsPhysic
                 IsPhysic = True if module is not None and channel is not None and IsBackup is False else False
                 # IsTrending
@@ -2553,7 +2572,7 @@ class Filling_attribute_DevStudio():
             if tabl == 'mapEGU': 
                 msg.update(self.egu_map())
                 continue
-        return msg  
+        return msg
     
     def clear_omx(self, list_tabl):
         path_AI_AO = [f'{connect.path_to_devstudio}\\AttributesMapAI_Ref.xml',
@@ -2568,6 +2587,7 @@ class Filling_attribute_DevStudio():
         path_ColorDI = [f'{connect.path_to_devstudio}\\AttributesMapColorScheme.xml']
         path_formatAI = [f'{connect.path_to_devstudio}\\AttributesAnalogsFormats.xml']
         path_egu = [f'{connect.path_to_devstudio}\\AttributesMapEGU.xml']
+        path_description = [f'{connect.path_to_devstudio}\\AttributesMapDescription.xml']
         msg = {}
 
         if len(list_tabl) == 0: 
@@ -2666,6 +2686,9 @@ class Filling_attribute_DevStudio():
                 continue
             if tabl == 'mapEGU': 
                 msg.update(self.dop_function.clear_objects_attrib('.Analogs', path_egu))
+                continue
+            if tabl == 'attrPZs':
+                msg.update(self.dop_function.clear_objects_attrib('.PZs', path_description))
                 continue
         return msg
     
@@ -6781,158 +6804,6 @@ class Filling_CodeSys():
             return msg 
 
 
-class Filling_HardWare():
-    def __init__(self):
-        self.cursor = db.cursor()
-        self.dop_function = General_functions()
-    # Получаем данные с таблицы Signals по количеству корзин и модулю
-    def getting_modul(self, kk_is_True):
-        msg = {}
-        list_type = {'CPU': 'MK-504-120', 'PSU': 'MK-550-024', 'CN': 'MK-545-010', 'MN' : 'MK-546-010', 'AI'    : 'MK-516-008A',
-                     'AO' : 'MK-514-008', 'DI' : 'MK-521-032', 'RS': 'MK-541-002', 'DO' : 'MK-531-032', 'EthEx' : 'MK-544-040'}
-        with db:
-            try:
-                if self.dop_function.empty_table('signals'): 
-                    msg[f'{today} - Таблица: signals пустая! Заполни таблицу!'] = 2
-                    return msg
-
-                self.cursor.execute(f'''SELECT DISTINCT uso 
-                                        FROM signals
-                                        ORDER BY uso''')
-                list_uso = self.cursor.fetchall()
-
-                temp_flag    = False
-                test_s       = []
-                count_basket = 0
-                count_AI, count_AO, count_EthEx = 0, 0, 0
-                count_DI, count_DO, count_RS = 0, 0, 0 
-                for uso in list_uso:
-                    self.cursor.execute(f"""SELECT DISTINCT basket 
-                                            FROM signals
-                                            WHERE uso='{uso[0]}'
-                                            ORDER BY basket""")
-                    list_basket = self.cursor.fetchall()
-
-                    # ЦК в количестве 2 - ONE!
-                    if temp_flag is False:
-                        for i in range(2):
-                            uso_kk = uso[0]
-                            test_s.append(dict(uso = uso[0], variable = f'countsErrDiag[{i + 1}]', tag = '',
-                                                basket  = i + 1, powerLink_ID ='', Pic = '',
-                                                type_0  = f'MK-550-024', variable_0 = f'PSU',   type_1 = f'MK-546-010', variable_1 = f'MN;3',
-                                                type_2  = f'MK-504-120', variable_2 = f'CPU;7', type_3 = f'',           variable_3 = f'',
-                                                type_4  = f'',           variable_4 = f'',      type_5 = f'',           variable_5 = f'',
-                                                type_6  = f'',           variable_6 = f'',      type_7 = f'',           variable_7 = f'',
-                                                type_8  = f'',           variable_8 = f'',      type_9 = f'',           variable_9 = f'',
-                                                type_10 = f'',           variable_10= f'',      type_11= f'',           variable_11= f'',
-                                                type_12 = f'',           variable_12= f'',      type_13= f'',           variable_13= f'',
-                                                type_14 = f'',           variable_14= f'',      type_15= f'',           variable_15= f'',
-                                                type_16 = f'',           variable_16= f'',      type_17= f'',           variable_17= f'',
-                                                type_18 = f'',           variable_18= f'',      type_19= f'',           variable_19= f'',
-                                                type_20 = f'',           variable_20= f'',      type_21= f'',           variable_21= f'',
-                                                type_22 = f'',           variable_22= f'',      type_23= f'',           variable_23= f'',
-                                                type_24 = f'',           variable_24= f'',      type_25= f'',           variable_25= f'',
-                                                type_26 = f'',           variable_26= f'',      type_27= f'',           variable_27= f'',
-                                                type_28 = f'',           variable_28= f'',      type_29= f'',           variable_29= f'',
-                                                type_30 = f'',           variable_30= f'',      type_31= f'',           variable_31= f'',
-                                                type_32 = f'',           variable_32= f''))
-                        temp_flag = True
-                    for basket in list_basket:
-                        count_basket     += 1
-                        list_hw           = {}
-                        list_hw['uso']    = uso[0]    
-                        list_hw['basket'] = basket[0] 
-
-                        # Если в проекте есть КК
-                        if kk_is_True and count_basket == 3:
-                            for i in range(4, 6, 1):
-                                test_s.append(dict(uso        = uso_kk,
-                                                   variable   = f'countsErrDiag[{i + 1}]',
-                                                   tag        = '',
-                                                   basket     = i + 1,
-                                                   type_0     = 'MK-550-024',
-                                                   variable_0 = f'PSU',
-                                                   type_1     = f'MK-544-040',
-                                                   variable_1 = f'EthEx;3',
-                                                   type_2     = f'MK-504-120',
-                                                   variable_2 = f'CPU;7'))
-
-                        self.cursor.execute(f"""SELECT DISTINCT module, type_signal 
-                                                FROM signals
-                                                WHERE uso='{uso[0]}' AND basket={basket[0]}
-                                                ORDER BY module""")
-                        req_modul = self.cursor.fetchall()
-                        for i in req_modul:
-                            if i[1] is None or i[1] == '' or i[1] == ' ': 
-                                type_kod = 'Неопределен!'
-                                type_mod = 'Неопределен!'
-                                msg[f'{today} - Таблица: Hardware. {uso[0]}.A{basket[0]}.{i[0]} тип не определен!'] = 2
-                            else:
-                                for key, value in list_type.items():
-                                    if str(i[1]).find(key) != -1: 
-                                        if key == 'AI': 
-                                            count_AI += 1
-                                            type_mod = f'{key}[{count_AI}]'
-                                        elif key == 'AO': 
-                                            count_AO += 1
-                                            type_mod = f'{key}[{count_AO}]'
-                                        elif key == 'DI': 
-                                            count_DI += 1
-                                            type_mod = f'{key}[{count_DI}]'
-                                        elif key == 'DO': 
-                                            count_DO += 1
-                                            type_mod = f'{key}[{count_DO}]'
-                                        elif key == 'RS': 
-                                            count_RS += 1
-                                            type_mod = f'RS[{count_RS}];3'
-                                        elif key == 'EthEx': 
-                                            count_EthEx += 1
-                                            type_mod = f'{key}[{count_EthEx}]'
-                                        else:
-                                            type_mod = key
-                                        type_kod = value
-
-                            if   kk_is_True and (count_basket == 1 or count_basket == 2):
-                                list_hw['id'] = count_basket + 2
-                            else:
-                                list_hw['id'] = count_basket + 4
-                            
-                            list_hw['variable']        = f'countsErrDiag[]'
-                            list_hw['tag']             = ''
-                            list_hw['powerLink_ID']    = count_basket
-                            list_hw['type_0']          = 'MK-550-024'
-                            list_hw['variable_0']      = 'PSU'
-                            list_hw['type_1']          = 'MK-545-010'
-                            list_hw['variable_1']      = 'CN;3'
-                            list_hw[f'type_{i[0]}']     = type_kod
-                            list_hw[f'variable_{i[0]}'] = type_mod
-                        test_s.append(list_hw)
-
-                # Checking for the existence of a database
-                HardWare.insert_many(test_s).execute()
-                msg[f'{today} - Таблица: hardware заполнена'] = 1
-            except Exception:
-                msg[f'{today} - Таблица: hardware, ошибка при заполнении: {traceback.format_exc()}'] = 2
-            msg[f'{today} - Таблица: hardware, выполнение кода завершено!'] = 1
-        return(msg)
-    # Заполняем таблицу HardWare
-    def column_check(self):
-        list_default = ['variable', 'tag', 'uso', 'basket', 'powerLink_ID', 'Pic', 
-                        'type_0',  'variable_0',  'type_1',  'variable_1',  'type_2',  'variable_2', 
-                        'type_3',  'variable_3',  'type_4',  'variable_4',  'type_5',  'variable_5', 
-                        'type_6',  'variable_6',  'type_7',  'variable_7',  'type_8',  'variable_8',
-                        'type_9',  'variable_9',  'type_10', 'variable_10', 'type_11', 'variable_11', 
-                        'type_12', 'variable_12', 'type_13', 'variable_13', 'type_14', 'variable_14', 
-                        'type_15', 'variable_15', 'type_16', 'variable_16', 'type_17', 'variable_17',
-                        'type_18', 'variable_18', 'type_19', 'variable_19', 'type_20', 'variable_20', 
-                        'type_21', 'variable_21', 'type_22', 'variable_22', 'type_23', 'variable_23', 
-                        'type_24', 'variable_24', 'type_25', 'variable_25', 'type_26', 'variable_26',
-                        'type_27', 'variable_27', 'type_28', 'variable_28', 'type_29', 'variable_29', 
-                        'type_30', 'variable_30', 'type_31', 'variable_31', 'type_32', 'variable_32']
-        
-        self.dop_func = General_functions()
-        msg = self.dop_func.column_check(HardWare, 'hardware', list_default)
-        return msg
 class Filling_USO():
     def __init__(self):
         self.cursor   = db.cursor()
