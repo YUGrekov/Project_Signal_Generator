@@ -1401,7 +1401,7 @@ class HMIWORD(BaseModel):
     tag = CharField(null=True)
     name = CharField(null=True)
     link = CharField(null=True)
-    
+
     class Meta:
         table_name = 'hmi_word'
 
@@ -1411,7 +1411,7 @@ class HMIVS(BaseModel):
     tag = CharField(null=True)
     name = CharField(null=True)
     link = CharField(null=True)
-    
+
     class Meta:
         table_name = 'hmi_vs'
 
@@ -1421,7 +1421,7 @@ class HMINA(BaseModel):
     tag = CharField(null=True)
     name = CharField(null=True)
     link = CharField(null=True)
-    
+
     class Meta:
         table_name = 'hmi_na'
 

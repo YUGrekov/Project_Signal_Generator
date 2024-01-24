@@ -8,6 +8,9 @@ from models import TrendsGrp
 from datetime import datetime
 today = datetime.now()
 
+NAME_FILE = 'AlphaTrends.xml'
+CONST_SCRIPT = '<?xml version="1.0" encoding="UTF-8"?>\n<Source Type="NaftaPostgres">\n</Source>'
+
 
 class TreeTrends():
     def __init__(self):
@@ -50,10 +53,29 @@ class TreeTrends():
 
     def collect_tree(self, name_grp, where_sql):
         '''Один метод ля повторяющихся действий.'''
+        data_ai = self.dop_function.select_orm(AI,
+                                               AI.TrendingGroup == where_sql,
+                                               AI.id)
         group = self.add_group(name_grp)
-        data_ai = self.dop_function.select_orm(AI, AI.TrendingGroup == where_sql, AI.id)
         self.add_signal(data_ai, group)
         return group
+
+    def list_group(self, data_grp):
+        '''Распределение списка групп по id и parent_id.'''
+        assembly = {}
+        for number in data_grp:
+            dict_group = []
+            grp_id = self.dop_function.select_orm(TrendsGrp, TrendsGrp.id == number, TrendsGrp.id)
+            parent_id = self.dop_function.select_orm(TrendsGrp, TrendsGrp.id == grp_id[0].parent_id, TrendsGrp.id)
+
+            if not len(parent_id):
+                assembly[grp_id[0].id] = 0
+            else:
+                groups = self.dop_function.select_orm(TrendsGrp, TrendsGrp.parent_id == parent_id[0].id, TrendsGrp.id)
+                for i in groups:
+                    dict_group.append(i.id)
+                assembly[parent_id[0].id] = dict_group
+        return assembly
 
     def build_tree(self, group_trend, root):
         """Построение дерева трендов.
@@ -61,57 +83,45 @@ class TreeTrends():
             group_trend (dict): список int c неповторяющимеся группами
             root (object): парсинг
         """
-        save_grp = []
         for lvl_one in root.iter('Source'):
-
-            # Добавляем название проекта
+            # Название проекта
             name_prj = self.add_group(connect.name_project)
 
-            for number in group_trend:
-                grp_id = self.dop_function.select_orm(TrendsGrp,
-                                                      TrendsGrp.id == number,
-                                                      TrendsGrp.id)
+            for parent, sub in group_trend.items():
+                grp_id = self.dop_function.select_orm(TrendsGrp, TrendsGrp.id == parent, TrendsGrp.id)
 
-                # Если у группы нет подгруппы
-                if not grp_id[0].parent_id:
-                    group = self.collect_tree(grp_id[0].name_grp, number)
-                else:
-                    # Родительская группа
-                    parent_group = self.dop_function.select_orm(TrendsGrp,
-                                                                TrendsGrp.id == grp_id[0].parent_id,
-                                                                TrendsGrp.id)
-
-                    if parent_group[0].name_grp not in save_grp:
-                        group = self.collect_tree(parent_group[0].name_grp, parent_group[0].id)
-                        save_grp.append(parent_group[0].name_grp)
-
-                    # Подгруппа
-                    search_subgrp = self.dop_function.select_orm(TrendsGrp,
-                                                                 TrendsGrp.id == number,
-                                                                 TrendsGrp.id)
-                    for sub in search_subgrp:
-                        subgroup = self.collect_tree(sub.name_grp, sub.id)
-                        group.append(subgroup)
-
+                group = self.collect_tree(grp_id[0].name_grp, parent)
+                if sub:
+                    for number in sub:
+                        search_subgrp = self.dop_function.select_orm(TrendsGrp, TrendsGrp.id == number, TrendsGrp.id)
+                        for sub in search_subgrp:
+                            data_ai = self.dop_function.select_orm(AI, AI.TrendingGroup == sub.id, AI.id)
+                            if len(data_ai):
+                                subgroup = self.collect_tree(sub.name_grp, sub.id)
+                                group.append(subgroup)
                 name_prj.append(group)
             root.append(name_prj)
 
     def fill_tree_trends(self):
         '''Обработка заполнения дерева трендов.'''
         msg = {}
+        path_file = f'{connect.path_file_txt}\\{NAME_FILE}'
         try:
-            # Проверка файла txt на существование
-            self.dop_function.check_file_txt(connect.path_file_txt)
+            # Проверка файла txt на существование и запись шапки
+            open_file = self.dop_function.check_file_txt(path_file)
+            open_file.write(CONST_SCRIPT)
+            open_file.close()
             # Парсинг новой картинки
-            root, tree = self.dop_function.xmlParser(connect.path_file_txt)
-            # Кол-во групп трендов
-            data_grp = self.count_group_prj()
+            root, tree = self.dop_function.xmlParser(path_file)
+            # Формирование групп трендов
+            data_grp = self.list_group(self.count_group_prj())
             # Построение групп
             self.build_tree(data_grp, root)
 
-            tree.write(connect.path_file_txt, pretty_print=True, encoding='utf-8')
+            tree.write(path_file, pretty_print=True, encoding='utf-8')
             msg[f'{today} - ВУ. Дерево трендов сформировано'] = 1
             return msg
         except Exception:
+            print({traceback.format_exc()})
             msg[f'{today} - ВУ. Дерево трендов. Ошибка {traceback.format_exc()}'] = 2
             return msg

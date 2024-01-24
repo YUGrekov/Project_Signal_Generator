@@ -36,6 +36,7 @@ from address_map import PZMap
 from address_map_diag import DiagMap
 from address_map_diag import RackStateMap
 from trends import TreeTrends
+from signal_search import SearchSignal
 
 # ГРАФИЧЕСКИЙ ИНТЕРФЕЙС ДЛЯ ЗАПУСКА ГЕНЕРАТОРА
 # Сформировать exe: в терминале добавить: auto-py-to-exe
@@ -2636,8 +2637,8 @@ class Widget(QWidget):
 
     # Поиск сигналов
     def click_search_signal(self):
-        trends = TreeTrends()
-        msg = trends.fill_tree_trends()
+        search = SearchSignal()
+        msg = search.fill_search_signal()
         self.logs_msg('default', 1, msg, True)
 
     # ------------------------СУ-------------------------

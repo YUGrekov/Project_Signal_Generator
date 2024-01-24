@@ -551,14 +551,9 @@ class General_functions():
 
     def check_file_txt(self, path):
         """Проверка файла txt на существование."""
-        if not os.path.exists(path):
-            text_file = codecs.open(path, 'w', 'utf-8')
-            text_file.write('<?xml version="1.0" encoding="UTF-8"?>\n<Source Type="NaftaPostgres">\n</Source>')
-        else:
+        if os.path.exists(path):
             os.remove(path)
-            text_file = codecs.open(path, 'w', 'utf-8')
-            text_file.write('<?xml version="1.0" encoding="UTF-8"?>\n<Source Type="NaftaPostgres">\n</Source>')
-        text_file.close()
+        return codecs.open(path, 'w', 'utf-8')
 
 
 class Editing_table_SQL():
@@ -6905,6 +6900,8 @@ class Filling_USO():
                         ]
         msg = self.dop_function.column_check(USO, 'uso', list_default)
         return msg 
+
+
 class Filling_AO():
     def __init__(self):
         self.cursor   = db.cursor()
