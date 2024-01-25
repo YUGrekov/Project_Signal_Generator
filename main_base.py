@@ -2694,10 +2694,6 @@ class Filling_attribute_DevStudio():
             msg[f'{today} - Карта адресов: не выбраны типы для очистки'] = 2
             return msg
 
-        # Резервная копия редактируемого файла
-        backup = BackupFile()
-        backup.create_file()
-
         for tabl in list_tabl: 
             if tabl == 'AI': 
                 self.dop_function.parser_map('.Analogs.', 'Modbus503')
@@ -3255,9 +3251,18 @@ class Filling_attribute_DevStudio():
             return msg
     
     def uts_omx(self):
+        def choice_tag(tag, model):
+            # Поиск тэга для контекстного меню
+            try:
+                isdigit = re.findall('\d+', tag)
+                row = self.dop_function.select_orm(model, model.id == isdigit, model.id)
+                return row[0].tag_eng
+            except Exception:
+                return ' '
+
         msg = {}
         try:
-            data = self.dop_function.connect_by_sql('uts', f'"id", "tag", "name", "siren"')
+            data = self.dop_function.connect_by_sql('uts', f'"id", "tag", "name", "siren", "VKL"')
             msg_bool, el1, tree = self.dop_function.parser_omx('UTSs')
             if msg_bool == 1: 
                 msg[f'{today} - Файл omx: ошибка при очистке UTSs'] = 2
@@ -3265,19 +3270,25 @@ class Filling_attribute_DevStudio():
 
             for value in data:
                 number = value[0]
-                tag    = value[1]
-                name   = value[2]
-                siren  = value[3]
+                tag = value[1]
+                name = value[2]
+                siren = value[3]
+                do_vkl = value[4]
 
-                if tag    is None or tag == '': continue
+                if tag is None or tag == '': continue
                 if number is None or number == '': continue
-                if name   is None or name == '': continue
+                if name is None or name == '': continue
 
-                if int(siren)                                              : sign = 'Сирена'
-                elif self.dop_function.str_find(str(name).lower(), {'газ'}): sign = 'Газ'
-                else                                                       : sign = ''
+                if int(siren):
+                    sign = 'Сирена'
+                elif self.dop_function.str_find(str(name).lower(), {'газ'}):
+                    sign = 'Газ'
+                else:
+                    sign = ''
 
                 tag = self.dop_function.translate(str(tag))
+                # Переход в диагностику
+                do_ref = choice_tag(do_vkl, DO)
 
                 object = etree.Element("{automation.control}object")
                 object.attrib['name'] = str(tag)
@@ -3288,6 +3299,7 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.Library.Attributes.Index", number)
                 self.dop_function.new_attr(object, "unit.Library.Attributes.Sign", sign)
                 self.dop_function.new_attr(object, "unit.System.Attributes.Description", name)
+                self.dop_function.new_attr(object, "unit.Library.Attributes.DO_ref", do_ref)
                 
                 el1.append(object)
             tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
