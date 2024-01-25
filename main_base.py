@@ -2867,12 +2867,12 @@ class Filling_attribute_DevStudio():
                     grp_analog  = value[7]
                     unit_alt    = 'кгс/см2'
 
-                    if equ_fiz     == '': equ_fiz = ''
-                    if tag         == '' or tag is None        : continue
-                    if tag_eng     == '' or tag_eng is None    : continue
-                    if number      == '' or number is None     : continue
-                    if name        == '' or name is None       : continue
-                    if equ         == '' or equ is None        : equ = ' '
+                    if equ_fiz == '': equ_fiz = ''
+                    if tag == '' or tag is None: continue
+                    if tag_eng == '' or tag_eng is None: continue
+                    if number == '' or number is None: continue
+                    if name == '' or name is None: continue
+                    if equ == '' or equ is None: equ = ' '
                     if unit_switch == '' or unit_switch is None: continue
 
                     if 'Уровни' in grp_analog or 'Аналоговые выходы' in grp_analog:
@@ -3019,12 +3019,19 @@ class Filling_attribute_DevStudio():
                 return msg
     
     def auxsystem_omx(self):
+        def choice_tag(tag, model):
+            # Поиск тэга для контекстного меню
+            try:
+                isdigit = re.findall('\d+', tag)
+                row = self.dop_function.select_orm(model, model.id == isdigit, model.id)
+                return row[0].tag_eng
+            except Exception:
+                return ' '
+
         msg = {}
         try:
             data_vs = self.dop_function.connect_by_sql('vs', f'"id", "name", "short_name", "Pressure_is_True", "Voltage", "OTKL"')
-            data_ai = self.dop_function.connect_by_sql('ai', f'"id", "tag"')
-            data_di = self.dop_function.connect_by_sql('di', f'"id", "tag"')
-            data_do = self.dop_function.connect_by_sql('do', f'"id", "tag"')
+
             msg_bool, el1, tree = self.dop_function.parser_omx('AuxSystems')
             if msg_bool == 1: 
                 msg[f'{today} - Файл omx: ошибка при очистке AuxSystems'] = 2
@@ -3032,57 +3039,32 @@ class Filling_attribute_DevStudio():
 
             for value_vs in data_vs:
                 number_vs = value_vs[0]
-                name      = value_vs[1]
+                name = value_vs[1]
                 shortdesc = value_vs[2]
-                sensor    = value_vs[3]
-                voltage   = value_vs[4]
-                close     = value_vs[5]
+                sensor = value_vs[3]
+                voltage = value_vs[4]
+                close = value_vs[5]
 
-                if number_vs == '' or number_vs is None: continue
-                if shortdesc == '' or shortdesc is None: shortdesc = ''
+                if number_vs == '' or number_vs is None:
+                    continue
+                if shortdesc == '' or shortdesc is None:
+                    shortdesc = ''
 
                 tag = 'VS_' + str(number_vs)
-                isdigit = re.findall('\d+', sensor)
                 # Ищем давление на выходе из таблицы AI и DI
-                tag_sensor = ' '
-                if self.dop_function.str_find(sensor.lower(), {'di'}):
-                    for value_di in data_di:
-                        number_di = value_di[0]
-                        tag_di    = value_di[1]
-                        if self.dop_function.str_find(number_di, isdigit):
-                            tag_sensor = tag_di
-                            break
+                if 'di' in sensor.lower():
+                    tag_sensor = choice_tag(sensor, DI)
                     pc_use = '1'
-                elif self.dop_function.str_find(sensor.lower(), {'ai'}):
-                    for value_ai in data_ai:
-                        number_ai = value_ai[0]
-                        tag_ai    = value_ai[1]
-                        if self.dop_function.str_find(number_ai, isdigit):
-                            tag_sensor = tag_ai
-                            break
+                elif 'ai' in sensor.lower():
+                    tag_sensor = choice_tag(sensor, AI)
                     pc_use = str('2')
                 else:
+                    tag_sensor = ' '
                     pc_use = str('0')
                 # Ищем напряжение из таблицы DI
-                tag_voltage = ' '
-                isdigitVoltage = re.findall('\d+', voltage)
-                if self.dop_function.str_find(voltage.lower(), {'di'}):
-                    for value_di in data_di:
-                        number_di = value_di[0]
-                        tag_di_for_diagno = value_di[1]
-                        if self.dop_function.str_find(number_di, isdigitVoltage):
-                            tag_voltage  = tag_di_for_diagno
-                            break
+                tag_voltage = choice_tag(voltage, DI)
                 # Ищем команду закрыть из таблицы DO
-                tag_close = ' '
-                isdigitCLOSE= re.findall('\d+', close)
-                if self.dop_function.str_find(close.lower(), {'do'}):
-                    for value_do in data_do:
-                        number_do = value_do[0]
-                        tag_do    = value_do[1]
-                        if self.dop_function.str_find(number_do, isdigitCLOSE):
-                            tag_close = tag_do
-                            break
+                tag_close = choice_tag(close, DO)
 
                 object = etree.Element("{automation.control}object")
                 object.attrib['name'] = tag
@@ -3107,49 +3089,42 @@ class Filling_attribute_DevStudio():
             return msg
     
     def valves_omx(self):
+        def choice_tag(tag, model):
+            # Поиск тэга для контекстного меню
+            try:
+                isdigit = re.findall('\d+', tag)
+                row = self.dop_function.select_orm(model, model.id == isdigit, model.id)
+                return row[0].tag_eng
+            except Exception:
+                return ' '
+            
         msg = {}
         try:
             data_zd = self.dop_function.connect_by_sql('zd', f'"id", "name", "short_name", "VMMO", "VMMZ", "exists_interface", "Dist", "Dist_i", "KVO", "Open"')
-            data_di = self.dop_function.connect_by_sql('di', f'"id", "tag"')
-            data_do = self.dop_function.connect_by_sql('do', f'"id", "tag"')
+
             msg_bool, el1, tree = self.dop_function.parser_omx('Valves')
             if msg_bool == 1: 
                 msg[f'{today} - Файл omx: ошибка при очистке Valves'] = 2
                 return msg
 
             for value in data_zd:
-                number    = value[0]
-                name      = value[1]
+                number = value[0]
+                name = value[1]
                 shortdesc = value[2]
-                vmmo      = value[3]
-                vmmz      = value[4]
-                rs        = value[5]
-                dist_f    = value[6]
-                dist_i    = value[7]
+                vmmo = value[3]
+                vmmz = value[4]
+                rs = value[5]
+                dist_f = value[6]
+                dist_i = value[7]
                 kvo_in_zd = value[8]
-                open_in_zd= value[9]
+                open_in_zd = value[9]
 
-                if name == '' or name   is None: continue
+                if name == '' or name is None:
+                    continue
 
-                try:
-                    isdigitKVO = re.findall('\d+', kvo_in_zd)
-                    if self.dop_function.str_find(kvo_in_zd.lower(), {'di'}):
-                        for value_di in data_di:
-                            tag_di = value_di[1]
-                            if self.dop_function.str_find(value_di[0], isdigitKVO):
-                                break
-                except Exception:
-                    tag_di = ' '
-
-                try:
-                    isdigitOPEN = re.findall('\d+', open_in_zd)
-                    if self.dop_function.str_find(open_in_zd.lower(), {'do'}):
-                        for value_do in data_do:
-                            tag_do = value_do[1]
-                            if self.dop_function.str_find(value_do[0], isdigitOPEN):
-                                break
-                except Exception:
-                    tag_do = ' '
+                # Переход в диагностику
+                tag_di = choice_tag(kvo_in_zd, DI)
+                tag_do = choice_tag(open_in_zd, DO)
 
                 tag = f'ZD_{number}'
                 # Наличие мутфа, авария
@@ -3162,7 +3137,7 @@ class Filling_attribute_DevStudio():
                 object = etree.Element("{automation.control}object")
                 object.attrib['name'] = tag
                 object.attrib['uuid'] = str(uuid.uuid1())
-                if isRS != True:
+                if not isRS:
                     object.attrib['base-type'] = "unit.Library.PLC_Types.Valve_PLC"
                 else:
                     object.attrib['base-type'] = "unit.Library.PLC_Types.ex_Valve_PLC"
@@ -3186,20 +3161,42 @@ class Filling_attribute_DevStudio():
             return msg
     
     def pumps_omx(self):
+        def choice_tag(tag, model):
+            # Поиск тэга для контекстного меню
+            try:
+                isdigit = re.findall('\d+', tag)
+                row = self.dop_function.select_orm(model, model.id == isdigit, model.id)
+                return row[0].tag_eng
+            except Exception:
+                return ' '
+
         msg = {}
         try:
-            data = self.dop_function.connect_by_sql('umpna', f'"id", "name"')
+            data = self.dop_function.connect_by_sql('umpna', f'"id", "name", "vv_included", "vv_double_included", \
+                                                    "command_to_turn_off_the_vv_output_1", "command_to_turn_off_the_vv_output_2"')
             msg_bool, el1, tree = self.dop_function.parser_omx('NAs')
             if msg_bool == 1: 
                 msg[f'{today} - Файл omx: ошибка при очистке  NAs'] = 2
                 return msg
             
             for value in data:
-                number    = value[0]
-                name      = value[1]
+                number = value[0]
+                name = value[1]
+                vv_vkl = value[2]
+                vv_vkl_d = value[3]
+                vv_otkl = value[4]
+                vv_otkl_d = value[5]
 
-                if number is None: continue
-                if name is None: continue
+                if number is None:
+                    continue
+                if name is None:
+                    continue
+
+                # Переход в диагностику
+                di_ref = choice_tag(vv_vkl, DI)
+                di_ref_1 = choice_tag(vv_vkl_d, DI)
+                do_ref = choice_tag(vv_otkl, DO)
+                do_ref_1 = choice_tag(vv_otkl_d, DO)
 
                 object = etree.Element("{automation.control}object")
                 object.attrib['name'] = f'NA_{str(number)}'
@@ -3210,6 +3207,10 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.Library.Attributes.Index", number)
                 self.dop_function.new_attr(object, "unit.Library.Attributes.Sign", name)
                 self.dop_function.new_attr(object, "unit.System.Attributes.Description", name)
+                self.dop_function.new_attr(object, "unit.Library.Attributes.DI_ref", di_ref)
+                self.dop_function.new_attr(object, "unit.Library.Attributes.DI_ref1", di_ref_1)
+                self.dop_function.new_attr(object, "unit.Library.Attributes.DO_ref", do_ref)
+                self.dop_function.new_attr(object, "unit.Library.Attributes.DO_ref1", do_ref_1)
                 
                 el1.append(object)
             tree.write(f'{connect.path_to_devstudio_omx}', pretty_print=True)
@@ -3586,10 +3587,10 @@ class Filling_attribute_DevStudio():
 
                     data_kd = self.dop_function.connect_by_sql_condition('signals', '*', f'''"uso"='{uso}' AND "basket"={int(num_basket)} AND "module"={int(number_modul)}''')
                     for data in data_kd:
-                        uso     = data[2]
-                        tag     = data[3]
-                        name    = data[4]
-                        klk     = data[6]
+                        uso = data[2]
+                        tag = data[3]
+                        name = data[4]
+                        klk = data[6]
                         contact = data[7]
                         channel = data[10]
 
@@ -7033,6 +7034,8 @@ class Filling_AO():
         list_default = ['variable', 'tag', 'name', 'pValue', 'pHealth', 'uso', 'basket', 'module', 'channel', 'tag_eng']
         msg = self.dop_function.column_check(AO, 'ao', list_default)
         return msg 
+
+
 class Filling_DO():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -7165,6 +7168,8 @@ class Filling_DO():
                         'AlphaHMI_PIC4', 'AlphaHMI_PIC4_Number_kont']
         msg = self.dop_function.column_check(DO, 'do', list_default)
         return msg 
+
+
 class Filling_RS():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -7275,6 +7280,8 @@ class Filling_RS():
         list_default = ['variable', 'tag', 'name', 'array_number_modul', 'pValue', 'pHealth', 'Pic', 'uso', 'basket', 'module', 'channel']
         msg = self.dop_function.column_check(RS, 'rs', list_default)
         return msg 
+
+
 class Filling_RSreq():
     def __init__(self):
         self.cursor = db.cursor()
@@ -7287,6 +7294,8 @@ class Filling_RSreq():
         msg = self.dop_function.column_check(RSReq, 'rsreq', list_default)
         msg[f'{today} - Таблица: rsreq подготовлена'] = 1
         return msg 
+
+
 class Filling_RSdata():
     def __init__(self):
         self.cursor = db.cursor()
@@ -7299,6 +7308,8 @@ class Filling_RSdata():
         msg = self.dop_function.column_check(RSData, 'rsdata', list_default)
         msg[f'{today} - Таблица: rsdata подготовлена'] = 1
         return msg 
+
+
 class Filling_KTPRP():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -7328,6 +7339,8 @@ class Filling_KTPRP():
                          'number_list_VU', 'number_protect_VU']
         msg = self.dop_function.column_check(KTPRP, 'ktprp', list_default)
         return msg 
+
+
 class Filling_KTPR():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -7387,6 +7400,8 @@ class Filling_KTPR():
                         'value_ust', 'Pic', 'group_ust', 'rule_map_ust', 'number_list_VU', 'number_protect_VU']
         msg = self.dop_function.column_check(KTPR, 'ktpr', list_default)
         return msg 
+
+
 class Filling_KTPRA():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -7426,6 +7441,8 @@ class Filling_KTPRA():
                         'group_ust', 'rule_map_ust', 'number_list_VU', 'number_protect_VU', 'number_pump_VU']
         msg = self.dop_function.column_check(KTPRA, 'ktpra', list_default)
         return msg 
+
+
 class Filling_KTPRS():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -7455,6 +7472,8 @@ class Filling_KTPRS():
                         'msg_priority_1', 'sound_msg_0', 'sound_msg_1', 'prohibition_issuing_msg', 'Pic']
         msg = self.dop_function.column_check(KTPRS, 'ktprs', list_default)
         return msg 
+
+
 class Filling_GMPNA():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -7494,6 +7513,8 @@ class Filling_GMPNA():
                         'rule_map_ust', 'number_list_VU', 'number_protect_VU', 'number_pump_VU']
         msg = self.dop_function.column_check(GMPNA, 'gmpna', list_default)
         return msg 
+
+
 class Filling_UMPNA():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -7673,6 +7694,8 @@ class Filling_UMPNA():
                         'replacement_uso_signal_vv_1', 'replacement_uso_signal_vv_2']
         msg = self.dop_function.column_check(UMPNA, 'umpna', list_default)
         return msg 
+
+
 class Filling_tmNA_UMPNA():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -7741,6 +7764,8 @@ class Filling_tmNA_UMPNA():
                         'unit', 'used', 'value_ust', 'value_real_ust', 'minimum', 'maximum', 'group_ust', 'rule_map_ust']
         msg = self.dop_function.column_check(tmNA_UMPNA, 'umpna_tm', list_default)
         return msg 
+
+
 class Filling_tmNA_UMPNA_narab():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -7796,6 +7821,8 @@ class Filling_tmNA_UMPNA_narab():
                         'unit', 'used', 'value_ust', 'minimum', 'maximum', 'group_ust', 'rule_map_ust']
         msg = self.dop_function.column_check(tmNA_UMPNA_narab, 'umpna_narab_tm', list_default)
         return msg 
+
+
 class Filling_ZD():
     def __init__(self):
         self.cursor = db.cursor()

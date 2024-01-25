@@ -37,6 +37,7 @@ from address_map_diag import DiagMap
 from address_map_diag import RackStateMap
 from trends import TreeTrends
 from signal_search import SearchSignal
+from message_log import TreeJornal
 
 # ГРАФИЧЕСКИЙ ИНТЕРФЕЙС ДЛЯ ЗАПУСКА ГЕНЕРАТОРА
 # Сформировать exe: в терминале добавить: auto-py-to-exe
@@ -349,8 +350,13 @@ class Widget(QWidget):
         b_clear_ai.resize(80, 23)
         b_clear_ai.move(b_width_two, b_height + 52) 
         b_clear_ai.clicked.connect(self.clear_ai_tabl)
+
+        # АСМЭ
+        l_asme = QLabel('Осторожно! Временно', tab_3)
+        l_asme.move(b_width_one - 22, l_height + 193)
         self.q_check_flASME = QCheckBox('АСМЭ', tab_3)
-        self.q_check_flASME.move(b_width_one, 230) 
+        self.q_check_flASME.move(b_width_one, 230)
+
         # AO
         l_ao = QLabel('AO:', tab_3)
         l_ao.move(2, l_height + 78)
@@ -1313,6 +1319,13 @@ class Widget(QWidget):
         b_search_signal.resize(130, 25)
         b_search_signal.move(550, 55) 
         b_search_signal.clicked.connect(self.click_search_signal)
+
+        # Журнал
+        b_jornal = QPushButton('Журнал', tab_6)
+        b_jornal.setStyleSheet("background: #10caff; border: 1px solid; border-radius: 3px;")
+        b_jornal.resize(130, 25)
+        b_jornal.move(550, 90) 
+        b_jornal.clicked.connect(self.click_jornal)
 
         # Установить все
         check_all_omx = QCheckBox('Установить/Снять', tab_6)
@@ -2639,6 +2652,12 @@ class Widget(QWidget):
     def click_search_signal(self):
         search = SearchSignal()
         msg = search.fill_search_signal()
+        self.logs_msg('default', 1, msg, True)
+
+    # Архивные сообщения
+    def click_jornal(self):
+        jornal = TreeJornal()
+        msg = jornal.fill_tree_jornal()
         self.logs_msg('default', 1, msg, True)
 
     # ------------------------СУ-------------------------

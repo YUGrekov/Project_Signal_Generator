@@ -24,10 +24,11 @@ EQUALITY = {AI: ['аналогов'],
             ZD: ['задвижк'],
             VS: ['вспомсистем'],
             UMPNA: ['насосн', 'агрега'],
-            PZ: ['пожарн', 'зоны'],
-            PI: ['пожарн', 'извещатель'],
+            UTS: ['табл', 'сирен'],
+            PZ: ['пожарн', 'зон'],
+            PI: ['пожарн', 'извещател'],
             DPS: ['поточных', 'устройств'],
-            BD: ['бак', 'дозатор']
+            BD: ['бак', 'дозатор'],
             }
 
 
@@ -63,6 +64,18 @@ class TreeJornal():
         group.text = value
         return group
 
+    def replace_model(self, name, model):
+        '''Замена моделй БД в зависимости от системы и других параметров.'''
+        if name == 'UTS':
+            if connect.type_system == 'PT':
+                return 'UPTS', UPTS
+            else:
+                return name, model
+        elif name == 'PZ':
+            return 'SPZ', PZ
+        else:
+            return name, model
+
     def collect_signal(self, model_bd, count_msg: int, start_msg: int, group):
         """Запись подгруппы.
         Args:
@@ -72,6 +85,10 @@ class TreeJornal():
         """
         data = self.dop_function.select_orm(model_bd, None, model_bd.id)
         for row in data:
+
+            if str(row.name).lower() == 'резерв':
+                continue
+
             begin_code_row = start_msg + count_msg * (row.id - 1)
             end_code_row = begin_code_row + (count_msg - 1)
             code_row = f'{begin_code_row}, {end_code_row}'
@@ -87,11 +104,13 @@ class TreeJornal():
                     check_len += 1
 
             if check_len == len(point):
+                r_name, r_model = self.replace_model(model.__name__, model)
+
                 msg = self.dop_function.select_orm(Msg,
-                                                   Msg.tag == model.__name__,
+                                                   Msg.tag == r_name,
                                                    Msg.id)
                 if len(msg):
-                    self.collect_signal(model, msg[0].count, msg[0].index, group)
+                    self.collect_signal(r_model, msg[0].count, msg[0].index, group)
 
     def build_tree(self, root):
         """Построение дерева.
@@ -133,7 +152,3 @@ class TreeJornal():
             print({traceback.format_exc()})
             msg[f'{today} - ВУ. Категории архивного журнала. Ошибка {traceback.format_exc()}'] = 2
             return msg
-
-
-a = TreeJornal()
-a.fill_tree_jornal()
