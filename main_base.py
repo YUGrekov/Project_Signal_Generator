@@ -984,7 +984,9 @@ class Generate_database_SQL():
     
     def write_in_sql_tabl(self, list_tabl, flag_write_db):
         msg = {}
-        if len(list_tabl) == 0: return
+        if not len(list_tabl):
+            return
+
         for tabl in list_tabl: 
             if tabl == 'AI_tabl': 
                 msg.update(self.gen_table_AI(flag_write_db))
@@ -1911,14 +1913,15 @@ class Generate_database_SQL():
         return msg
 
     def gen_table_AIGRP(self, flag_write_db):
-        def choise_ust(ust):
-            if ust is None:
-                ust = ''
-            return ust
+        def select_values(data):
+            array = []
+            for key, value in data.items():
+                if value is None:
+                    value = ''
+                array.append(value)
+            return array
 
-        cursor = db.cursor()
         cursor_prj = db_prj.cursor()
-    
         text_start = ('\tCREATE SCHEMA IF NOT EXISTS objects;\n'
                       '\tCREATE TABLE IF NOT EXISTS objects.TblAnalogGroups(\n'
                       '\t\tId INT NOT NULL,\n'
@@ -1936,6 +1939,18 @@ class Generate_database_SQL():
                       '\t\tMax5Name VARCHAR(1024),\n'
                       '\t\tMax6Name VARCHAR(1024),\n'
                       '\t\tMessageTable VARCHAR(1024),\n'
+                      '\t\tMin6Desc VARCHAR(1024),\n'
+                      '\t\tMin5Desc VARCHAR(1024),\n'
+                      '\t\tMin4Desc VARCHAR(1024),\n'
+                      '\t\tMin3Desc VARCHAR(1024),\n'
+                      '\t\tMin2Desc VARCHAR(1024),\n'
+                      '\t\tMin1Desc VARCHAR(1024),\n'
+                      '\t\tMax1Desc VARCHAR(1024),\n'
+                      '\t\tMax2Desc VARCHAR(1024),\n'
+                      '\t\tMax3Desc VARCHAR(1024),\n'
+                      '\t\tMax4Desc VARCHAR(1024),\n'
+                      '\t\tMax5Desc VARCHAR(1024),\n'
+                      '\t\tMax6Desc VARCHAR(1024),\n'
                       '\t\tCONSTRAINT TblAnalogGroups_pkey PRIMARY KEY (Id)\n'
                       '\t);\n'
                       '\tDELETE FROM objects.TblAnalogGroups;\n')
@@ -1944,63 +1959,26 @@ class Generate_database_SQL():
         gen_list = []
         flag_del_tabl = False
         try:
-            cursor.execute(f"""SELECT "id", "name", "tabl_msg",
-                                      "min6", "min5", "min4", "min3", "min2", "min1", 
-                                      "max1", "max2", "max3", "max4", "max5", "max6"
-                                FROM "ai_grp" ORDER BY Id""")
-            list_signal = cursor.fetchall()
+            data = AIgrp.select().dicts().order_by(AIgrp.id)
         except Exception:
             msg[f'{today} - TblAnalogGroups: ошибка генерации: {traceback.format_exc()}'] = 2
             return msg
 
-        for signal in list_signal:
-            try:
-                id_ = signal[0]
-                name = signal[1]
-                tabl_msg = signal[2]
-                ust_min6 = signal[3]
-                ust_min5 = signal[4]
-                ust_min4 = signal[5]
-                ust_min3 = signal[6]
-                ust_min2 = signal[7]
-                ust_min1 = signal[8]
-                ust_max1 = signal[9]
-                ust_max2 = signal[10]
-                ust_max3 = signal[11]
-                ust_max4 = signal[12]
-                ust_max5 = signal[13]
-                ust_max6 = signal[14]
-
-                # Выбор уставок
-                ust_min6 = choise_ust(ust_min6)
-                ust_min5 = choise_ust(ust_min5)
-                ust_min4 = choise_ust(ust_min4)
-                ust_min3 = choise_ust(ust_min3)
-                ust_min2 = choise_ust(ust_min2)
-                ust_min1 = choise_ust(ust_min1)
-                ust_max1 = choise_ust(ust_max1)
-                ust_max2 = choise_ust(ust_max2)
-                ust_max3 = choise_ust(ust_max3)
-                ust_max4 = choise_ust(ust_max4)
-                ust_max5 = choise_ust(ust_max5)
-                ust_max6 = choise_ust(ust_max6)
-            except Exception:
-                msg[f'{today} - TblAnalogGroups: ошибка добавления строки, пропускается: {traceback.format_exc()}'] = 2
-                continue
-            
-            ins_row_tabl = f"INSERT INTO objects.TblAnalogGroups (Id, Name, Min6Name, Min5Name, Min4Name, Min3Name, Min2Name, Min1Name, Max1Name, Max2Name, Max3Name, Max4Name, Max5Name, Max6Name, MessageTable) VALUES({id_}, '{name}', '{ust_min6}', '{ust_min5}', '{ust_min4}', '{ust_min3}', '{ust_min2}', '{ust_min1}', '{ust_max1}', '{ust_max2}', '{ust_max3}', '{ust_max4}', '{ust_max5}', '{ust_max6}', '{tabl_msg}');\n"
+        for row in data:
+            l_row = select_values(row)
+            query = f"INSERT INTO objects.TblAnalogGroups (Id, Name, Min6Name, Min5Name, Min4Name, Min3Name, Min2Name, Min1Name, Max1Name, Max2Name, Max3Name, Max4Name, Max5Name, Max6Name, MessageTable, Min6Desc, Min5Desc, Min4Desc, Min3Desc, Min2Desc, Min1Desc, Max1Desc, Max2Desc, Max3Desc, Max4Desc, Max5Desc, Max6Desc) VALUES({l_row[0]}, '{l_row[1]}', '{l_row[2]}', '{l_row[3]}', '{l_row[4]}', '{l_row[5]}', '{l_row[6]}', '{l_row[7]}', '{l_row[8]}', '{l_row[9]}', '{l_row[10]}', '{l_row[11]}', '{l_row[12]}', '{l_row[13]}', '{l_row[14]}', '{l_row[15]}', '{l_row[16]}', '{l_row[17]}', '{l_row[18]}', '{l_row[19]}', '{l_row[20]}', '{l_row[21]}', '{l_row[22]}', '{l_row[23]}', '{l_row[24]}', '{l_row[25]}', '{l_row[26]}');\n"
             
             if flag_write_db:
                 try:
                     if flag_del_tabl is False:
                         cursor_prj.execute(text_start)
                         flag_del_tabl = True
-                    cursor_prj.execute(ins_row_tabl)
+                    cursor_prj.execute(query)
                 except Exception:
                     msg[f'{today} - TblAnalogGroups: ошибка добавления строки, пропускается: {traceback.format_exc()}'] = 2
                     continue
             else:
-                gen_list.append(ins_row_tabl)
+                gen_list.append(query)
     
         if not flag_write_db:
             try:
@@ -2024,7 +2002,6 @@ class Generate_database_SQL():
                 return msg
             except Exception:
                 msg[f'{today} - TblAnalogGroups: ошибка записи в файл: {traceback.format_exc()}'] = 2
-
         msg[f'{today} - TblAnalogGroups: генерация завершена!'] = 1
         return msg
 
@@ -3275,9 +3252,12 @@ class Filling_attribute_DevStudio():
                 siren = value[3]
                 do_vkl = value[4]
 
-                if tag is None or tag == '': continue
-                if number is None or number == '': continue
-                if name is None or name == '': continue
+                if tag is None or tag == '':
+                    continue
+                if number is None or number == '':
+                    continue
+                if name is None or name == '':
+                    continue
 
                 if int(siren):
                     sign = 'Сирена'
@@ -8913,6 +8893,8 @@ class Filling_DPS():
                         'actuation', 'actuation_transmitter', 'malfunction', 'voltage']
         msg = self.dop_function.column_check(DPS, 'dps', list_default)
         return msg 
+
+
 class Filling_TM_DP():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -8922,6 +8904,8 @@ class Filling_TM_DP():
         list_default = ['variable', 'tag', 'name', 'link_to_link_signal', 'link_to_timeout', 'Pic']
         msg = self.dop_function.column_check(TM_DP, 'tm_dp', list_default)
         return msg 
+
+
 class Filling_TM_TS():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -8952,6 +8936,8 @@ class Filling_TM_TS():
         list_default = ['variable', 'tag', 'name', 'function_ASDU', 'addr_object', 'link_value']
         msg = self.dop_function.column_check(TM_TS, 'tm_ts', list_default)
         return msg 
+
+
 class Filling_TM_TI4():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -8981,6 +8967,8 @@ class Filling_TM_TI4():
         list_default = ['variable', 'tag', 'name', 'function_ASDU', 'addr_object', 'variable_value', 'variable_status', 'variable_Aiparam']
         msg = self.dop_function.column_check(TM_TI4, 'tm_ti4', list_default)
         return msg 
+
+
 class Filling_TM_TI2():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -9009,6 +8997,8 @@ class Filling_TM_TI2():
         list_default = ['variable', 'tag', 'name', 'function_ASDU', 'addr_object', 'variable_value', 'variable_status']
         msg = self.dop_function.column_check(TM_TI2, 'tm_ti2', list_default)
         return msg 
+
+
 class Filling_TM_TII():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -9037,6 +9027,8 @@ class Filling_TM_TII():
         list_default = ['variable', 'tag', 'name', 'function_ASDU', 'addr_object', 'variable_value', 'variable_status']
         msg = self.dop_function.column_check(TM_TII, 'tm_tii', list_default)
         return msg 
+
+
 class Filling_TM_TU():
     def __init__(self):
         self.cursor   = db.cursor()
@@ -9065,6 +9057,8 @@ class Filling_TM_TU():
         list_default = ['variable', 'tag', 'name', 'function_ASDU', 'addr_object', 'variable_change', 'change_bit', 'descriptionTU']
         msg = self.dop_function.column_check(TM_TU, 'tm_tu', list_default)
         return msg 
+
+
 class Filling_TM_TR4():
     def __init__(self):
         self.cursor   = db.cursor()

@@ -1520,6 +1520,18 @@ class AIgrp(BaseModel):
     max5 = CharField(null=True)
     max6 = CharField(null=True)
     tabl_msg = CharField(null=True)
+    min6desc = CharField(null=True, max_length=1024)
+    min5desc = CharField(null=True, max_length=1024)
+    min4desc = CharField(null=True, max_length=1024)
+    min3desc = CharField(null=True, max_length=1024)
+    min2desc = CharField(null=True, max_length=1024)
+    min1desc = CharField(null=True, max_length=1024)
+    max1desc = CharField(null=True, max_length=1024)
+    max2desc = CharField(null=True, max_length=1024)
+    max3desc = CharField(null=True, max_length=1024)
+    max4desc = CharField(null=True, max_length=1024)
+    max5desc = CharField(null=True, max_length=1024)
+    max6desc = CharField(null=True, max_length=1024)
 
     class Meta:
         table_name = 'ai_grp'
