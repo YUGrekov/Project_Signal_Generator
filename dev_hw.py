@@ -77,9 +77,9 @@ class ConstValues():
         list_basket = [i.basket for i in query]
         return min(list_basket) - 1, max(list_basket)
 
-    def add_kc_row(self, uso, request):
+    def add_kc_row(self, uso, request, end_for_kc):
         '''Добавление в базу ОСН и РЕЗ КЦ.'''
-        for i in range(1, 3):
+        for i in range(1, end_for_kc):
             const_row = [
                 {'id': f'{i}', 'uso': uso, 'variable': f'countsErrDiag[{i}]',
                  'basket': f'{i}',
@@ -125,21 +125,27 @@ class ConstValues():
                 }
 
     def add_const_sql(self, kk_flag: bool, name: str,
-                      total: int, request):
+                      total: int, request, asme):
         """Добавляем строки КЦ и КК.
         Args:
             kk_flag (bool): Флаг налиция КК.
             name (_type_): Название шкафа.
             total (int): Выборка из базы п окорзине и шкафу.
-            request (_type_): Объект листа запроса
+            request (_type_): Объект листа запроса.
+            asme (bool): Для АСМЭ одна корзина КЦ.
         Returns:
             _type_: Мин и Мах номер корзины, флаг одного захода
         """
         num_min, num_max = self.position(total)
-        self.add_kc_row(name, request)
+
+        # У АСМЭ по умолчанию 1 корзина КЦ
+        end_for_kc = 2 if asme else 3
+        self.add_kc_row(name, request, end_for_kc)
+
         if kk_flag:
             self.add_kk_row(name, request, num_max)
             num_max = num_max + 2
+
         t_flag = True
         return num_min, num_max, t_flag
 
@@ -177,7 +183,7 @@ class HW(ConstValues, BaseType):
         self.dop_function.write_base_orm(write_array, HardWare)
         self.msg[f'{today} - SQL. HW. Корзина {data.uso}.A{data.basket} добавлена'] = 1
 
-    def hardware(self, kk_flag: bool):
+    def hardware(self, kk_flag: bool, asme: bool = False):
         """Заполнение таблицы.
         Args:
             kk_flag (bool): Нужен ли КК
@@ -205,7 +211,7 @@ class HW(ConstValues, BaseType):
                     err_1, err_all, t_flag = self.add_const_sql(kk_flag,
                                                                 name.uso,
                                                                 total,
-                                                                self.dop_function)
+                                                                self.dop_function, asme)
                 if counts_uso <= 2:
                     countsErr = err_1 if counts_uso == 1 else err_all
 

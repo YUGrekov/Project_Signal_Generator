@@ -1651,7 +1651,7 @@ class Widget(QWidget):
 
     def filling_hardware(self):
         hw_table = SQL_HW()
-        msg = hw_table.hardware(self.kk_is_true)
+        msg = hw_table.hardware(self.kk_is_true, self.q_check_flASME.isChecked())
         self.logs_msg('default', 1, msg, True)
     
     def clear_hardware_tabl(self):

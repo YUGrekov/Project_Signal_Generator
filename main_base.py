@@ -2782,6 +2782,12 @@ class Filling_attribute_DevStudio():
                 tag = basket['tag']
                 uso = basket['uso']
                 num_basket = basket['basket']
+                space = False
+
+                for key, value in basket.items():
+                    if 'MN' in str(value) or 'EthEx' in str(value):
+                        space = True
+
                 for key, value in basket.items():
                     if value == type_modul:
                         number_modul = str(key).split('_')[1]
@@ -2797,7 +2803,8 @@ class Filling_attribute_DevStudio():
                                           string_name=string_name,
                                           num_basket=num_basket,
                                           number_modul=number_modul,
-                                          modPosition=modPosition))
+                                          modPosition=modPosition,
+                                          space=space))
         return modul
 
     def analogs_omx(self):
@@ -2843,7 +2850,6 @@ class Filling_attribute_DevStudio():
                     if equ_fiz == '': equ_fiz = ''
                     if tag == '' or tag is None: continue
                     if tag_eng == '' or tag_eng is None: continue
-                    if number == '' or number is None: continue
                     if name == '' or name is None: continue
                     if equ == '' or equ is None: equ = ' '
                     if unit_switch == '' or unit_switch is None: continue
@@ -3682,12 +3688,13 @@ class Filling_attribute_DevStudio():
             
             data_hw = self.hardware_data(type_mod)
             for data in data_hw:
-                id_          = data['id_']
-                uso          = data['uso']
-                string_name  = data['string_name']
+                id_ = data['id_']
+                uso = data['uso']
+                string_name = data['string_name']
                 number_modul = data['number_modul']
-                num_basket   = data['num_basket']
-                modPosition  = data['modPosition']
+                num_basket = data['num_basket']
+                modPosition = data['modPosition']
+                space = data['space']
 
                 object = etree.Element("{automation.control}object")
                 object.attrib['name'] = string_name
@@ -3696,7 +3703,7 @@ class Filling_attribute_DevStudio():
                 object.attrib['aspect'] = "unit.Library.PLC_Types.PLC"
 
                 # Модуль PSU занимает 2 слота корзины, остальные смещаются +1
-                mod_num = int(number_modul) if variable_mod == 'PSUs' else int(number_modul) + 1
+                mod_num = int(number_modul) if ('PSUs' in variable_mod) or space else int(number_modul) + 1
 
                 self.dop_function.new_attr(object, "unit.Library.Attributes.ModNumber", mod_num)
                 self.dop_function.new_attr(object, "unit.Library.Attributes.RackNumber", id_)
@@ -5845,15 +5852,15 @@ class Filling_CodeSys():
         msg = {}
         list_pic = []
         try:
-            data_pic   = self.dop_function.connect_by_sql('pic'  , f'''"id", "name", "frame", "Pic"''')
-            data_ai    = self.dop_function.connect_by_sql('ai'   , f'''"id", "name", "Pic"''')
-            data_di    = self.dop_function.connect_by_sql('di'   , f'''"id", "name", "priority_0", "priority_1", "pNC_AI", "Pic"''')
-            data_zd    = self.dop_function.connect_by_sql('zd'   , f'''"id", "name", "Pic"''')
-            data_vs    = self.dop_function.connect_by_sql('vs'   , f'''"id", "name", "Pic"''')
-            data_ss    = self.dop_function.connect_by_sql('ss'   , f'''"id", "name", "number_array_stateRSreq_1", "number_array_stateRSreq_2", "Pic"''')
-            data_ktpr  = self.dop_function.connect_by_sql('ktpr' , f'''"id", "name", "Pic"''')
+            data_pic = self.dop_function.connect_by_sql('pic', f'''"id", "name", "frame", "Pic"''')
+            data_ai = self.dop_function.connect_by_sql('ai', f'''"id", "name", "Pic"''')
+            data_di = self.dop_function.connect_by_sql('di', f'''"id", "name", "priority_0", "priority_1", "pNC_AI", "Pic"''')
+            data_zd = self.dop_function.connect_by_sql('zd', f'''"id", "name", "Pic"''')
+            data_vs = self.dop_function.connect_by_sql('vs', f'''"id", "name", "Pic"''')
+            data_ss = self.dop_function.connect_by_sql('ss', f'''"id", "name", "number_array_stateRSreq_1", "number_array_stateRSreq_2", "Pic"''')
+            data_ktpr = self.dop_function.connect_by_sql('ktpr', f'''"id", "name", "Pic"''')
             data_ktpra = self.dop_function.connect_by_sql('ktpra', f'''"id", "name", "Pic"''')
-            data_hw    = self.dop_function.connect_by_sql('hardware', f'''"id", "variable", "uso", "type_1", "Pic"''')
+            data_hw = self.dop_function.connect_by_sql('hardware', f'''"id", "variable", "uso", "type_1", "Pic"''')
             data_tm_dp = self.dop_function.connect_by_sql('tm_dp', f'''"name", "link_to_link_signal", "Pic"''')
 
             # Проверяем файл на наличие в папке, если есть удаляем и создаем новый
