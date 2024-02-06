@@ -1534,9 +1534,9 @@ class Widget(QWidget):
                 return
 
             dict_column = self.hat_list()
-            data_uso = self.import_sql.preparation_import(self.select_uso.currentText(),
-                                                          self.select_row.text(),
-                                                          dict_column)
+            data_uso, msg = self.import_sql.preparation_import(self.select_uso.currentText(),
+                                                               self.select_row.text(),
+                                                               dict_column)
             msg = self.import_sql.column_check()
             self.logs_msg('default', 1, msg, True)
             msg = self.import_sql.row_update_SQL(data_uso,
@@ -1558,14 +1558,16 @@ class Widget(QWidget):
         dict_column = self.hat_list()
 
         try:
-            data_uso = self.import_sql.preparation_import(self.select_uso.currentText(),
-                                                        self.select_row.text(),
-                                                        dict_column)
+            data_uso, msg = self.import_sql.preparation_import(self.select_uso.currentText(),
+                                                               self.select_row.text(),
+                                                               dict_column)
+            self.logs_msg('default', 1, msg, True)
+
             msg = self.import_sql.column_check()
             self.logs_msg('default', 1, msg, True)
 
             msg = self.import_sql.database_entry_SQL(data_uso,
-                                                    self.select_uso.currentText())
+                                                     self.select_uso.currentText())
             self.logs_msg('default', 1, msg, True)
 
         except Exception:
@@ -1844,8 +1846,6 @@ class Widget(QWidget):
     # VS
     def filling_vs(self):
         vs_table = Filling_VS()
-        msg = vs_table.column_check()
-        self.logs_msg('default', 1, msg, True)
         msg = vs_table.getting_modul()
         self.logs_msg('default', 1, msg, True)
     def clear_vs_tabl(self):

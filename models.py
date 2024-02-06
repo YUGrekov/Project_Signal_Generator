@@ -696,15 +696,6 @@ class VS(BaseModel):
     Pic = CharField(null=True)
     tabl_msg = CharField(null=True)
     Is_klapana_interface_auxsystem = CharField(null=True)
-    AlphaHMI = CharField(null=True)
-    AlphaHMI_PIC1 = CharField(null=True)
-    AlphaHMI_PIC1_Number_kont = CharField(null=True)
-    AlphaHMI_PIC2 = CharField(null=True)
-    AlphaHMI_PIC2_Number_kont = CharField(null=True)
-    AlphaHMI_PIC3 = CharField(null=True)
-    AlphaHMI_PIC3_Number_kont = CharField(null=True)
-    AlphaHMI_PIC4 = CharField(null=True)
-    AlphaHMI_PIC4_Number_kont = CharField(null=True)
 
     class Meta:
         table_name = 'vs'

@@ -124,6 +124,7 @@ class DataExel():
                            select_col: tuple) -> list:
         '''Подготовка таблицы к импорту.'''
         data = []
+        msg = {}
 
         count_row = self.database_count_row()
 
@@ -140,27 +141,40 @@ class DataExel():
             module = row[tuple_name[NameColumn.MODULE.value]].value
             channel = row[tuple_name[NameColumn.CHANNEl.value]].value
 
-            if (basket or module or channel) is None:
+            try:
+                if (basket or module or channel) is None:
+                    continue
+                count_row += 1
+
+                if contact is not None:
+                    contact = str(contact).replace('.', ',')
+
+                if name is not None:
+                    name = name.replace('  ', ' ')
+
+                if tag is None:
+                    if schema is not None or type_s is not None:
+                        if 'RS' not in (schema, type_s):
+                            tag = self.sub_str(uso, basket, module, channel)
+
+                type_s = self.search_type(schema, type_s)
+
+                data.append(dict(id=count_row,
+                                 type_signal=type_s,
+                                 uso=uso,
+                                 tag=tag,
+                                 description=name,
+                                 schema=schema,
+                                 klk=klk,
+                                 contact=contact,
+                                 basket=basket,
+                                 module=module,
+                                 channel=channel))
+            except Exception:
+                msg[f'''{today} - Импорт КЗФКП. Таблица: signals, class: DataExel, preparation_import -
+                     Пропуск строки {basket}, {module}, {channel}: {traceback.format_exc()}'''] = 2
                 continue
-            count_row += 1
-
-            if tag is None and 'RS' not in schema:
-                tag = self.sub_str(uso, basket, module, channel)
-
-            type_s = self.search_type(schema, type_s)
-
-            data.append(dict(id=count_row,
-                             type_signal=type_s,
-                             uso=uso,
-                             tag=tag,
-                             description=name,
-                             schema=schema,
-                             klk=klk,
-                             contact=contact,
-                             basket=basket,
-                             module=module,
-                             channel=channel))
-        return data
+        return data, msg
 
 
 class Import_in_SQL(DataExel):
@@ -169,9 +183,9 @@ class Import_in_SQL(DataExel):
         '''Проверяем существование сигнала в базе
         по корзине, модулю, каналу.'''
         exist_row = Signals.select().where(Signals.uso == uso,
-                                           Signals.basket == str(row[NameColumn.BASKET.value]),
-                                           Signals.module == str(row[NameColumn.MODULE.value]),
-                                           Signals.channel == str(row[NameColumn.CHANNEl.value]))
+                                           Signals.basket == row[NameColumn.BASKET.value],
+                                           Signals.module == row[NameColumn.MODULE.value],
+                                           Signals.channel == row[NameColumn.CHANNEl.value])
         return exist_row
 
     def compare_row(self, row_exel: dict, msg: str,

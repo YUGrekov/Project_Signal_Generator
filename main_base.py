@@ -1322,7 +1322,7 @@ class Generate_database_SQL():
                 if sign == 'KTPRA' or sign == 'GMPNA':
                     gen_list.append(self.dop_function.parser_sample(path, start_addr, f'{na}. {name}', flag_write_db, sign))
                 if sign == 'KTPRP':
-                    gen_list.append(self.dop_function.parser_sample(path, start_addr, f'Пожарная защита. {name}', flag_write_db, sign))
+                    gen_list.append(self.dop_function.parser_sample(path, start_addr, f'Противопожарная защита. {name}', flag_write_db, sign))
                 else:
                     gen_list.append(self.dop_function.parser_sample(path, start_addr, name, flag_write_db, sign))
             if not flag_write_db:
@@ -3702,7 +3702,7 @@ class Filling_attribute_DevStudio():
                 object.attrib['base-type'] = f"unit.Library.PLC_Types.modules.{base_type}"
                 object.attrib['aspect'] = "unit.Library.PLC_Types.PLC"
 
-                # Модуль PSU занимает 2 слота корзины, остальные смещаются +1
+                # Корзины с модулями MN и ExtEx занимает 1 слота корзины, остальные смещаются +1
                 mod_num = int(number_modul) if ('PSUs' in variable_mod) or space else int(number_modul) + 1
 
                 self.dop_function.new_attr(object, "unit.Library.Attributes.ModNumber", mod_num)
@@ -7830,7 +7830,7 @@ class Filling_ZD():
     def getting_modul(self):
         msg = {}
         array_di_tag_zd = ('OKC', 'CKC', 'ODC', 'CDC', 'MC', 'OPC', 'DCK', 'MCO', 'MCC', 'KKCC', 'KKCS', 'EC', 'OFC', 'CFC')
-        array_do_tag_zd = ('DOB', 'DKB', 'DCB', 'DCOB', 'DCCB')
+        array_do_tag_zd = ('DOB', 'DB', 'DKB', 'DCB', 'DCOB', 'DCCB')
         with db:
             try:
                 try:
@@ -7848,7 +7848,7 @@ class Filling_ZD():
                                               name LIKE '%клап%' OR name LIKE '%Клап%' OR
                                               name LIKE '%клоп%' OR name LIKE '%КЛОП%' OR
                                               name LIKE '%кран шар%' OR name LIKE '%Кран шар%'
-                                        ORDER BY id""")
+                                        ORDER BY name""")
                 name_zd_new = self.cursor.fetchall()
                 list_zd_name_split = []
                 for i in name_zd_new: 
@@ -7873,6 +7873,9 @@ class Filling_ZD():
                 count_row = self.cursor.fetchall()[0][0]
                         
                 for name in sorted(unique_name):
+                    if 'резерв' in name.lower():
+                        continue
+
                     list_zd = []
 
                     kvo, kvz, mpo, mpz, mufta, error, dist, vmmo, vmmz = None, None, None, None, None, None, None, None, None
@@ -7882,11 +7885,11 @@ class Filling_ZD():
                     for tag in array_di_tag_zd:
                         self.cursor.execute(f"""SELECT id, tag_eng, name 
                                                 FROM di
-                                                WHERE (name ~* '\m{name}\M') AND (tag_eng LIKE '%{tag}%')""")
-                        
+                                                WHERE (name ~* '\m{name}\M' OR name LIKE '%{name}%') AND (tag_eng LIKE '%{tag}%')""")                   
                         try: 
                             number_id = self.cursor.fetchall()[0][0]
-                        except: continue
+                        except Exception:
+                            continue
 
                         if tag == 'OKC':   kvo = f'DI[{number_id}].Value'
                         if tag == 'CKC':   kvz = f'DI[{number_id}].Value'
@@ -7912,6 +7915,7 @@ class Filling_ZD():
                         except: continue
                         
                         if tag == 'DOB' : open_zd    = f'ctrlDO[{number_id}]'
+                        if tag == 'DB' : open_zd     = f'ctrlDO[{number_id}]'
                         if tag == 'DKB' : close_zd   = f'ctrlDO[{number_id}]'
                         if tag == 'DCB' : stop_zd    = f'ctrlDO[{number_id}]'
                         if tag == 'DCOB': open_stop  = f'ctrlDO[{number_id}]'
@@ -8026,7 +8030,7 @@ class Filling_ZD_tm():
                     count_ZD += 1
                     for ust in time_ust:
                         count_row += 1
-                        used = '0' if ust[0] == 'Резерв' else '1' 
+                        used = False if ust[0] == 'Резерв' else True
                         list_zd_tm.append(dict(id = count_row, 
                                                 variable = f'{47 + count_row}', # f'tmZD[{count_ZD}].{ust[1]}'
                                                 tag  = f'HZD{count_ZD}_{ust[1]}',
@@ -8109,7 +8113,13 @@ class Filling_VS():
                         
                 for name in sorted(unique_name):
                     list_vs = []
-                    mp, voltage, isp_opening_chain, open_vs, close_vs, error = '', '', '', '', '', ''
+
+                    mp = None
+                    voltage = None
+                    isp_opening_chain = None
+                    open_vs = None
+                    close_vs = None
+                    error = None
 
                     # Принадлежность OPC тега
                     for tag in array_tag_opc_vs:  
@@ -8175,8 +8185,8 @@ class Filling_VS():
                         pressure_norm = f'AI[{number_id}].Norm'
                         pressure_ndv  = f'AI[{number_id}].Ndv'
                     except:
-                        pressure_norm = f''
-                        pressure_ndv  = f''
+                        pressure_norm = None
+                        pressure_ndv  = None
 
                     if name in tabl_vs_name:
                         msg.update(self.dop_function.update_signal_dop(VS, "vs", name, VS.MP, 'MP', mp))
@@ -8196,26 +8206,18 @@ class Filling_VS():
                         msg[f'{today} - Таблица: vs, добавлена новая вспомсистема: VS[{count_row}], {name}'] = 1
                         list_vs.append(dict(id = count_row, 
                                             variable = f'VS[{count_row}]',
-                                            tag = '',
                                             name = name,
-                                            short_name = '',
                                             MP = mp,
                                             Pressure_is_True = pressure_norm,
                                             Voltage = voltage,
-                                            Voltage_Sch = '',
                                             Serviceability_of_circuits_of_inclusion = isp_opening_chain,
                                             External_alarm = error,
                                             Pressure_sensor_defective = pressure_ndv,
                                             VKL = open_vs,
                                             OTKL = close_vs,
                                             Not_APV = '0',
-                                            Pic = '',
                                             tabl_msg = 'TblAuxSyses',
-                                            Is_klapana_interface_auxsystem = '0',
-                                            
-                                            AlphaHMI = '',AlphaHMI_PIC1 = '',AlphaHMI_PIC1_Number_kont = '',
-                                            AlphaHMI_PIC2 = '',AlphaHMI_PIC2_Number_kont = '',AlphaHMI_PIC3 = '',
-                                            AlphaHMI_PIC3_Number_kont = '',AlphaHMI_PIC4 = '',AlphaHMI_PIC4_Number_kont = ''))
+                                            Is_klapana_interface_auxsystem = '0'))
 
                         # Checking for the existence of a database
                         VS.insert_many(list_vs).execute()
@@ -8229,16 +8231,6 @@ class Filling_VS():
                 msg[f'{today} - Таблица: vs, ошибка при заполнении: {traceback.format_exc()}'] = 2
             msg[f'{today} - Таблица: vs, выполнение кода завершено!'] = 1
         return(msg)
-    # Заполняем таблицу VS
-    def column_check(self):
-        list_default = ['variable', 'tag', 'name', 'short_name', 'group', 'number_in_group', 'MP', 'Pressure_is_True', 'Voltage', 'Voltage_Sch', 
-                        'Serviceability_of_circuits_of_inclusion', 'External_alarm', 'Pressure_sensor_defective', 'VKL', 'OTKL', 'Not_APV',
-                        'Pic', 'tabl_msg', 'Is_klapana_interface_auxsystem',
-                        'AlphaHMI', 'AlphaHMI_PIC1', 'AlphaHMI_PIC1_Number_kont', 'AlphaHMI_PIC2',
-                        'AlphaHMI_PIC2_Number_kont','AlphaHMI_PIC3', 'AlphaHMI_PIC3_Number_kont', 
-                        'AlphaHMI_PIC4', 'AlphaHMI_PIC4_Number_kont']
-        msg = self.dop_function.column_check(VS, 'vs', list_default)
-        return msg 
 
 
 class Filling_VS_tm():
@@ -8268,12 +8260,12 @@ class Filling_VS_tm():
                     msg[f'{today} - Таблицы: vs пустая! Заполни таблицу!'] = 2
                     return msg
                 
-                self.cursor.execute(f'''SELECT name FROM vs''')
+                self.cursor.execute(f'''SELECT name FROM vs ORDER BY id ''')
                 for i in self.cursor.fetchall():
                     count_VS += 1
                     for ust in time_ust:
                         count_row += 1
-                        used = '0' if ust[0] == 'Резерв' else '1' 
+                        used = False if ust[0] == 'Резерв' else True
                         list_vs_tm.append(dict(id = count_row, 
                                                 variable = f'{3047 + count_row}', # f'tmVS[{count_VS}].{ust[1]}'
                                                 tag  = f'HVS{count_VS}_{ust[1]}',
@@ -8527,7 +8519,7 @@ class Filling_UTS_tm():
                     msg[f'{today} - Таблицы: uts пустая! Заполни таблицу!'] = 2
                     return msg
                 
-                self.cursor.execute(f'''SELECT name FROM uts''')
+                self.cursor.execute(f'''SELECT name FROM uts ORDER BY id''')
                 for i in self.cursor.fetchall():
                     count_UTS += 1
                     for ust in time_ust:
@@ -8580,7 +8572,7 @@ class Filling_UPTS_tm():
                     msg[f'{today} - Таблицы: upts пустая! Заполни таблицу!'] = 2
                     return msg
                 
-                self.cursor.execute(f'''SELECT name FROM upts''')
+                self.cursor.execute(f'''SELECT name FROM upts ORDER BY id''')
                 for siren in self.cursor.fetchall():
                     count_UPTS += 1
                     for ust in time_ust:
