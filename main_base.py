@@ -918,6 +918,9 @@ class Generate_database_SQL():
             if tabl == 'VS': 
                 msg.update(self.gen_msg_general(flag_write_db, 'vs', 'VS', 'PostgreSQL_Messages-VS'))
                 continue
+            if tabl == 'VSGRP':
+                msg.update(self.gen_msg_defence(flag_write_db, 'vsgrp', 'VSGrp', 'PostgreSQL_Messages-VSGRP', 'TblAuxGroups'))
+                continue
             if tabl == 'VV': 
                 msg.update(self.gen_msg_defence(flag_write_db, 'vv', 'VV', 'PostgreSQL_Messages-VV', 'TblHighVoltageSwitches'))
                 continue
@@ -1376,6 +1379,7 @@ class Generate_database_SQL():
         tabl = 'hardware' 
         count_CN, count_CPU, count_EthEx = 0, 0, 0
         count_MN, count_PCU, count_RS = 0, 0, 0 
+        count_Other = 0
         try:
             self.exist_table()
 
@@ -1386,7 +1390,7 @@ class Generate_database_SQL():
                 for five_column in range(0, 33, 1):
                     if column[f'type_{five_column}'] != '' and column[f'type_{five_column}'] is not None:
                         type_modul = column[f'type_{five_column}']
-                        prefix_number = f'0{five_column}' if five_column < 10 else basket
+                        prefix_number = f'0{five_column}' if five_column < 10 else five_column
 
                         value = f'Диагностика. {uso}. Модуль А{basket}.{prefix_number} {type_modul}'
                         modul_list.append(dict(id=id_basket,
@@ -1409,13 +1413,14 @@ class Generate_database_SQL():
                 else:
                     script_file = 'PostgreSQL_Messages-Modul' 
                     tbl_racks = False
-                    for j in range(6):
+                    for j in range(7):
                         if j == 0: sign = 'DiagCN'
                         elif j == 1: sign = 'DiagCPU'
                         elif j == 2: sign = 'DiagEthEx'
                         elif j == 3: sign = 'DiagMN'
                         elif j == 4: sign = 'DiagPSU'
                         elif j == 5: sign = 'DiagRS'
+                        else: sign = 'DiagMod'
 
                         kod_msg, addr_offset = self.define_number_msg(cursor, sign)
                         if addr_offset == 0 or kod_msg is None or addr_offset is None: 
@@ -1440,6 +1445,9 @@ class Generate_database_SQL():
                         elif j == 5: 
                             kod_msg_RS = kod_msg
                             addr_offset_RS = addr_offset
+                        else:
+                            kod_msg_Other = kod_msg
+                            addr_offset_Other = addr_offset
                     
                 for modul in modul_list:
                     id_basket = modul['id']
@@ -1476,6 +1484,10 @@ class Generate_database_SQL():
                             start_addr = kod_msg_RS + (count_RS * int(addr_offset_RS)) 
                             table_msg = 'TblD_ModulesRS'
                             count_RS += 1
+                        else:
+                            start_addr = kod_msg_Other + (count_Other * int(addr_offset_Other)) 
+                            table_msg = 'TblD_Racks'
+                            count_Other += 1
 
                     path = f'{connect.path_sample}\{table_msg}.xml'
                     if not os.path.isfile(path):
@@ -3712,8 +3724,8 @@ class Filling_attribute_DevStudio():
                 self.dop_function.new_attr(object, "unit.System.Attributes.Description", type_mod)
                 # Только для RS
                 if variable_mod == 'RSs': 
-                    rs_port1 = 'Резерв'
-                    rs_port2 = 'Резерв'
+                    rs_port1 = ' '
+                    rs_port2 = ' '
                     data_kd = self.dop_function.connect_by_sql_condition('signals', '*', f'''"uso"='{uso}' AND "basket"={int(num_basket)} AND "module"={int(number_modul)}''')
                     for data in data_kd:
                         channel = data[10]

@@ -1015,6 +1015,10 @@ class Widget(QWidget):
         self.q_check_global.setToolTip('''tag: Global''')
         self.q_check_global.move(100, 83) 
         self.q_check_global.stateChanged.connect(self.check_global)
+        self.q_check_vsgrp = QCheckBox('VSGRP', tab_4)
+        self.q_check_vsgrp.setToolTip('''tag: VSGRP''')
+        self.q_check_vsgrp.move(100, 99) 
+        self.q_check_vsgrp.stateChanged.connect(self.check_vsgrp)
 
         self.q_check_nps = QCheckBox('НПС', tab_4)
         self.q_check_nps.setToolTip(''''tag: KRMPN, NPS\ntabl:TblStationCommonKRMPN, TblNPS.xml''')
@@ -2056,6 +2060,7 @@ class Widget(QWidget):
             self.q_check_tmdp.setChecked(True)
             self.q_check_bdgrp.setChecked(True)
             self.q_check_global.setChecked(True)
+            self.q_check_vsgrp.setChecked(True)
             self.q_check_uts.setChecked(True)
             self.q_check_upts.setChecked(True)
             self.q_check_vv.setChecked(True)
@@ -2090,6 +2095,7 @@ class Widget(QWidget):
             self.q_check_vs.setChecked(False)
             self.q_check_bd.setChecked(False)
             self.q_check_global.setChecked(False)
+            self.q_check_vsgrp.setChecked(False)
             self.q_check_bdgrp.setChecked(False)
             self.q_check_uts.setChecked(False)
             self.q_check_upts.setChecked(False)
@@ -2136,6 +2142,9 @@ class Widget(QWidget):
     def check_global(self, checked):
         if checked: self.list_gen_msg.append('Global')
         else      : self.list_gen_msg.remove('Global')
+    def check_vsgrp(self, checked):
+        if checked: self.list_gen_msg.append('VSGRP')
+        else      : self.list_gen_msg.remove('VSGRP')
     def check_zd(self, checked):
         if checked: self.list_gen_msg.append('ZD')
         else      : self.list_gen_msg.remove('ZD')
@@ -2151,9 +2160,6 @@ class Widget(QWidget):
     def check_dps(self, checked):
         if checked: self.list_gen_msg.append('DPS')
         else      : self.list_gen_msg.remove('DPS')
-    def check_vsgrp(self, checked):
-        if checked: self.list_gen_msg.append('VSGRP')
-        else      : self.list_gen_msg.remove('VSGRP')
     def check_uts(self, checked):
         if checked: self.list_gen_msg.append('UTS')
         else      : self.list_gen_msg.remove('UTS')
