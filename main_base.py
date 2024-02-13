@@ -1383,7 +1383,7 @@ class Generate_database_SQL():
         try:
             self.exist_table()
 
-            for column in HardWare.select().dicts():
+            for column in HardWare.select().dicts().order_by(HardWare.id):
                 id_basket = column['id']
                 uso = column['uso']
                 basket = column['basket']
@@ -2277,10 +2277,12 @@ class Generate_database_SQL():
                 except Exception:
                     RuleName = 'NULL'
 
+                max_row = self.dop_function.max_value_column_cond(f"{tabl_sql}", 'id_num', 'number_pump_VU', number_pump_VU)
+
                 if sign == 'TblPumpDefencesSetpoints':
-                    source = 5031 + (192 * (number_pump_VU - 1)) + id_num
+                    source = 5031 + (max_row * (number_pump_VU - 1)) + id_num
                 else:
-                    source = 8103 + (64 * (number_pump_VU - 1)) + id_num
+                    source = 8103 + (max_row * (number_pump_VU - 1)) + id_num
 
             except Exception:
                 msg[f'{today} - {sign}: ошибка добавления строки, пропускается: {traceback.format_exc()}'] = 2
@@ -7742,7 +7744,7 @@ class Filling_tmNA_UMPNA():
                 if self.dop_function.empty_table('umpna'): 
                     msg[f'{today} - Таблицы: umpna пустая! Заполни таблицу!'] = 2
                     return msg
-                self.cursor.execute(f'''SELECT name FROM umpna''')
+                self.cursor.execute(f'''SELECT name FROM umpna ORDER BY id''')
                 for i in self.cursor.fetchall():
                     count_NA += 1
                     if i[0] is None or i[0] == '' or i[0] == ' ':
@@ -7799,7 +7801,7 @@ class Filling_tmNA_UMPNA_narab():
                 if self.dop_function.empty_table('umpna'): 
                     msg[f'{today} - Таблицы: umpna пустая! Заполни таблицу!'] = 2
                     return msg
-                self.cursor.execute(f'''SELECT name FROM umpna''')
+                self.cursor.execute(f'''SELECT name FROM umpna ORDER BY id''')
                 for i in self.cursor.fetchall():
                     count_NA += 1
                     if i[0] is None or i[0] == '' or i[0] == ' ':

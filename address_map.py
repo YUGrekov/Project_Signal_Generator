@@ -571,7 +571,7 @@ class KTPRAMap(BaseMap):
                 for grp in range(1, count_group + 1):
                     name = f'Root{connect.prefix_system}.{KTPRAs}KTPRAs_{na.number_pump_VU}.Group_{grp}.StateKTPRx'
 
-                    address = list_addrr['stateKTPRA'] + (grp - 1) + (na.number_pump_VU - 1) * 48
+                    address = list_addrr['stateKTPRA'] + (grp - 1) + (na.number_pump_VU - 1) * count_group
                     self.new_element(root, name, address)
 
             tree.write(path, pretty_print=True)
