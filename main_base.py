@@ -214,7 +214,9 @@ class General_functions():
             elif table == 'AI':
                 text_mess = f'{name[0]}. {mess}'
                 if ('##' in text_mess) and (name[1] is not None):
-                    text_mess = text_mess.replace('##', name[1])
+                    text_mess = text_mess.replace('##', f'({name[2]}) {name[1]}')
+                else:
+                    text_mess = text_mess.replace('##', f'({name[2]})')
             else:
                 text_mess = f'{name}. {mess}'
             
@@ -1084,7 +1086,7 @@ class Generate_database_SQL():
             if addr_offset == 0 or kod_msg is None or addr_offset is None: 
                 msg[f'{today} - Сообщения ai: ошибка. Адреса из таблицы msg не определены'] = 2
                 return msg
-            cursor.execute("""SELECT id, "name", "AnalogGroupId", "Egu" FROM ai ORDER BY id""")
+            cursor.execute("""SELECT id, "name", "AnalogGroupId", "Egu", "Precision" FROM ai ORDER BY id""")
             list_ai = cursor.fetchall()
 
             self.exist_table()
@@ -1094,6 +1096,7 @@ class Generate_database_SQL():
                 name_ai = analog[1]
                 group_ai = analog[2]
                 egu_ai = analog[3]
+                precision_ai = analog[4]
 
                 start_addr = kod_msg + ((id_ai - 1) * int(addr_offset))
 
@@ -1108,14 +1111,22 @@ class Generate_database_SQL():
                     if not os.path.isfile(path):
                         msg[f'{today} - Сообщения ai: id = {id_ai}, отсутствует шаблон - {list_group}. Используем по умолчанию: TblAnalogsDefault.xml'] = 2
                         raise
-                    gen_list.append(self.dop_function.parser_sample(path, start_addr, [name_ai, egu_ai], flag_write_db, 'AI'))
+                    gen_list.append(self.dop_function.parser_sample(path,
+                                                                    start_addr,
+                                                                    [name_ai, egu_ai, precision_ai],
+                                                                    flag_write_db,
+                                                                    'AI'))
                 
                 except Exception:
                     path = f'{connect.path_sample}\TblAnalogsDefault.xml'
                     if not os.path.isfile(path):
                         msg[f'{today} - Сообщения ai: отсутствует шаблон по умолчанию. Пропускаем сигнал'] = 2
                         continue
-                    gen_list.append(self.dop_function.parser_sample(path, start_addr, [name_ai, egu_ai], flag_write_db, 'AI'))
+                    gen_list.append(self.dop_function.parser_sample(path,
+                                                                    start_addr,
+                                                                    [name_ai, egu_ai, precision_ai],
+                                                                    flag_write_db,
+                                                                    'AI'))
                     continue
 
             if not flag_write_db:
@@ -1141,7 +1152,17 @@ class Generate_database_SQL():
             
             self.exist_table()
 
-            cursor.execute(f"""SELECT id, name, "tabl_msg", "msg_priority_0", "msg_priority_1", "sound_msg_0", "sound_msg_1" FROM "{tabl}" ORDER BY id""")
+            cursor.execute(f"""SELECT id,
+                                      name,
+                                      "tabl_msg",
+                                      "msg_priority_0",
+                                      "msg_priority_1",
+                                      "sound_msg_0",
+                                      "sound_msg_1",
+                                      "group_diskrets"
+                               FROM "{tabl}"
+                               ORDER BY id""")
+
             list_signal = cursor.fetchall()
             for signal in list_signal:
                 id_ = signal[0]
@@ -1151,9 +1172,13 @@ class Generate_database_SQL():
                 msg_prior_1 = signal[4]
                 sound_prior_0 = signal[5]
                 sound_prior_1 = signal[6]
+                grp_di = signal[7]
 
                 start_addr = kod_msg + ((id_ - 1) * int(addr_offset))
                 path = f'{connect.path_sample}\{table_msg}.xml'
+
+                if grp_di in ('Диагностика', 'Электроснабжение'):
+                    name = f'{grp_di}. {name}'
 
                 if not os.path.isfile(path):
                     msg[f'{today} - Сообщения {tabl}: в папке отсутствует шаблон - {table_msg}'] = 2
@@ -1315,27 +1340,34 @@ class Generate_database_SQL():
             for signal in list_signal:
                 id_ = signal[0]
                 name = signal[1]
-                if sign == 'KTPRA' or sign == 'GMPNA': na = signal[2]
+                if sign == 'KTPRA' or sign == 'GMPNA':
+                    na = signal[2]
 
                 start_addr = kod_msg + ((id_ - 1) * int(addr_offset))
                 path = f'{connect.path_sample}\{table_msg}.xml'
                 if not os.path.isfile(path):
                     msg[f'{today} - Сообщения {tabl}: в папке отсутствует шаблон - {table_msg}'] = 2
                     return msg
-                if sign == 'KTPRA' or sign == 'GMPNA':
-                    gen_list.append(self.dop_function.parser_sample(path, start_addr, f'{na}. {name}', flag_write_db, sign))
-                if sign == 'KTPRP':
+
+                if sign == 'KTPR':
+                    gen_list.append(self.dop_function.parser_sample(path, start_addr, f'Общестанционная защита. {name}', flag_write_db, sign))
+                elif sign == 'KTPRA':
+                    gen_list.append(self.dop_function.parser_sample(path, start_addr, f'Агрегатная защита. {na}. {name}', flag_write_db, sign))
+                elif sign == 'GMPNA':
+                    gen_list.append(self.dop_function.parser_sample(path, start_addr, f'Агрегатная готовность. {na}. {name}', flag_write_db, sign))                
+                elif sign == 'KTPRP':
                     gen_list.append(self.dop_function.parser_sample(path, start_addr, f'Противопожарная защита. {name}', flag_write_db, sign))
                 else:
                     gen_list.append(self.dop_function.parser_sample(path, start_addr, name, flag_write_db, sign))
+
             if not flag_write_db:
                 msg.update(self.write_file(gen_list, sign, script_file))
                 msg[f'{today} - Сообщения {tabl}: файл скрипта создан'] = 1
-                return(msg)
+                return msg
         except Exception:
             msg[f'{today} - Сообщения {tabl}: ошибка генерации: {traceback.format_exc()}'] = 2
         msg[f'{today} - Сообщения {tabl}: генерация завершена!'] = 1
-        return(msg)
+        return msg
     
     def gen_msg_general(self, flag_write_db, tabl, sign, script_file):
         msg = {}
