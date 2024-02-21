@@ -291,7 +291,7 @@ class VSMap(BaseMap):
 
 class ZDMap(BaseMap):
     '''Заполнение ModBus карты адресов.'''
-    prefix = ['StateValve1', 'StateValve2', 'StateValve3',
+    prefix = ['StateValve1', 'StateValve2', 'StateValve3', 'StateValve4',
               'Tm.tmZD', 'NumOfOpenings', 'NumOfClosings']
 
     variable = ['StateZD', 'numOfOpenings', 'numOfClosings']
@@ -314,13 +314,15 @@ class ZDMap(BaseMap):
                     name = f'Root{connect.prefix_system}.{ZDs}ZD_{row.id}.{self.prefix[i]}'
 
                     if 'StateValve1' == self.prefix[i]:
-                        address = list_addrr['StateZD'] + 7 * (row.id - 1)
+                        address = list_addrr['StateZD'] + 8 * (row.id - 1)
                     elif 'StateValve2' == self.prefix[i]:
-                        address = (list_addrr['StateZD'] + 7 * (row.id - 1) + 1)
+                        address = (list_addrr['StateZD'] + 8 * (row.id - 1) + 1)
                     elif 'StateValve3' == self.prefix[i]:
-                        address = (list_addrr['StateZD'] + 7 * (row.id - 1) + 2)
+                        address = (list_addrr['StateZD'] + 8 * (row.id - 1) + 2)
+                    elif 'StateValve4' == self.prefix[i]:
+                        address = (list_addrr['StateZD'] + 8 * (row.id - 1) + 3)
                     elif 'Tm.tmZD' == self.prefix[i]:
-                        address = (list_addrr['StateZD'] + 7 * (row.id - 1) + 4)
+                        address = (list_addrr['StateZD'] + 8 * (row.id - 1) + 5)
                     elif 'NumOfOpenings' == self.prefix[i]:
                         address = list_addrr['numOfOpenings'] + 2 * (row.id - 1)
                     elif 'NumOfClosings' == self.prefix[i]:

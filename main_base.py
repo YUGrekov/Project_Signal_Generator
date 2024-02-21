@@ -213,12 +213,14 @@ class General_functions():
                 text_mess = mess
             elif table == 'AI':
                 text_mess = f'{name[0]}. {mess}'
-                if ('##' in text_mess) and (name[1] is not None):
-                    text_mess = text_mess.replace('##', f'({name[2]}) {name[1]}')
+                if (' ##' in text_mess) and (name[1] is not None):
+                    text_mess = text_mess.replace(' ##', f'({name[2]}) {name[1]}')
+                    print(text_mess)
                 else:
-                    text_mess = text_mess.replace('##', f'({name[2]})')
+                    text_mess = text_mess.replace(' ##', f'({name[2]})')
             else:
                 text_mess = f'{name}. {mess}'
+
             
             del_row_tabl = f"DELETE FROM messages.opmessages WHERE Category ={kod_msg + int(category)};\n"
 
@@ -556,6 +558,11 @@ class General_functions():
         if os.path.exists(path):
             os.remove(path)
         return codecs.open(path, 'w', 'utf-8')
+
+    def get_orm(self, models, models_column, value):
+        '''Запрос get через ORM.'''
+        query = models.get(models_column == value)
+        return query
 
 
 class Editing_table_SQL():
@@ -1911,12 +1918,19 @@ class Generate_database_SQL():
                     RuleName = cursor.fetchall()[0][0]
                 except Exception:
                     RuleName = 'NULL'
+                # Запрос к таблице ModBus
+                AIValue = self.dop_function.get_orm(Modbus, Modbus.variable, 'AIValue')
+                if IsPhysic:
+                    AIElValue = self.dop_function.get_orm(Modbus, Modbus.variable, 'AIElValue')
+                    trend_set = f'address = {(AIValue.start_address + 2 * Id) - 1}, addresstype=4x, datatype=float ; address = {AIElValue.start_address + Id}, addresstype=4x, datatype=short'
+                else:
+                    trend_set = f'address = {(AIValue.start_address + 2 * Id) - 1}, addresstype=4x, datatype=float'
 
             except Exception:
                 msg[f'{today} - TblAnalogs: ошибка добавления строки, пропускается: {traceback.format_exc()}'] = 2
                 continue
             
-            ins_row_tabl = f"INSERT INTO objects.TblAnalogs (Id, Prefix, SystemIndex, Tag, Name, AnalogGroupId, SetpointGroupId, Egu, PhysicEgu, IsOilPressure, IsInterface, IsPhysic, IsPumpVibration, Precision, IsTrending, TrendingSettings, TrendingGroup, LoLimField, HiLimField, LoLimEng, HiLimEng, LoLim, HiLim, Min6, Min5, Min4, Min3, Min2, Min1, Max1, Max2, Max3, Max4, Max5, Max6, Histeresis, DeltaHi, DeltaLo, DeltaT, SmoothFactor, Ctrl, MsgMask, SigMask, CtrlMask, TimeFilter, IsBackup, RuleName, TrendingCollector) VALUES({Id}, {Prefix}, {SystemIndex}, '{Tag}', '{Name}', {AnalogGroupId}, {SetpointGroupId}, '{Egu}', '{PhysicEgu}', {IsOilPressure}, {IsInterface}, {IsPhysic}, {IsPumpVibration}, {Precision}, {IsTrending}, 'address = {48999 + 2 * Id}, addresstype=4x, datatype=float', {TrendingGroup}, {LoLimField}, {HiLimField}, {LoLimEng}, {HiLimEng}, {LoLim}, {HiLim}, {Min6}, {Min5}, {Min4}, {Min3}, {Min2}, {Min1}, {Max1}, {Max2}, {Max3}, {Max4}, {Max5}, {Max6}, {Histeresis}, {DeltaHi}, {DeltaLo}, {DeltaT}, {SmoothFactor}, {Ctrl}, {MsgMask}, {SigMask}, {CtrlMask}, {TimeFilter}, {IsBackup}, {RuleName}, 'MBTCP');\n"
+            ins_row_tabl = f"INSERT INTO objects.TblAnalogs (Id, Prefix, SystemIndex, Tag, Name, AnalogGroupId, SetpointGroupId, Egu, PhysicEgu, IsOilPressure, IsInterface, IsPhysic, IsPumpVibration, Precision, IsTrending, TrendingSettings, TrendingGroup, LoLimField, HiLimField, LoLimEng, HiLimEng, LoLim, HiLim, Min6, Min5, Min4, Min3, Min2, Min1, Max1, Max2, Max3, Max4, Max5, Max6, Histeresis, DeltaHi, DeltaLo, DeltaT, SmoothFactor, Ctrl, MsgMask, SigMask, CtrlMask, TimeFilter, IsBackup, RuleName, TrendingCollector) VALUES({Id}, {Prefix}, {SystemIndex}, '{Tag}', '{Name}', {AnalogGroupId}, {SetpointGroupId}, '{Egu}', '{PhysicEgu}', {IsOilPressure}, {IsInterface}, {IsPhysic}, {IsPumpVibration}, {Precision}, {IsTrending}, '{trend_set}', {TrendingGroup}, {LoLimField}, {HiLimField}, {LoLimEng}, {HiLimEng}, {LoLim}, {HiLim}, {Min6}, {Min5}, {Min4}, {Min3}, {Min2}, {Min1}, {Max1}, {Max2}, {Max3}, {Max4}, {Max5}, {Max6}, {Histeresis}, {DeltaHi}, {DeltaLo}, {DeltaT}, {SmoothFactor}, {Ctrl}, {MsgMask}, {SigMask}, {CtrlMask}, {TimeFilter}, {IsBackup}, {RuleName}, 'MBTCP');\n"
             
             if flag_write_db:
                 try:

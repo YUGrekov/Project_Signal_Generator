@@ -47,6 +47,16 @@ from map_address_diag import DiagMap
 from map_address_diag import RackStateMap
 from omx_object import AnalogsOmx
 from omx_object import DiskretsOmx
+from omx_object import VSOmx
+from omx_object import ZDOmx
+from omx_object import NAOmx
+from omx_object import UtsUptsOmx
+from omx_object import PIOmx
+from omx_object import PZOmx
+from omx_object import PICOmx
+from omx_object import SSOmx
+from omx_object import KTPROmx
+from omx_object import KtpraGmpnaOmx
 
 
 SIZE_WORK_BACK = (1200, 500)
@@ -911,19 +921,19 @@ class GenHMIandDev(QWidget):
         list_param = []
         list_help = {self.checkbox_dev_analogs: ['Analogs', AnalogsMap, AnalogsOmx],
                      self.checkbox_dev_diskrets: ['Diskrets', DiskretsMap, DiskretsOmx],
-                     self.checkbox_dev_vs: ['AuxSystems', VSMap],
-                     self.checkbox_dev_zd: ['Valves', ZDMap],
-                     self.checkbox_dev_na: ['NAs', PumpsMap],
-                     self.checkbox_dev_uts: ['UTSs', UtsUptsMap],
-                     self.checkbox_dev_pic: ['Pictures', PicturesMap],
-                     self.checkbox_dev_ktpr: ['KTPRs', KTPRMap],
-                     self.checkbox_dev_ktpra: ['KTPRAs', KTPRAMap],
-                     self.checkbox_dev_gmpna: ['GMPNAs', GMPNAMap],
-                     self.checkbox_dev_upts: ['UPTSs', UtsUptsMap],
-                     self.checkbox_dev_pi: ['PIs', PIMap],
-                     self.checkbox_dev_pz: ['PZs', PZMap],
-                     self.checkbox_dev_ktprp: ['KTPRPs', KTPRMap],
-                     self.checkbox_dev_sss: ['SSs', RelaytedSystemMap],
+                     self.checkbox_dev_vs: ['AuxSystems', VSMap, VSOmx],
+                     self.checkbox_dev_zd: ['Valves', ZDMap, ZDOmx],
+                     self.checkbox_dev_na: ['NAs', PumpsMap, NAOmx],
+                     self.checkbox_dev_uts: ['UTSs', UtsUptsMap, UtsUptsOmx],
+                     self.checkbox_dev_pic: ['Pictures', PicturesMap, PICOmx],
+                     self.checkbox_dev_ktpr: ['KTPRs', KTPRMap, KTPROmx],
+                     self.checkbox_dev_ktpra: ['KTPRAs', KTPRAMap, KtpraGmpnaOmx],
+                     self.checkbox_dev_gmpna: ['GMPNAs', GMPNAMap, KtpraGmpnaOmx(False)],
+                     self.checkbox_dev_upts: ['UPTSs', UtsUptsMap, UtsUptsOmx],
+                     self.checkbox_dev_pi: ['PIs', PIMap, PIOmx],
+                     self.checkbox_dev_pz: ['PZs', PZMap, PZOmx],
+                     self.checkbox_dev_ktprp: ['KTPRPs', KTPRMap, KTPROmx],
+                     self.checkbox_dev_sss: ['SSs', RelaytedSystemMap, SSOmx],
                      self.checkbox_dev_ais: ['Diag.AIs', DiagMap],
                      self.checkbox_dev_aos: ['Diag.AOs', DiagMap],
                      self.checkbox_dev_dis: ['Diag.DIs', DiagMap],
@@ -948,7 +958,6 @@ class GenHMIandDev(QWidget):
                 self.logsTextEdit.logs_msg('''Невозможно заполнить карту адресов DevStudio.
                                            Нет подключения к БД разработки''', 2)
                 return
-
             obj.write_in_omx()
 
     def click_clear_omx(self):
@@ -1071,14 +1080,14 @@ class MainWindow(QMainWindow):
         tab_3 = TabConnect(self.logsTextEdit)
         tab_4 = TabConnect(self.logsTextEdit)
         tab_5 = GenHMIandDev(self.logsTextEdit)
-        tab_6 = TabConnect(self.logsTextEdit)
+        # tab_6 = TabConnect(self.logsTextEdit)
 
         self.tabwidget.addTab(tab_1, 'Соединение')
         self.tabwidget.addTab(tab_2, 'Импорт КЗФКП')
         self.tabwidget.addTab(tab_3, 'SQL разработки')
         self.tabwidget.addTab(tab_4, 'SQL проекта')
         self.tabwidget.addTab(tab_5, 'ВУ')
-        self.tabwidget.addTab(tab_6, 'СУ')
+        # self.tabwidget.addTab(tab_6, 'СУ')
 
     def bottom_row(self):
         '''Нижний ряд с кнопкой и ииндикацией.'''

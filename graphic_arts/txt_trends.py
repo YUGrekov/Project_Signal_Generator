@@ -31,6 +31,22 @@ class TreeTrends():
 
         return group
 
+    def add_group_signal(self, data, group):
+        """Добавление сигнала группы.
+        Args:
+            data (dict): массив данных.
+            group (object): объект группы.
+        """
+        for signal in data:
+            group_signal = self.add_group(signal.name)
+
+            self.add_signal(signal, group_signal)
+
+            if 'резерв' not in str(signal.name).lower() and signal.module is not None and signal.channel is not None:
+                self.add_signal_phisic(signal, group_signal)
+
+            group.append(group_signal)
+
     def add_signal(self, data, group):
         """Добавление сигнала группы.
         Args:
@@ -41,18 +57,35 @@ class TreeTrends():
             group_tag = etree.Element('Tag')
             group_tag.attrib['Name'] = str(signal.tag)
             group_tag.attrib['Format'] = '%g'
-            group_tag.attrib['Description'] = str(signal.name)
+            group_tag.attrib['Description'] = 'Инженерное'
             group_tag.attrib['EGU'] = str(signal.Egu)
             group_tag.attrib['Alias'] = str(signal.tag)
             group_tag.attrib['Min'] = str(signal.LoLimEng)
             group_tag.attrib['Max'] = str(signal.HiLimEng)
             group.append(group_tag)
 
+    def add_signal_phisic(self, signal, group):
+        """Добавление дополнительного сигнала группы.
+        Args:
+            data (dict): массив данных.
+            group (object): объект группы.
+        """
+        group_tag = etree.Element('Tag')
+        group_tag.attrib['Name'] = str(f'{signal.tag}_kin')
+        group_tag.attrib['Format'] = '%g'
+        group_tag.attrib['Description'] = 'Полевое'
+        group_tag.attrib['EGU'] = str(signal.PhysicEgu)
+        group_tag.attrib['Alias'] = str(f'{signal.tag}_kin')
+        group_tag.attrib['Min'] = str(signal.LoLimField)
+        group_tag.attrib['Max'] = str(signal.HiLimField)
+        group.append(group_tag)
+
     def collect_tree(self, name_grp, where_sql):
         '''Один метод ля повторяющихся действий.'''
         group = self.add_group(name_grp)
         data_ai = self.request.select_orm(AI, AI.TrendingGroup == where_sql, AI.id)
-        self.add_signal(data_ai, group)
+
+        self.add_group_signal(data_ai, group)
         return group
 
     def build_tree(self, group_trend, root):

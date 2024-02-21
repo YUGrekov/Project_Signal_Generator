@@ -426,6 +426,7 @@ class TopRow(BaseFunction):
         self.table = table
         self.num_iter = num_iter
         self.click = click
+        self.num_row = 0
 
     def req_table(self, page):
         '''Запрос к таблице с данными по каждой странице с защитами.'''
@@ -462,7 +463,7 @@ class TopRow(BaseFunction):
         elif key == 3:
             value = str(name)
         elif key == 4:
-            value = str(num)
+            value = str(self.num_row)
         elif key == 5:
             value = str(id_)
         elif key == 6:
@@ -509,6 +510,7 @@ class TopRow(BaseFunction):
                     id_num = data[i][0]
                     name = data[i][1]
                     not_mask = data[i][2]
+                    self.num_row += 1
 
                     object = self.new_row_obj(lvl_1,
                                               f'{self.kit.attrib_row}_{i + 1}',
